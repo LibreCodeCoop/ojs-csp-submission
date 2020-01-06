@@ -82,7 +82,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		
 		if($this->sectionId == 4){					
 			$output .= $smarty->fetch($this->getTemplateResource('Tema.tpl'));
-			$output .= $smarty->fetch($this->getTemplateResource('CodigoEditorConvidado.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('CodigoTematico.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('ConflitoInteresse.tpl'));
@@ -107,7 +107,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'FonteFinanciamento';
 		$userVars[] = 'FonteFinanciamentoQual';		
 		$userVars[] = 'Agradecimentos';		
-		$userVars[] = 'CodigoEditorConvidado';
+		$userVars[] = 'CodigoTematico';
 		$userVars[] = 'Tema';
 		$userVars[] = 'CodigoArtigo';
 		
@@ -125,7 +125,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
 		$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
 		$article->setData('Agradecimentos', $form->getData('Agradecimentos'));	
-		$article->setData('CodigoEditorConvidado', $form->getData('CodigoEditorConvidado'));
+		$article->setData('CodigoTematico', $form->getData('CodigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
 		$article->setData('CodigoArtigo', $form->getData('CodigoArtigo'));
 		
@@ -144,7 +144,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
 		$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
 		$form->setData('Agradecimentos', $article->getData('Agradecimentos'));			
-		$form->setData('CodigoEditorConvidado', $article->getData('CodigoEditorConvidado'));	
+		$form->setData('CodigoTematico', $article->getData('CodigoTematico'));	
 		$form->setData('Tema', $article->getData('Tema'));	
 		$form->setData('CodigoArtigo', $article->getData('CodigoArtigo'));	
 		
@@ -156,10 +156,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function addCheck($hookName, $params) {
 		$form =& $params[0];
-		//$form->addCheck(new FormValidatorRegExp($form, 'ConflitoInteresse', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/')); // COLOCAR UMA VALIDACAO DE QUANTIDADE MAXIMA DE CARACTERES 
-		if($this->sectionId == 8){
-			$form->addCheck(new FormValidatorRegExp($form, 'Campo1', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/'));
+		//$form->addCheck(new FormValidatorRegExp($form, 'ConflitoInteresse', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/')); // COLOCAR UMA VALIDACAO DE QUANTIDADE MAXIMA DE CARACTERES 	
+		if($_POST['ConflitoInteresse'] == "yes"){
+			$form->addCheck(new FormValidatorLength($form, 'ConflitoInteresseQual', 'required', 'plugins.generic.CspSubmission.ConflitoInteresseQual.Valid', '>', 0));
+			
+		}
+		if($_POST['FonteFinanciamento'] == "yes"){
+			$form->addCheck(new FormValidatorLength($form, 'FonteFinanciamentoQual', 'required', 'plugins.generic.CspSubmission.FonteFinanciamentoQual.Valid', '>', 0));			
 		}		
+
+		if($this->sectionId == 4){		
+			$form->addCheck(new FormValidatorLength($form, 'CodigoTematico', 'required', 'plugins.generic.CspSubmission.CodigoTematico.Valid', '>', 0));			
+			$form->addCheck(new FormValidatorLength($form, 'Tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));			
+		}
+
+		if($this->sectionId == 6){		
+			$form->addCheck(new FormValidatorLength($form, 'CodigoArtigo', 'required', 'plugins.generic.CspSubmission.CodigoArtigo.Valid', '>', 0));			
+		}
 		return false;
 	}
 

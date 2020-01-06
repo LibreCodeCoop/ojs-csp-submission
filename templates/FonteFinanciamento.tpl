@@ -13,8 +13,8 @@ $("#FonteFinanciamento-yes").change(function() {
 
 {fbvFormArea id="cspSubmission"}
 	{fbvFormSection label="plugins.generic.CspSubmission.FonteFinanciamento" list=true required="1" validation="required" class="localizable  required"}
-		{fbvElement type="radio" id="FonteFinanciamento-yes" name="FonteFinanciamento" value="yes" checked=$FonteFinanciamento|compare:"yes" label="plugins.generic.CspSubmission.FonteFinanciamento.yes"}
-		{fbvElement type="radio" id="FonteFinanciamento-no" name="FonteFinanciamento" value="no" checked=$FonteFinanciamento|compare:"no" label="plugins.generic.CspSubmission.FonteFinanciamento.no"}
+		{fbvElement type="radio" id="FonteFinanciamento-yes" name="FonteFinanciamento" value="yes" checked=($FonteFinanciamento|compare:"yes") label="plugins.generic.CspSubmission.FonteFinanciamento.yes"}
+		{fbvElement type="radio" id="FonteFinanciamento-no" name="FonteFinanciamento" value="no" checked=($FonteFinanciamento|compare:"no")|compare:"" label="plugins.generic.CspSubmission.FonteFinanciamento.no"}
 	{/fbvFormSection}
 
 

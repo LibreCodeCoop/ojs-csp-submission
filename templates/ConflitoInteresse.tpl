@@ -13,8 +13,8 @@ $("#ConflitoInteresse-yes").change(function() {
 
 {fbvFormArea id="cspSubmission"}
 	{fbvFormSection label="plugins.generic.CspSubmission.ConflitoInteresse" list=true required="1" validation="required" class="localizable  required" aria-required="true"}
-		{fbvElement type="radio" id="ConflitoInteresse-yes" name="ConflitoInteresse" value="yes" checked=$ConflitoInteresse|compare:"yes" label="plugins.generic.CspSubmission.ConflitoInteresse.yes"}
-		{fbvElement type="radio" id="ConflitoInteresse-no" name="ConflitoInteresse" value="no" checked=$ConflitoInteresse|compare:"no" label="plugins.generic.CspSubmission.ConflitoInteresse.no"}
+		{fbvElement type="radio" id="ConflitoInteresse-yes" name="ConflitoInteresse" value="yes" checked=($ConflitoInteresse|compare:"yes") label="plugins.generic.CspSubmission.ConflitoInteresse.yes"}
+		{fbvElement type="radio" id="ConflitoInteresse-no" name="ConflitoInteresse" value="no" checked=($ConflitoInteresse|compare:"no")|compare:"" label="plugins.generic.CspSubmission.ConflitoInteresse.no"}
 	{/fbvFormSection}
 
 
