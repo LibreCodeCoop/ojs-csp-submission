@@ -16,4 +16,19 @@
 	<message key="plugins.generic.CspSubmission.description">O plugin cspSubmission inclui campos extras aos metadados do artigo possibilitando associar campos a sessões.</message>
 	<message key="plugins.generic.CspSubmission.Campo1">Campo1</message>
 	<message key="plugins.generic.CspSubmission.Campo1.description">Descrição do campo</message>
+  <message key="plugins.generic.CspSubmission.Tema">Tema</message>
+  <message key="plugins.generic.CspSubmission.ConflitoInteresse">Seu artigo possui conflito de interesse?</message>
+  <message key="plugins.generic.CspSubmission.ConflitoInteresse.yes">Sim</message>
+  <message key="plugins.generic.CspSubmission.ConflitoInteresse.no">Não</message>
+  <message key="plugins.generic.CspSubmission.ConflitoInteresseQual">Qual(is)?</message>
+  <message key="plugins.generic.CspSubmission.FonteFinanciamento">Seu artigo possui fontes de financiamento?</message>
+  <message key="plugins.generic.CspSubmission.FonteFinanciamento.yes">Sim</message>
+  <message key="plugins.generic.CspSubmission.FonteFinanciamento.no">Não</message>
+  <message key="plugins.generic.CspSubmission.FonteFinanciamentoQual">Qual(is)?</message>
+  <message key="plugins.generic.CspSubmission.CodigoEditorConvidado">Código do editor convidado</message>
+	<message key="plugins.generic.CspSubmission.CodigoEditorConvidado.description">(Solicite o código ao editor convidado)</message>
+  <message key="plugins.generic.CspSubmission.Agradecimentos">Agradecimentos</message>
+  <message key="plugins.generic.CspSubmission.Agradecimentos.description">Deixe aqui seus agradecimentos</message>
+  <message key="plugins.generic.CspSubmission.Revisao">As revisões sistemáticas só serão encaminhadas se submetidas em inglês.</message>
+  <message key="plugins.generic.CspSubmission.CodigoArtigo">Código do artigo</message>
 </locale>

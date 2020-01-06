@@ -24,7 +24,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($success && $this->getEnabled($mainContextId)) {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
-			// HookRegistry::register('TemplateManager::fetch', array($this, 'testeStep1'));
+			//HookRegistry::register('TemplateManager::fetch', array($this, 'testeStep1'));
 
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
@@ -48,7 +48,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function testeStep1($hookName, $args) {
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$templateMgr =& $args[0];
-			// $templateMgr->assign('additionalFormContent1', 'toaqui_1');
+			//$templateMgr->assign('additionalFormContent1', 'toaqui_1');
+
 		}
 		return false;
 	}
@@ -73,8 +74,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function metadataFieldEdit($hookName, $params) {
 		$smarty =& $params[1];
 		$output =& $params[2];
+		$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
+		
+		if($this->sectionId == 5){
+			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
+		}
+		
+		if($this->sectionId == 4){					
+			$output .= $smarty->fetch($this->getTemplateResource('Tema.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('CodigoEditorConvidado.tpl'));
+		}
 
-		$output .= $smarty->fetch($this->getTemplateResource('Campo1Edit.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('ConflitoInteresse.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('Agradecimentos.tpl'));
+		
+		if($this->sectionId == 6){	
+			$output .= $smarty->fetch($this->getTemplateResource('CodigoArtigo.tpl'));
+		}
+		
+		
 		return false;
 	}
 
@@ -83,7 +102,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
-		$userVars[] = 'Campo1';
+		$userVars[] = 'ConflitoInteresse';
+		$userVars[] = 'ConflitoInteresseQual';
+		$userVars[] = 'FonteFinanciamento';
+		$userVars[] = 'FonteFinanciamentoQual';		
+		$userVars[] = 'Agradecimentos';		
+		$userVars[] = 'CodigoEditorConvidado';
+		$userVars[] = 'Tema';
+		$userVars[] = 'CodigoArtigo';
+		
 		return false;
 	}
 
@@ -93,8 +120,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function metadataExecute($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
-		$formCampo1 = $form->getData('Campo1');
-		$article->setData('Campo1', $formCampo1);
+		$article->setData('ConflitoInteresse', $form->getData('ConflitoInteresse'));
+		$article->setData('ConflitoInteresseQual', $form->getData('ConflitoInteresseQual'));
+		$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
+		$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
+		$article->setData('Agradecimentos', $form->getData('Agradecimentos'));	
+		$article->setData('CodigoEditorConvidado', $form->getData('CodigoEditorConvidado'));
+		$article->setData('Tema', $form->getData('Tema'));
+		$article->setData('CodigoArtigo', $form->getData('CodigoArtigo'));
+		
 		return false;
 	}
 
@@ -105,8 +139,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
-		$articleCampo1 = $article->getData('Campo1');
-		$form->setData('Campo1', $articleCampo1);
+		$form->setData('ConflitoInteresse', $article->getData('ConflitoInteresse'));				
+		$form->setData('ConflitoInteresseQual', $article->getData('ConflitoInteresseQual'));	
+		$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
+		$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
+		$form->setData('Agradecimentos', $article->getData('Agradecimentos'));			
+		$form->setData('CodigoEditorConvidado', $article->getData('CodigoEditorConvidado'));	
+		$form->setData('Tema', $article->getData('Tema'));	
+		$form->setData('CodigoArtigo', $article->getData('CodigoArtigo'));	
+		
 		return false;
 	}
 
@@ -115,7 +156,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function addCheck($hookName, $params) {
 		$form =& $params[0];
-		$form->addCheck(new FormValidatorRegExp($form, 'Campo1', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/'));
+		//$form->addCheck(new FormValidatorRegExp($form, 'ConflitoInteresse', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/')); // COLOCAR UMA VALIDACAO DE QUANTIDADE MAXIMA DE CARACTERES 
+		if($this->sectionId == 8){
+			$form->addCheck(new FormValidatorRegExp($form, 'Campo1', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/'));
+		}		
 		return false;
 	}
 
