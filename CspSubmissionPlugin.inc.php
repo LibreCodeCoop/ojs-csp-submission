@@ -24,7 +24,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($success && $this->getEnabled($mainContextId)) {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
-			//HookRegistry::register('TemplateManager::fetch', array($this, 'testeStep1'));
+			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
 
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
@@ -45,10 +45,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return $success;
 	}
 
-	function testeStep1($hookName, $args) {
+	function additionalMetadataStep1($hookName, $args) {
 		if ($args[1] == 'submission/form/step1.tpl') {
-			$templateMgr =& $args[0];
-			//$templateMgr->assign('additionalFormContent1', 'toaqui_1');
+			$templateMgr =& $args[0];			
+			$templateMgr->assign('additionalFormContent1', $templateMgr->fetch($this->getTemplateResource('IndicacaoConsultor.tpl')));
 
 		}
 		return false;
@@ -92,6 +92,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($this->sectionId == 6){	
 			$output .= $smarty->fetch($this->getTemplateResource('CodigoArtigo.tpl'));
 		}
+
+		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
 		
 		
 		return false;
