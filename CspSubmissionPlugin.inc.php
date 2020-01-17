@@ -41,6 +41,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// Consider the new field for ArticleDAO for storage
 			HookRegistry::register('articledao::getAdditionalFieldNames', array($this, 'metadataReadUserVars'));
 
+			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));			
+
 		}
 		return $success;
 	}
@@ -177,5 +179,79 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		return false;
 	}
+
+	public function submissionfilesuploadformValidate($hookName, $args) {
+		// Retorna o tipo do arquivo enviado
+		$genreId = $args[0]->getData('genreId');
+		
+		// $genreDao = DAORegistry::getDAO('GenreDAO');
+		// $genreDao->getById($genreId);
+
+
+		switch($genreId) {			
+			case 1:	// Corpo do artigo / Tabela (Texto)
+				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
+				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
+				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
+					$args[0]->addError('genreId', 'Formato inválido');
+				}
+				break;
+			case 10: // Fotografia / Imagem satélite (Resolução mínima de 300 dpi)
+				if (($_FILES['uploadedFile']['type'] <> 'image/bmp') /*bmp*/
+				and ($_FILES['uploadedFile']['type'] <> 'image/tiff') /*tiff*/) {
+					$args[0]->addError('genreId', 'Formato inválido');
+				}
+				break;		
+			case 14: // Fluxograma (Texto ou Desenho Vetorial)
+				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*doc*/
+					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
+					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
+					$args[0]->addError('genreId', 'Formato inválido');
+				}
+				break;	
+			case 15: // Gráfico (Planilha ou Desenho Vetorial)
+				$_FILES['uploadedFile']['type'];
+				if (($_FILES['uploadedFile']['type'] <> 'application/vnd.ms-excel') /*xls*/
+					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') /*xlsx*/
+					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.spreadsheet')/*ods*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
+					$args[0]->addError('genreId', 'Formato inválido');
+				}
+				break;	
+			case 13: // Mapa (Desenho Vetorial)
+				$_FILES['uploadedFile']['type'];
+				if (($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
+					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
+					$args[0]->addError('genreId', 'Formato inválido');
+				}
+				break;																
+		}
+
+		if (!defined('SESSION_DISABLE_INIT')) {
+			$request = Application::getRequest();
+			$user = $request->getUser();
+
+			if (!$args[0]->isValid() && $user) {
+				import('classes.notification.NotificationManager');
+				$notificationManager = new NotificationManager();
+				$notificationManager->createTrivialNotification(
+					$user->getId(),
+					NOTIFICATION_TYPE_FORM_ERROR,
+					['contents' => $args[0]->getErrorsArray()]
+				);
+			}
+		}
+		if (!$args[0]->isValid()) {
+			return true;
+		}
+		return false;
+	}
+
 
 }
