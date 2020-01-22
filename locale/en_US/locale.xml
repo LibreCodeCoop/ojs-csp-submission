@@ -36,4 +36,8 @@
   <message key="plugins.generic.CspSubmission.Revisao">Systematic reviews will only be submitted if submitted in English.</message>
   <message key="plugins.generic.CspSubmission.Revisao">Paper code</message>
   <message key="plugins.generic.CspSubmission.CodigoArtigo.Valid">Need to inform the paper code</message>
+  <message key="plugins.generic.CspSubmission.Metadados.Notification">Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito.</message>
+  <message key="plugins.generic.CspSubmission.File.Title">Especifique o tipo de arquivo e a ordem que você quer que apareca no artigo</message>
+  <message key="plugins.generic.CspSubmission.File.Description">Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2</message>
+  <message key="plugins.generic.CspSubmission.artworkFile.Title">Título</message>
 </locale>

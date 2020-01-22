@@ -52,6 +52,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr =& $args[0];			
 			$templateMgr->assign('additionalFormContent1', $templateMgr->fetch($this->getTemplateResource('IndicacaoConsultor.tpl')));
 
+		} elseif ($args[1] == 'submission/form/step2.tpl') {
+			$templateMgr =& $args[0];
+			$templateMgr->assign('additionalFormContent1', $templateMgr->fetch($this->getTemplateResource('IndicacaoConsultor.tpl')));
+
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
+			$templateMgr =& $args[0];
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
+			
+			return true;
 		}
 		return false;
 	}

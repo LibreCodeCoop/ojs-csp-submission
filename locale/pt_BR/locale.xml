@@ -36,4 +36,8 @@
   <message key="plugins.generic.CspSubmission.Revisao">As revisões sistemáticas só serão encaminhadas se submetidas em inglês.</message>
   <message key="plugins.generic.CspSubmission.CodigoArtigo">Código do artigo</message>
   <message key="plugins.generic.CspSubmission.CodigoArtigo.Valid">Necessário informar o código do artigo.</message>
+  <message key="plugins.generic.CspSubmission.Metadados.Notification">Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito.</message>
+  <message key="plugins.generic.CspSubmission.File.Title">Especifique o tipo de arquivo e a ordem que você quer que apareca no artigo</message>
+  <message key="plugins.generic.CspSubmission.File.Description">Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2</message>
+  <message key="plugins.generic.CspSubmission.artworkFile.Title">Título</message>
 </locale>
