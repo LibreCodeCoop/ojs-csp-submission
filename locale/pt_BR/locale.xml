@@ -34,8 +34,9 @@
   <message key="plugins.generic.CspSubmission.Agradecimentos">Agradecimentos</message>
   <message key="plugins.generic.CspSubmission.Agradecimentos.description">Deixe aqui seus agradecimentos</message>
   <message key="plugins.generic.CspSubmission.Revisao">As revisões sistemáticas só serão encaminhadas se submetidas em inglês.</message>
-  <message key="plugins.generic.CspSubmission.CodigoArtigo">Código do artigo</message>
+  <message key="plugins.generic.CspSubmission.CodigoArtigo">Código</message>
   <message key="plugins.generic.CspSubmission.CodigoArtigo.Valid">Necessário informar o código do artigo.</message>
+  <message key="plugins.generic.CspSubmission.CodigoArtigo.Description">Código do artigo ou do debate comentado.</message>
   <message key="plugins.generic.CspSubmission.Metadados.Notification">Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito.</message>
   <message key="plugins.generic.CspSubmission.File.Title">Especifique o tipo de arquivo e a ordem que você quer que apareca no artigo</message>
   <message key="plugins.generic.CspSubmission.File.Description">Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2</message>
