@@ -48,24 +48,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
-		// file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
+		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
+		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
-			$templateMgr =& $args[0];
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
 			
 			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
-			$templateMgr =& $args[0];
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 			
 			return true;
 		}
 		elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
-			$templateMgr =& $args[0];
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
 			
 			return true;
 		}
+		elseif($args[1] == 'controllers/grid/users/author/form/authorForm.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
+			
+			return true;
+		}
+
 		return false;
 	}
 
@@ -89,7 +93,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function metadataFieldEdit($hookName, $params) {
 		$smarty =& $params[1];
 		$output =& $params[2];
-		$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
+		// $output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
 		
 		if($this->sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
