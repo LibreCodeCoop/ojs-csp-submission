@@ -43,7 +43,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
-			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'teste'));
+			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'articleDAO_fromRow'));
 		}
 		return $success;
 	}
@@ -301,7 +301,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	public function teste($hookName, $args)
+	public function articleDAO_fromRow($hookName, $args)
 	{
 		$this->article = $args[0];
 	}
