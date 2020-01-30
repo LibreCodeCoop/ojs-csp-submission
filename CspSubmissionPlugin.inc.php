@@ -12,6 +12,8 @@
  * @brief CspSubmission plugin class
  */
 
+use Symfony\Component\HttpClient\HttpClient;
+
 import('lib.pkp.classes.plugins.GenericPlugin');
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
@@ -34,8 +36,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));
 
 			// Hook for execute in two forms -- consider the new field in the article settings
-			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecute'));
-			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecute'));
+			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecuteStep3'));
+			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
 
 			// Hook for save in two forms -- add validation for the new field
 			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'addCheck'));
@@ -135,6 +137,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'Tema';
 		$userVars[] = 'CodigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
+		$userVars[] = 'DOI';
 		
 		return false;
 	}
@@ -142,7 +145,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * Set article Campo1
 	 */
-	function metadataExecute($hookName, $params) {
+	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$article->setData('ConflitoInteresse', $form->getData('ConflitoInteresse'));
@@ -153,7 +156,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('CodigoTematico', $form->getData('CodigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
 		$article->setData('CodigoArtigoRelacionado', $form->getData('CodigoArtigoRelacionado'));
+		$article->setData('DOI', $form->getData('DOI'));		
 		
+		return false;
+	}
+
+	function metadataExecuteStep4($hookName, $params) {
+		$form =& $params[0];
+		$article = $form->submission;				
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = $userDao->retrieve(
 			<<<QUERY
@@ -162,12 +172,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			WHERE YEAR(date_submitted) = YEAR(now())
 			QUERY
 		);
-		$a = $result->GetRowAssoc(false);
-		$article->setData('CodigoArtigo', $a['code']);
+		$article->setData('CodigoArtigo', $result->GetRowAssoc(false)['code']);
 		
 		
 		return false;
 	}
+	
 
 	/**
 	 * Init article Campo1
@@ -184,6 +194,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('CodigoTematico', $article->getData('CodigoTematico'));	
 		$form->setData('Tema', $article->getData('Tema'));	
 		$form->setData('CodigoArtigoRelacionado', $article->getData('CodigoArtigoRelacionado'));	
+		$form->setData('DOI', $article->getData('DOI'));	
 		
 		return false;
 	}
@@ -210,6 +221,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($this->sectionId == 6){		
 			$form->addCheck(new FormValidatorLength($form, 'CodigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.CodigoArtigoRelacionado.Valid', '>', 0));			
 		}
+
+		$form->addCheck(new FormValidatorCustom($form, 'DOI', 'optional', 'plugins.generic.CspSubmission.DOI.Valid', function($DOI) {
+			if (!filter_var($DOI, FILTER_VALIDATE_URL)) {
+				if (strpos($DOI, 'doi.org') === false){
+					$DOI = 'http://dx.doi.org/'.$DOI;
+				} elseif (strpos($DOI,'http') === false) {
+					$DOI = 'http://'.$DOI;
+				} else {
+					return false;
+				}				
+			}
+
+			$client = HttpClient::create();
+			$response = $client->request('GET', $DOI);
+			$statusCode = $response->getStatusCode();			
+			return in_array($statusCode,[303,200]);
+		}));
+
+		
 		return false;
 	}
 
