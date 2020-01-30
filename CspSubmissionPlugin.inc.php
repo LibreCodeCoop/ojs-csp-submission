@@ -13,7 +13,7 @@
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
-
+require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
 	/**
@@ -41,8 +41,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// Consider the new field for ArticleDAO for storage
 			HookRegistry::register('articledao::getAdditionalFieldNames', array($this, 'metadataReadUserVars'));
 
-			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));			
+			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
+			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'teste'));
 		}
 		return $success;
 	}
@@ -200,23 +201,47 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
 		$genreId = $args[0]->getData('genreId');
-		
-		// $genreDao = DAORegistry::getDAO('GenreDAO');
-		// $genreDao->getById($genreId);
 
-
-		switch($genreId) {			
+		switch($genreId) {
 			case 1:	// Corpo do artigo / Tabela (Texto)
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
-					$args[0]->addError('genreId', 'Formato inválido');
+					$args[0]->addError('genreId',
+						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+					);
+					break;
+				}
+
+				$sectionId = $this->article->getData('sectionId');
+				$sectionDAO = DAORegistry::getDAO('SectionDAO');
+				$section = $sectionDAO->getById($sectionId);
+				$wordCount = $section->getData('wordCount');
+
+				if ($wordCount) {
+					$formato = explode('.', $_FILES['uploadedFile']['name']);
+					$formato = trim(strtolower(end($formato)));
+	
+					$readers = array('docx' => 'Word2007', 'odt' => 'ODText', 'rtf' => 'RTF', 'doc' => 'ODText');
+					$doc = \PhpOffice\PhpWord\IOFactory::load($_FILES['uploadedFile']['tmp_name'], $readers[$formato]);
+					$html = new PhpOffice\PhpWord\Writer\HTML($doc);
+					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
+					if ($contagemPalavras > $wordCount) {
+						$phrase = PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+							'sectoin' => $this->article->getData('sectionTitle'),
+							'max'     => $wordCount,
+							'count'   => $contagemPalavras
+						]);
+						$args[0]->addError('genreId', $phrase);
+					}
 				}
 				break;
 			case 10: // Fotografia / Imagem satélite (Resolução mínima de 300 dpi)
 				if (($_FILES['uploadedFile']['type'] <> 'image/bmp') /*bmp*/
 				and ($_FILES['uploadedFile']['type'] <> 'image/tiff') /*tiff*/) {
-					$args[0]->addError('genreId', 'Formato inválido');
+					$args[0]->addError('genreId',
+						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+					);
 				}
 				break;		
 			case 14: // Fluxograma (Texto ou Desenho Vetorial)
@@ -226,7 +251,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
-					$args[0]->addError('genreId', 'Formato inválido');
+					$args[0]->addError('genreId',
+						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+					);
 				}
 				break;	
 			case 15: // Gráfico (Planilha ou Desenho Vetorial)
@@ -237,7 +264,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
-					$args[0]->addError('genreId', 'Formato inválido');
+					$args[0]->addError('genreId',
+						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+					);
 				}
 				break;	
 			case 13: // Mapa (Desenho Vetorial)
@@ -245,7 +274,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
-					$args[0]->addError('genreId', 'Formato inválido');
+					$args[0]->addError('genreId',
+						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+					);
 				}
 				break;																
 		}
@@ -270,5 +301,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
+	public function teste($hookName, $args)
+	{
+		$this->article = $args[0];
+	}
 
 }
