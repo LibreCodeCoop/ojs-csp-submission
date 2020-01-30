@@ -25,6 +25,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
+			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
 
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
@@ -34,6 +35,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			// Hook for execute in two forms -- consider the new field in the article settings
 			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecute'));
+			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecute'));
 
 			// Hook for save in two forms -- add validation for the new field
 			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'addCheck'));
@@ -49,7 +51,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
-		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
+		file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -110,7 +112,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$output .= $smarty->fetch($this->getTemplateResource('Agradecimentos.tpl'));
 		
 		if($this->sectionId == 6){	
-			$output .= $smarty->fetch($this->getTemplateResource('CodigoArtigo.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('CodigoArtigoRelacionado.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
@@ -131,6 +133,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'Agradecimentos';		
 		$userVars[] = 'CodigoTematico';
 		$userVars[] = 'Tema';
+		$userVars[] = 'CodigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
 		
 		return false;
@@ -149,7 +152,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('Agradecimentos', $form->getData('Agradecimentos'));	
 		$article->setData('CodigoTematico', $form->getData('CodigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
-		$article->setData('CodigoArtigo', $form->getData('CodigoArtigo'));
+		$article->setData('CodigoArtigoRelacionado', $form->getData('CodigoArtigoRelacionado'));
+		
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$result = $userDao->retrieve(
+			<<<QUERY
+			SELECT CONCAT(LPAD(count(*)+1, CASE WHEN count(*) > 9999 THEN 5 ELSE 4 END, 0), '/', DATE_FORMAT(now(), '%y')) code
+			FROM submissions
+			WHERE YEAR(date_submitted) = YEAR(now())
+			QUERY
+		);
+		$a = $result->GetRowAssoc(false);
+		$article->setData('CodigoArtigo', $a['code']);
+		
 		
 		return false;
 	}
@@ -168,7 +183,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('Agradecimentos', $article->getData('Agradecimentos'));			
 		$form->setData('CodigoTematico', $article->getData('CodigoTematico'));	
 		$form->setData('Tema', $article->getData('Tema'));	
-		$form->setData('CodigoArtigo', $article->getData('CodigoArtigo'));	
+		$form->setData('CodigoArtigoRelacionado', $article->getData('CodigoArtigoRelacionado'));	
 		
 		return false;
 	}
@@ -193,7 +208,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 		if($this->sectionId == 6){		
-			$form->addCheck(new FormValidatorLength($form, 'CodigoArtigo', 'required', 'plugins.generic.CspSubmission.CodigoArtigo.Valid', '>', 0));			
+			$form->addCheck(new FormValidatorLength($form, 'CodigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.CodigoArtigoRelacionado.Valid', '>', 0));			
 		}
 		return false;
 	}
@@ -306,4 +321,46 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$this->article = $args[0];
 	}
 
+	function fileManager_downloadFile($hookName, $args)
+	{
+		list($filePath, $mediaType, $inline, $result, $fileName) = $args;
+		if (is_readable($filePath)) {			
+			if ($mediaType === null) {
+				// If the media type wasn't specified, try to detect.
+				$mediaType = PKPString::mime_content_type($filePath);
+				if (empty($mediaType)) $mediaType = 'application/octet-stream';
+			}
+			if ($fileName === null) {
+				// If the filename wasn't specified, use the server-side.
+				$fileName = basename($filePath);
+			}
+			preg_match('/\/articles\/(?P<id>\d+)\//',$filePath,$matches);
+			if ($matches) {
+				$submissionDao = DAORegistry::getDAO('SubmissionFileDAO');
+				$result = $submissionDao->retrieve(
+					<<<QUERY
+					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
+					FROM ojs.submission_settings
+					WHERE setting_name = 'CodigoArtigo' AND submission_id = ?
+					QUERY, 
+					[$matches['id']]
+				);
+				$a = $result->GetRowAssoc(false);
+				$fileName = $a['codigo_artigo'].'_'.$fileName;
+			}
+			// Stream the file to the end user.
+			header("Content-Type: $mediaType");
+			header('Content-Length: ' . filesize($filePath));
+			header('Accept-Ranges: none');
+			header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . "; filename=\"$fileName\"");
+			header('Cache-Control: private'); // Workarounds for IE weirdness
+			header('Pragma: public');
+			FileManager::readFileFromPath($filePath, true);
+			$returner = true;
+		} else {
+			$returner = false;
+		}
+		HookRegistry::call('FileManager::downloadFileFinished', array(&$returner));
+		return true;
+	}
 }
