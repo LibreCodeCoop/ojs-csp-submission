@@ -53,7 +53,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
-		file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
+		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -63,15 +63,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 			
 			return true;
-		}
-		elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
 			
 			return true;
-		}
-		elseif($args[1] == 'controllers/grid/users/author/form/authorForm.tpl'){
+		} elseif($args[1] == 'controllers/grid/users/author/form/authorForm.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
 			
+			return true;
+		} elseif ($args[1] == 'controllers/modals/submissionMetadata/form/issueEntrySubmissionReviewForm.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('issueEntrySubmissionReviewForm.tpl'));
+
 			return true;
 		}
 

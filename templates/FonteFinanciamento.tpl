@@ -6,9 +6,12 @@
 </style>
 <script type="text/javascript">
 $("#FonteFinanciamento-yes").change(function() {
-  $("#FonteFinanciamentoQual").css('display','block');
+  $("#FonteFinanciamentoQual").show("slow");
 });
 
+$("#FonteFinanciamento-no").change(function() {
+  $("#FonteFinanciamentoQual").hide("slow");
+});
 </script>
 
 {fbvFormArea id="cspSubmission"}

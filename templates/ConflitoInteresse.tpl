@@ -6,9 +6,12 @@
 </style>
 <script type="text/javascript">
 $("#ConflitoInteresse-yes").change(function() {
-  $("#ConflitoInteresseQual").css('display','block');
+  $("#ConflitoInteresseQual").show("slow");
 });
 
+$("#ConflitoInteresse-no").change(function() {
+  $("#ConflitoInteresseQual").hide("slow");
+});
 </script>
 
 {fbvFormArea id="cspSubmission"}
