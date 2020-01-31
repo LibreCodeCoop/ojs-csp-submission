@@ -38,8 +38,7 @@
 	{include file="submission/form/categories.tpl"}
 
 
-
-	{include file="submission/submissionMetadataFormFields.tpl"}
+	{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFields.tpl"}
 
 	{fbvFormButtons id="step3Buttons" submitText="common.saveAndContinue"}
 </form>
