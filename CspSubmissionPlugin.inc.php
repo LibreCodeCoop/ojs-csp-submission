@@ -90,7 +90,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function setupGridHandler($hookName, $params) {
 		$component =& $params[0];
 		if ($component == 'plugins.generic.cspSubmission.controllers.grid.AddAuthorHandler') {
-			define('CSPSUBMISSION_PLUGIN_NAME', $this->getName());
 			return true;
 		}
 		return false;

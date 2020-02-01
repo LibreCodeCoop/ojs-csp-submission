@@ -6,7 +6,7 @@ class AddAuthorHandler extends GridHandler {
 
     function __construct() {
         parent::__construct();
-        $this->plugin = PluginRegistry::getPlugin('generic', CSPSUBMISSION_PLUGIN_NAME);
+        $this->plugin = PluginRegistry::getPlugin('generic', 'cspsubmissionplugin');
     }
     public function searchAuthor($args, $request)
     {
