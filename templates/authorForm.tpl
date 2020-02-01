@@ -11,7 +11,6 @@
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="authorFormNotification"}
 
 	{assign var="uuid" value=""|uniqid|escape}
-	<script src="{$baseUrl}/plugins/generic/cspSubmission/js/build.js"></script>
 	<div id="my-submission-list-handler-{$uuid}">
 		<script type="text/javascript">
 			pkp.registry.init('my-submission-list-handler-{$uuid}', 'CoautorListPanel', {$myQueueListData});
