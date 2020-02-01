@@ -44,4 +44,5 @@
   <message key="plugins.generic.CspSubmission.commentsToEditor.Description">Considerando que parte da demora na avaliação do artigo se deve à busca de consultores, agradecemos a indicação de ao menos dois nomes</message>
   <message key="plugins.generic.CspSubmission.SectionFile.errorWordCount">A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras.</message>
   <message key="plugins.generic.CspSubmission.SectionFile.invalidFormat">Invalid format</message>
+  <message key="plugins.generic.cspSubmission.searchForAuthor">Informe o nome do coautor</message>
 </locale>

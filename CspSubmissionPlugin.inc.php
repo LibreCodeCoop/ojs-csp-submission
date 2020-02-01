@@ -110,7 +110,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
 			
 			return true;
-		} elseif($args[1] == 'controllers/grid/users/author/form/authorForm.tpl'){
+		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
+			$config['i18n']['testee'] = __('plugins.generic.cspSubmission.searchForAuthor');
+			$templateMgr->assign('myQueueListData', json_encode($config));
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
 			
 			return true;
