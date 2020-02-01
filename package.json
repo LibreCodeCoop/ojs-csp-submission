@@ -1,9 +1,10 @@
 {
   "name": "cspsubmission",
-  "version": "1.0.0",
   "description": "Custom JS para o CSP",
-  "main": "index.js",
+  "author": "",
+  "license": "MIT",
   "scripts": {
+    "build-dev": "cross-env NODE_ENV=development webpack --progress --hide-modules",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
   },
   "devDependencies": {
@@ -11,7 +12,5 @@
     "vue": "^2.5.13",
     "vue-loader": "^14.0.3",
     "webpack": "^3.10.0"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }
