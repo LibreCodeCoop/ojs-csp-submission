@@ -10,7 +10,7 @@
 	{csrf}
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="authorFormNotification"}
 
-	busca
+	Lista
 
 	{fbvFormButtons id="step2Buttons" submitText="navigation.nextStep"}
 </form>

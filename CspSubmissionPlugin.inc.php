@@ -48,8 +48,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
 			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'articleDAO_fromRow'));
+
+			// This hook is used to register the components this plugin implements to
+			// permit administration of custom block plugins.
+			HookRegistry::register('LoadComponentHandler', array($this, 'setupGridHandler'));
 		}
 		return $success;
+	}
+
+	/**
+	 * Permit requests to the custom block grid handler
+	 * @param $hookName string The name of the hook being invoked
+	 * @param $args array The parameters to the invoked hook
+	 */
+	function setupGridHandler($hookName, $params) {
+		$component =& $params[0];
+		if ($component == 'plugins.generic.cspSubmission.controllers.grid.AddAuthorHandler') {
+			define('CSPSUBMISSION_PLUGIN_NAME', $this->getName());
+			return true;
+		}
+		return false;
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
