@@ -129,8 +129,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'assignedTo' => $request->getUser()->getId(),
 				),
 			));
-			$config = $myQueueListHandler->getConfig();
-			$templateMgr->assign('myQueueListData', json_encode($config));
+			$templateMgr->assign('myQueueListData', json_encode($myQueueListHandler->getConfig()));
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
 			
 			return true;

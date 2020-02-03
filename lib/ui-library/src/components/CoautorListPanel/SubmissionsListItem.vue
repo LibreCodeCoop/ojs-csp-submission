@@ -54,7 +54,7 @@ export default {
 		PkpButton,
 		Icon,
 	},
-	props: ['item', 'i18n', 'apiPath', 'infoUrl', 'assignParticipantUrl'],
+	props: ['item', 'i18n', 'apiPath'],
 	data: function () {
 		return {
 			isExpanded: false,
