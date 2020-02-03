@@ -61,7 +61,8 @@ module.exports = {
   resolve: {
     alias: {
       'vue$': 'vue/dist/vue.common.js',
-      '@': path.resolve(__dirname, 'lib/ui-library/src')
+      '@csp': path.resolve(__dirname, 'lib/ui-library/src'),
+      '@': path.resolve(__dirname, '../../../lib/ui-library/src')
     }
   },
   performance: {

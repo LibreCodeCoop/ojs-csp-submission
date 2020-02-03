@@ -69,15 +69,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request =& Registry::get('request');
 		$templateManager =& $args[0];
 
-		// Load JavaScript file
-		$templateManager->addJavaScript(
-			'tinymce',
-			$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
-			array(
-				'contexts' => 'backend',
-				'priority' => STYLE_SEQUENCE_LAST,
-			)
-		);
+		// // Load JavaScript file
+		// $templateManager->addJavaScript(
+		// 	'tinymce',
+		// 	$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+		// 	array(
+		// 		'contexts' => 'backend',
+		// 		'priority' => STYLE_SEQUENCE_LAST,
+		// 	)
+		// );
+		// // Stylesheet compiled from Vue.js single-file components
+		// $templateManager->addStyleSheet(
+		// 	'build',
+		// 	$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
+		// 	array(
+		// 		'priority' => STYLE_SEQUENCE_CORE,
+		// 		'contexts' => 'backend',
+		// 	)
+		// );
 
 		return false;
 	}
@@ -96,7 +105,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
-		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
+		file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -111,7 +120,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
-			$config['i18n']['testee'] = __('plugins.generic.cspSubmission.searchForAuthor');
+			import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
+			$request = Application::getRequest();
+			$myQueueListHandler = new CoautorListHandler(array(
+				'title' => 'plugins.generic.cspSubmission.searchForAuthor',
+				'getParams' => array(
+					'status' => STATUS_QUEUED,
+					'assignedTo' => $request->getUser()->getId(),
+				),
+			));
+			$config = $myQueueListHandler->getConfig();
 			$templateMgr->assign('myQueueListData', json_encode($config));
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
 			
