@@ -1,7 +1,6 @@
 <?php
 
 import('lib.pkp.controllers.list.ListHandler');
-import('classes.core.ServicesContainer');
 
 class CoautorListHandler extends ListHandler {
 
@@ -81,19 +80,13 @@ class CoautorListHandler extends ListHandler {
 	 * @copydoc ListHandler::getItems()
 	 */
 	public function getItems() {
-		$request = Application::getRequest();
-		$context = $request->getContext();
-
-		$submissionService = ServicesContainer::instance()->get('submission');
-		$submissions = $submissionService->getSubmissions($context->getId(), $this->_getItemsParams());
 		$items = array();
-		if (!empty($submissions)) {
-			$propertyArgs = array(
-				'request' => $request,
-			);
-			foreach ($submissions as $submission) {
-				$items[] = $submissionService->getBackendListProperties($submission, $propertyArgs);
-			}
+		for ($i = 1; $i<= $this->_count; $i++) {
+			$items[] = [
+				'fullTitle' => ['pt_BR' => 'Título ' . $i],
+				'authorString' => 'Autor ' . $i,
+				'id' => $i
+			];
 		}
 
 		return $items;
@@ -103,12 +96,7 @@ class CoautorListHandler extends ListHandler {
 	 * @copydoc ListHandler::getItemsMax()
 	 */
 	public function getItemsMax() {
-		$request = Application::getRequest();
-		$context = $request->getContext();
-
-		return ServicesContainer::instance()
-			->get('submission')
-			->getSubmissionsMaxCount($context->getId(), $this->_getItemsParams());
+		return 70;
 	}
 
 	/**
