@@ -125,8 +125,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$myQueueListHandler = new CoautorListHandler(array(
 				'title' => 'plugins.generic.cspSubmission.searchForAuthor',
 				'getParams' => array(
-					'status' => STATUS_QUEUED,
-					'assignedTo' => $request->getUser()->getId(),
+					'roleIds' => [ROLE_ID_AUTHOR],
+					'orderBy' => 'givenName',
+					'orderDirection' => 'ASC'
 				),
 			));
 			$templateMgr->assign('myQueueListData', json_encode($myQueueListHandler->getConfig()));

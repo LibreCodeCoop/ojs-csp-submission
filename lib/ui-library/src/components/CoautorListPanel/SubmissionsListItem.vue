@@ -7,11 +7,11 @@
 						<span class="-screenReader">{{ i18n.id }}</span>
 						{{ item.id }}
 					</div>
-					<div v-if="item.authorString" class="pkpListPanelItem--submission__author">
-						{{ item.authorString }}
+					<div class="pkpListPanelItem--submission__author">
+						{{ item.fullName }}
 					</div>
 					<div class="pkpListPanelItem--submission__title">
-						{{ item.fullTitle.pt_BR }}
+						{{ item.email }}
 					</div>
 				</div>
 			</a>

@@ -1,6 +1,8 @@
 <?php
 
+import('lib.pkp.classes.services.UserService');
 import('lib.pkp.controllers.list.ListHandler');
+import('classes.core.ServicesContainer');
 
 class CoautorListHandler extends ListHandler {
 
@@ -11,7 +13,7 @@ class CoautorListHandler extends ListHandler {
 	public $_getParams = array();
 
 	/** @var string Used to generate URLs to API endpoints for this component. */
-	public $_apiPath = '_submissions';
+	public $_apiPath = 'users';
 
 	/**
 	 * @copydoc ListHandler::init()
@@ -80,12 +82,16 @@ class CoautorListHandler extends ListHandler {
 	 * @copydoc ListHandler::getItems()
 	 */
 	public function getItems() {
+		$userService = ServicesContainer::instance()->get('user');
+		$request = Application::getRequest();
+		$context = $request->getContext();
+		$users = $userService->getUsers($context->getId(), $this->_getItemsParams());
 		$items = array();
-		for ($i = 1; $i<= $this->_count; $i++) {
+		foreach ($users as $user) {
 			$items[] = [
-				'fullTitle' => ['pt_BR' => 'Título ' . $i],
-				'authorString' => 'Autor ' . $i,
-				'id' => $i
+				'fullName' => $user->getFullName(false),
+				'email' => $user->getEmail(null),
+				'id' => $user->getId(null)
 			];
 		}
 
@@ -96,7 +102,12 @@ class CoautorListHandler extends ListHandler {
 	 * @copydoc ListHandler::getItemsMax()
 	 */
 	public function getItemsMax() {
-		return 70;
+		$request = Application::getRequest();
+		$context = $request->getContext();
+
+		return ServicesContainer::instance()
+			->get('user')
+			->getUsersMaxCount($context->getId(), $this->_getItemsParams());
 	}
 
 	/**
