@@ -49,6 +49,13 @@ class CoautorListHandler extends ListHandler {
 			'submission',
 			'wizard'
 		);
+		$config['fillUser'] = $request->getDispatcher()->url(
+			$request,
+			ROUTE_COMPONENT,
+			null,
+			'plugins.generic.cspSubmission.controllers.grid.AddAuthorHandler',
+			'searchAuthor'
+		);
 
 		$config['apiPath'] = $this->_apiPath;
 
@@ -89,9 +96,9 @@ class CoautorListHandler extends ListHandler {
 		$items = array();
 		foreach ($users as $user) {
 			$items[] = [
-				'fullName' => $user->getFullName(false),
-				'email' => $user->getEmail(null),
-				'id' => $user->getId(null)
+				'fullName' => $user->getFullName(),
+				'email' => $user->getEmail(),
+				'id' => $user->getId()
 			];
 		}
 

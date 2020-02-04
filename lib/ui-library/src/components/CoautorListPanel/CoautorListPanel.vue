@@ -21,6 +21,7 @@
 						:item="item"
 						:i18n="i18n"
 						:apiPath="apiPath"
+						:fillUser="fillUser"
 					/>
 				</ul>
 			</div>

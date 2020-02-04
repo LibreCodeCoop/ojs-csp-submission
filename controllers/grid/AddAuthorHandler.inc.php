@@ -11,7 +11,7 @@ class AddAuthorHandler extends GridHandler {
     public function searchAuthor($args, $request)
     {
         import('lib.pkp.classes.form.Form');
-        $form = new Form($this->plugin->getTemplateResource('searchAuthor.tpl'));
+        $form = new Form($this->plugin->getTemplateResource('authorFormAdd.tpl'));
         return new JSONMessage(true, $form->fetch($request));
     }
 }

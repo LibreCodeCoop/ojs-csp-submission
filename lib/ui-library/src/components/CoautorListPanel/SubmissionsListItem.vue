@@ -1,7 +1,11 @@
 <template>
 	<li class="pkpListPanelItem pkpListPanelItem--submission pkpListPanelItem--hasSummary" :class="{'-hasFocus': isFocused}">
 		<div class="pkpListPanelItem__summary -pkpClearfix">
-			<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link" @focus="focusItem" @blur="blurItem">
+			<a
+				@click="addCoautor" class="pkpListPanelItem--submission__link"
+				@focus="focusItem"
+				@blur="blurItem"
+				>
 				<div class="pkpListPanelItem--submission__item">
 					<div class="pkpListPanelItem--submission__id">
 						<span class="-screenReader">{{ i18n.id }}</span>
@@ -54,7 +58,7 @@ export default {
 		PkpButton,
 		Icon,
 	},
-	props: ['item', 'i18n', 'apiPath'],
+	props: ['item', 'i18n', 'apiPath', 'fillUser'],
 	data: function () {
 		return {
 			isExpanded: false,
@@ -73,7 +77,18 @@ export default {
 			e.preventDefault();
 			this.isExpanded = !this.isExpanded;
 		},
-
+		addCoautor: function (e) {
+			e.preventDefault();
+			$.ajax({
+				url: this.fillUser + '?userId=' + this.item.id,
+				type: 'POST',
+				success: function (r) {
+					$.pkp.classes.Handler.getHandler(
+						$('#editAuthor')
+					).replaceWith(r.content);
+				}
+			});
+		},
 	},
 };
 </script>

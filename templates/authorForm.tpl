@@ -7,8 +7,7 @@
 </script>
 <link rel="stylesheet" href="/ojs/plugins/generic/cspSubmission/styles/build.css?v=3.1.2.4" type="text/css" />
 <script src="/ojs/plugins/generic/cspSubmission/js/build.js?v=3.1.2.4" type="text/javascript"></script>
-
-<form class="pkp_form" id="editAuthor" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT component="plugins.generic.cspSubmission.controllers.grid.AddAuthorHandler" op="searchAuthor"}">
+<form class="pkp_form" id="editAuthor" method="post">
 	{csrf}
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="authorFormNotification"}
 
