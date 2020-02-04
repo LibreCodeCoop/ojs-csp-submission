@@ -72,7 +72,11 @@ export default {
 		addCoautor: function (e) {
 			e.preventDefault();
 			$.ajax({
-				url: this.fillUser + '?userId=' + this.item.id,
+				url: this.fillUser,
+				data: {
+					userId: this.item.id,
+					submissionId: $('[name="submissionId"]').val(),
+				},
 				type: 'POST',
 				success: function (r) {
 					$.pkp.classes.Handler.getHandler(
