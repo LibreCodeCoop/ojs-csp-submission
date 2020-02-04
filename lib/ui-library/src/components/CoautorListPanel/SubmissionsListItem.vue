@@ -64,14 +64,6 @@ export default {
 			isExpanded: false,
 		};
 	},
-	computed: {
-		/**
-		 * Map the submission id to the list item id
-		 */
-		id: function () {
-			return this.item.id;
-		},
-	},
 	methods: {
 		expandData: function (e) {
 			e.preventDefault();
@@ -86,7 +78,7 @@ export default {
 					$.pkp.classes.Handler.getHandler(
 						$('#editAuthor')
 					).replaceWith(r.content);
-				}
+				},
 			});
 		},
 	},
