@@ -17,8 +17,7 @@
 	{rdelim});
 </script>
 
-<form class="pkp_form" id="editAuthor" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT component="grid.users.author.authorGridHandler" op="updateAuthor" authorId=$authorId}"
-	{csrf}
+<form class="pkp_form" id="editAuthor" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT component="grid.users.author.authorGridHandler" op="updateAuthor" authorId=$authorId  csrfToken=$csrfToken}"
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="authorFormNotification"}
 
 	{include
