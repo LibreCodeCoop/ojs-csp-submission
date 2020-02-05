@@ -120,20 +120,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
-			import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
 			$request = Application::getRequest();
-			$myQueueListHandler = new CoautorListHandler(array(
-				'title' => 'plugins.generic.cspSubmission.searchForAuthor',
-				'getParams' => array(
-					'roleIds' => [ROLE_ID_AUTHOR],
-					'orderBy' => 'givenName',
-					'orderDirection' => 'ASC'
-				),
-			));
-			$templateMgr->assign('myQueueListData', json_encode($myQueueListHandler->getConfig()));
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
-			
-			return true;
+			$operation = $request->getRouter()->getRequestedOp($request);
+			switch ($operation) {
+				case 'addAuthor':
+					import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
+					$myQueueListHandler = new CoautorListHandler(array(
+						'title' => 'plugins.generic.cspSubmission.searchForAuthor',
+						'getParams' => array(
+							'roleIds' => [ROLE_ID_AUTHOR],
+							'orderBy' => 'givenName',
+							'orderDirection' => 'ASC'
+						),
+					));
+					$templateMgr->assign('myQueueListData', json_encode($myQueueListHandler->getConfig()));
+					$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
+					return true;
+				case 'updateAuthor':
+					$templateMgr->assign('csrfToken', $request->getSession()->getCSRFToken());
+					$args[4] = $templateMgr->fetch($this->getTemplateResource('authorFormAdd.tpl'));
+					return true;
+			}
 		} elseif ($args[1] == 'controllers/modals/submissionMetadata/form/issueEntrySubmissionReviewForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('issueEntrySubmissionReviewForm.tpl'));
 
