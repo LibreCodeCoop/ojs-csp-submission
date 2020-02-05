@@ -263,7 +263,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
 					);
 					break;
 				}
@@ -282,7 +282,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$html = new PhpOffice\PhpWord\Writer\HTML($doc);
 					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
 					if ($contagemPalavras > $wordCount) {
-						$phrase = PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+						$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 							'sectoin' => $this->article->getData('sectionTitle'),
 							'max'     => $wordCount,
 							'count'   => $contagemPalavras
@@ -295,7 +295,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (($_FILES['uploadedFile']['type'] <> 'image/bmp') /*bmp*/
 				and ($_FILES['uploadedFile']['type'] <> 'image/tiff') /*tiff*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
 					);
 				}
 				break;		
@@ -307,7 +307,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
 					);
 				}
 				break;	
@@ -320,7 +320,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
 					);
 				}
 				break;	
@@ -330,7 +330,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
 					);
 				}
 				break;																
