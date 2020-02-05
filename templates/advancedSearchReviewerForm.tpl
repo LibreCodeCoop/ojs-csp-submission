@@ -15,6 +15,7 @@
 	{rdelim});
 </script>
 
+<a target="_blank" href="http://www.kfinder.com/member-search/login.cgi?medweb=1&data=qhjnK2a9jJgT28s2GQY8YGwvX8XUOvW8W6pvj85npuq8hq&searchstring={$title}&dbproduct=MEDLINE&searchlogic=fuzzy&getcount=200&relevance=50&segments=4&getchunk=20&concept_mapping=on&wordvars=on&relevance_sort=on">MEDLINE</a>
 <div id="advancedReviewerSearch" class="pkp_form pkp_form_advancedReviewerSearch">
 
 	<div id="searchGridAndButton">
