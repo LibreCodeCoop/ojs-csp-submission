@@ -11,29 +11,25 @@ class AddAuthorHandler extends GridHandler {
     }
     public function searchAuthor($args, $request)
     {
-        import('lib.pkp.classes.form.Form');
+        AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION, LOCALE_COMPONENT_PKP_USER);
+        $authorId = (int) $request->getUserVar('authorId');
+        $submissionDAO = Application::getSubmissionDAO();
+        $submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 
-        $request = Application::getRequest();
-        $context = $request->getContext();
+        $authorDao = DAORegistry::getDAO('AuthorDAO');
+        $author = $authorDao->getById($authorId, $submission->getId());
+
+        // Form handling
+        import('lib.pkp.controllers.grid.users.author.form.AuthorForm');
+        $authorForm = new AuthorForm($submission, $author, 'submissionId');
+        $authorForm->setTemplate($this->plugin->getTemplateResource('authorFormAdd.tpl'));
 
         $userService = ServicesContainer::instance()->get('user');
         $user = $userService->getUser($request->getUserVar('userId'));
+        $authorForm->_data = $user->_data;
+        $authorForm->setData('includeInBrowse', true);
+        $authorForm->setData('csrfToken', $request->getSession()->getCSRFToken());
 
-        $locale = AppLocale::getLocale();
-        $form = new Form($this->plugin->getTemplateResource('authorFormAdd.tpl'));
-        $form->_data = $user->_data;
-
-        $countryDao = DAORegistry::getDAO('CountryDAO');
-        $countries = $countryDao->getCountries($locale);
-        $form->setData('countries', $countries);
-        $form->setData('submissionId', $request->getUserVar('submissionId'));
-        $form->setData('includeInBrowse', 'on');
-        $form->setData('csrfToken', $request->getSession()->getCSRFToken());
-
-        $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
-        $authorUserGroups = $userGroupDao->getByRoleId($context->getId(), ROLE_ID_AUTHOR);
-        $form->setData('authorUserGroups', $authorUserGroups);
-
-        return new JSONMessage(true, $form->fetch($request));
+        return new JSONMessage(true, $authorForm->fetch($request));
     }
 }
