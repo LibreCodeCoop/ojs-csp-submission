@@ -98,7 +98,9 @@ class CoautorListHandler extends ListHandler {
 			$items[] = [
 				'fullName' => $user->getFullName(),
 				'email' => $user->getEmail(),
-				'id' => $user->getId()
+				'id' => $user->getId(),
+				'type' => $user->getData('type'),
+				'instituicao' => $user->getData('instituicao')
 			];
 		}
 

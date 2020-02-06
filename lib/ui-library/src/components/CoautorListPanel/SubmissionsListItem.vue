@@ -20,6 +20,7 @@
 				</div>
 			</a>
 			<button
+				v-if="item.instituicao"
 				@click="expandData"
 				class="pkpListPanelItem__expander"
 			>
@@ -30,12 +31,12 @@
 			</button>
 		</div>
 		<div
-			v-if="isExpanded"
+			v-if="isExpanded && item.instituicao"
 			class="pkpListPanelItem__details pkpListPanelItem__details--submission"
 		>
-			<list v-if="!item.submissionProgress">
+			<list>
 				<list-item>
-					<span>Item 1</span>
+					<span>{{ item.instituicao }}</span>
 				</list-item>
 			</list>
 		</div>
@@ -75,6 +76,7 @@ export default {
 				url: this.fillUser,
 				data: {
 					userId: this.item.id,
+					type: this.item.type,
 					submissionId: $('[name="submissionId"]').val(),
 				},
 				type: 'POST',
