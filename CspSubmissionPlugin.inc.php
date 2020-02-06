@@ -273,7 +273,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
 					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody')
 					);
 					break;
 				}
@@ -305,7 +305,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (($_FILES['uploadedFile']['type'] <> 'image/bmp') /*bmp*/
 				and ($_FILES['uploadedFile']['type'] <> 'image/tiff') /*tiff*/) {
 					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
 					);
 				}
 				break;		
@@ -317,7 +317,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Flowchart')
 					);
 				}
 				break;	
@@ -330,7 +330,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Chart')
 					);
 				}
 				break;	
@@ -340,20 +340,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Map')
 					);
 				}
 				break;		
-				case '': 
-					$_FILES['uploadedFile']['type'];
+				case '': 							
 					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
-						$args[0]->addError('genreId',
-							__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						$args[0]->addError('typeId',
+							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 						);
-					}else{
-						$genreId = $args[0]->getData('genreId');					
-						$args[1] = true;
-						$args[0]->setData('genreId',8);
+					}else{				
+						$args[0]->setData('genreId',8);			
+						$args[1] = true;														
+
 						return true;
 					}					
 					break;																				
