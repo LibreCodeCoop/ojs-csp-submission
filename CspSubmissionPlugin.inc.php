@@ -54,6 +54,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function additionalMetadataStep1($hookName, $args) {
 		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
+		$args[1];
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -83,7 +84,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
 			return true;
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {	
+			$a = $this->article->getData('submissionProgress');
+			if ($this->article->getData('submissionProgress') == 0){				
+				$templateMgr->assign('revisionOnly',false);
+				$templateMgr->assign('isReviewAttachment',true);
+				$templateMgr->assign('submissionFileOptions',[]);
+			}
+			
+
 		}
+			
 
 		return false;
 	}
@@ -255,8 +266,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
-		$genreId = $args[0]->getData('genreId');
-
+		$genreId = $args[0]->getData('genreId');		
 		switch($genreId) {
 			case 1:	// Corpo do artigo / Tabela (Texto)
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
@@ -333,7 +343,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
 					);
 				}
-				break;																
+				break;		
+				case '': 
+					$_FILES['uploadedFile']['type'];
+					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+						$args[0]->addError('genreId',
+							__('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						);
+					}else{
+						$genreId = $args[0]->getData('genreId');					
+						$args[1] = true;
+						$args[0]->setData('genreId',8);
+						return true;
+					}					
+					break;																				
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
