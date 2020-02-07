@@ -68,15 +68,15 @@ class CoautorListHandler extends ListHandler {
 			'title' => __($this->_title),
 			'search' => __('common.search'),
 			'clearSearch' => __('common.clearSearch'),
-			'itemCount' => __('submission.list.count'),
-			'itemsOfTotal' => __('submission.list.itemsOfTotal'),
+			'itemCount' => __('author.list.count'),
+			'itemsOfTotal' => __('author.list.itemsOfTotal'),
 			'loadMore' => __('grid.action.moreItems'),
 			'loading' => __('common.loading'),
 			'filter' => __('common.filter'),
 			'filterRemove' => __('common.filterRemove'),
 			'viewMore' => __('list.viewMore'),
 			'viewLess' => __('list.viewLess'),
-			'notFoundAndCreate' => 'Autor não encontrado, cadastrar'
+			'notFoundAndCreate' => __('plugins.generic.cspSubmission.authorNotFoundCreate')
 		);
 
 		// Attach a CSRF token for post requests

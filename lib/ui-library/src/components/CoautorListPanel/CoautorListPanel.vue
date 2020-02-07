@@ -27,6 +27,11 @@
 			</div>
 		</div>
 		<div class="pkpListPanel__footer -pkpClearfix">
+			<div v-if="!this.itemsMax" class="pkpListPanel__loadMore" :class="classLoadingMore">
+				<a href="#" class="pkpListPanel__loadMoreButton" @click="newAuthor">
+					{{ i18n.notFoundAndCreate }}
+				</a>
+			</div>
 			<list-panel-load-more
 				v-if="canLoadMore"
 				@loadMore="loadMore"
@@ -45,7 +50,7 @@
 <script>
 import ListPanel from '@/components/ListPanel/ListPanel.vue';
 import ListPanelSearch from '@/components/ListPanel/ListPanelSearch.vue';
-import ListPanelCount from '@csp/components/CoautorListPanel/ListPanelCount.vue';
+import ListPanelCount from '@/components/ListPanel/ListPanelCount.vue';
 import ListPanelLoadMore from '@/components/ListPanel/ListPanelLoadMore.vue';
 import SubmissionsListItem from '@csp/components/CoautorListPanel/SubmissionsListItem.vue';
 
@@ -57,6 +62,24 @@ export default {
 		ListPanelCount,
 		ListPanelLoadMore,
 		SubmissionsListItem,
+	},
+	methods: {
+		newAuthor: function (e) {
+			e.preventDefault();
+			$.ajax({
+				url: this.fillUser,
+				data: {
+					type: 'new',
+					submissionId: $('[name="submissionId"]').val(),
+				},
+				type: 'POST',
+				success: function (r) {
+					$.pkp.classes.Handler.getHandler(
+						$('#editAuthor')
+					).replaceWith(r.content);
+				},
+			});
+		},
 	},
 };
 </script>

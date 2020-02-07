@@ -43,6 +43,7 @@ class AddAuthorHandler extends GridHandler {
                     $form->setData('country', $abbreviation);
                 }
             }
+        } elseif($args['type'] == 'new') {
         } else {
             $userService = ServicesContainer::instance()->get('user');
             $user = $userService->getUser($request->getUserVar('userId'));

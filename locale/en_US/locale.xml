@@ -45,4 +45,7 @@
   <message key="plugins.generic.CspSubmission.SectionFile.errorWordCount">A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras.</message>
   <message key="plugins.generic.CspSubmission.SectionFile.invalidFormat">Invalid format</message>
   <message key="plugins.generic.cspSubmission.searchForAuthor">Informe o nome do coautor</message>
+  <message key="author.list.count">{$count} autores</message>
+  <message key="author.list.itemsOfTotal">{$count} de {$total} autores</message>
+  <message key="plugins.generic.cspSubmission.authorNotFoundCreate">Autor não encontrado, cadastrar</message>
 </locale>
