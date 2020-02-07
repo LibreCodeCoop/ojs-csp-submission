@@ -34,9 +34,10 @@ class CoautorListHandler extends ListHandler {
 
 		$config = array();
 
+		$config['minWordsToSearch'] = 3;
 		if ($this->_lazyLoad) {
 			$config['lazyLoad'] = true;
-		} else {
+		} elseif(!$config['minWordsToSearch']) {
 			$config['items'] = $this->getItems();
 			$config['itemsMax'] = $this->getItemsMax();
 		}
@@ -76,7 +77,8 @@ class CoautorListHandler extends ListHandler {
 			'filterRemove' => __('common.filterRemove'),
 			'viewMore' => __('list.viewMore'),
 			'viewLess' => __('list.viewLess'),
-			'notFoundAndCreate' => __('plugins.generic.cspSubmission.authorNotFoundCreate')
+			'notFoundAndCreate' => __('plugins.generic.cspSubmission.authorNotFoundCreate'),
+			'informAName' => __('plugins.generic.cspSubmission.informAName'),
 		);
 
 		// Attach a CSRF token for post requests

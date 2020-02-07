@@ -7,8 +7,11 @@
 			</div>
 			<list-panel-search
 				@search-phrase-changed="setSearchPhrase"
+				@current-search-phrase="setCurrentSearchPhrase"
 				:searchPhrase="searchPhrase"
 				:i18n="i18n"
+				:currentSearchPhrase="currentSearchPhrase"
+				:minWordsToSearch="minWordsToSearch"
 			/>
 		</div>
 		<div class="pkpListPanel__body -pkpClearfix pkpListPanel__body--submissions">
@@ -27,9 +30,17 @@
 			</div>
 		</div>
 		<div class="pkpListPanel__footer -pkpClearfix">
-			<div v-if="!this.itemsMax" class="pkpListPanel__loadMore" :class="classLoadingMore">
-				<a href="#" class="pkpListPanel__loadMoreButton" @click="newAuthor">
+			<div v-if="!itemsMax && currentSearchPhrase.trim().length >= minWordsToSearch" class="pkpListPanel__loadMore" :class="classLoadingMore">
+				<a class="pkpListPanel__loadMoreButton" @click="newAuthor">
 					{{ i18n.notFoundAndCreate }}
+				</a>
+			</div>
+			<div
+				v-if="currentSearchPhrase.trim().length < minWordsToSearch"
+				class="pkpListPanel__loadMore" :class="classLoadingMore"
+			>
+				<a class="pkpListPanel__loadMoreButton">
+					{{ i18n.informAName }}
 				</a>
 			</div>
 			<list-panel-load-more
@@ -49,7 +60,7 @@
 
 <script>
 import ListPanel from '@/components/ListPanel/ListPanel.vue';
-import ListPanelSearch from '@/components/ListPanel/ListPanelSearch.vue';
+import ListPanelSearch from '@csp/components/CoautorListPanel/ListPanelSearch.vue';
 import ListPanelCount from '@/components/ListPanel/ListPanelCount.vue';
 import ListPanelLoadMore from '@/components/ListPanel/ListPanelLoadMore.vue';
 import SubmissionsListItem from '@csp/components/CoautorListPanel/SubmissionsListItem.vue';
@@ -63,7 +74,26 @@ export default {
 		ListPanelLoadMore,
 		SubmissionsListItem,
 	},
+	data: function () {
+		return {
+			currentSearchPhrase: '',
+		};
+	},
 	methods: {
+		setSearchPhrase: function (val) {
+			console.log(val);
+			if (this.searchPhrase == val && val.length == this.minWordsToSearch) {
+				this.get();
+			}
+			this.searchPhrase = val;
+		},
+		setCurrentSearchPhrase: function (val) {
+			if (val.trim().length < this.minWordsToSearch) {
+				this.items = [];
+				this.itemsMax = null;
+			}
+			this.currentSearchPhrase = val;
+		},
 		newAuthor: function (e) {
 			e.preventDefault();
 			$.ajax({

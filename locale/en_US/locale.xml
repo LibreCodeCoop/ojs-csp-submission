@@ -48,4 +48,5 @@
   <message key="author.list.count">{$count} autores</message>
   <message key="author.list.itemsOfTotal">{$count} de {$total} autores</message>
   <message key="plugins.generic.cspSubmission.authorNotFoundCreate">Autor não encontrado, cadastrar</message>
+  <message key="plugins.generic.cspSubmission.informAName">Informe um nome</message>
 </locale>
