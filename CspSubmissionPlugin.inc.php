@@ -109,7 +109,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
-		file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -149,7 +148,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('issueEntrySubmissionReviewForm.tpl'));
 
 			return true;
+		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
+			$request = Application::getRequest();
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
+
+			return true;
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {	
+			$a = $this->article->getData('submissionProgress');
+			if ($this->article->getData('submissionProgress') == 0){				
+				$templateMgr->assign('revisionOnly',false);
+				$templateMgr->assign('isReviewAttachment',true);
+				$templateMgr->assign('submissionFileOptions',[]);
+			}
+			
+
 		}
+			
 
 		return false;
 	}
@@ -439,15 +456,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
-		$genreId = $args[0]->getData('genreId');
-
+		$genreId = $args[0]->getData('genreId');		
 		switch($genreId) {
 			case 1:	// Corpo do artigo / Tabela (Texto)
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody')
 					);
 					break;
 				}
@@ -466,7 +482,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$html = new PhpOffice\PhpWord\Writer\HTML($doc);
 					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
 					if ($contagemPalavras > $wordCount) {
-						$phrase = PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+						$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 							'sectoin' => $this->article->getData('sectionTitle'),
 							'max'     => $wordCount,
 							'count'   => $contagemPalavras
@@ -479,7 +495,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (($_FILES['uploadedFile']['type'] <> 'image/bmp') /*bmp*/
 				and ($_FILES['uploadedFile']['type'] <> 'image/tiff') /*tiff*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
 					);
 				}
 				break;		
@@ -491,7 +507,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Flowchart')
 					);
 				}
 				break;	
@@ -504,7 +520,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Chart')
 					);
 				}
 				break;	
@@ -514,10 +530,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
 					$args[0]->addError('genreId',
-						PKPLocale::translate('plugins.generic.CspSubmission.SectionFile.invalidFormat')
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Map')
 					);
 				}
-				break;																
+				break;		
+				case '': 							
+					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+						$args[0]->addError('typeId',
+							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
+						);
+					}else{				
+						$args[0]->setData('genreId',8);			
+						$args[1] = true;														
+
+						return true;
+					}					
+					break;																				
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
