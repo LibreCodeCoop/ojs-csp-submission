@@ -74,23 +74,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$templateManager =& $args[0];
 
 		// // Load JavaScript file
-		// $templateManager->addJavaScript(
-		// 	'tinymce',
-		// 	$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
-		// 	array(
-		// 		'contexts' => 'backend',
-		// 		'priority' => STYLE_SEQUENCE_LAST,
-		// 	)
-		// );
-		// // Stylesheet compiled from Vue.js single-file components
-		// $templateManager->addStyleSheet(
-		// 	'build',
-		// 	$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
-		// 	array(
-		// 		'priority' => STYLE_SEQUENCE_CORE,
-		// 		'contexts' => 'backend',
-		// 	)
-		// );
+		$templateManager->addJavaScript(
+			'tinymce',
+			$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+			array(
+				'contexts' => 'backend',
+				'priority' => STYLE_SEQUENCE_LAST,
+			)
+		);
 
 		return false;
 	}
