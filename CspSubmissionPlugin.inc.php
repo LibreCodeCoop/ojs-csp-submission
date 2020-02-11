@@ -28,6 +28,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
+			HookRegistry::register('Mail::send', array($this,'mail_send'));
 
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
@@ -52,9 +53,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return $success;
 	}
 
+	
+	function mail_send($hookName, $args){
+		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
+			$body = $args[0]->_data['body'];
+			
+			preg_match("/href='(?P<url>.*)' class='submissionReview/",$body,$matches);
+			$body = str_replace('{$submissionReviewUrlAccept}', $matches['url']."&accept=yes", $body);
+			$body = str_replace('{$submissionReviewUrlReject}', $matches['url']."&accept=no", $body);
+			$args[0]->_data['body'] = $body;
+		}
+
+	}
+
 	function additionalMetadataStep1($hookName, $args) {
 		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
-		$args[1];
+		//$args[1];
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -90,11 +104,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$templateMgr->assign('revisionOnly',false);
 				$templateMgr->assign('isReviewAttachment',true);
 				$templateMgr->assign('submissionFileOptions',[]);
-			}
+			}			
+		}elseif ($args[1] == 'reviewer/review/step1.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
 			
-
-		}
-			
+			return true;
+		}		
 
 		return false;
 	}
