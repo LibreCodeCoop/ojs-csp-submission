@@ -109,7 +109,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
 			
 			return true;
-		}		
+		}elseif ($args[1] == 'reviewer/review/step3.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep3.tpl'));
+			
+			return true;
+		}				
 
 		return false;
 	}
