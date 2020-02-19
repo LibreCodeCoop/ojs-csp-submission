@@ -68,7 +68,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function additionalMetadataStep1($hookName, $args) {
 		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
-		//$args[1];
+		$args[1];
 		$templateMgr =& $args[0];
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -98,9 +98,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {	
-			$a = $this->article->getData('submissionProgress');
-			if ($this->article->getData('submissionProgress') == 0){				
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
+			$args[0];
+			$article = $args[0]->submission;
+			$submissionProgress = $this->article->getData('submissionProgress');
+
+			$request = Application::getRequest();
+			$fileStage = $request->getUserVar('fileStage');
+
+			if ($submissionProgress == 0 && $fileStage == 2){
 				$templateMgr->assign('revisionOnly',false);
 				$templateMgr->assign('isReviewAttachment',true);
 				$templateMgr->assign('submissionFileOptions',[]);
