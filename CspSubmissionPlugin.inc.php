@@ -123,7 +123,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep3.tpl'));
 			
 			return true;
-		}				
+		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
+			return true;
+		}
 
 		return false;
 	}
