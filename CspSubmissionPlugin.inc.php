@@ -55,6 +55,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	
 	function mail_send($hookName, $args){
+		$stageId = $this->article->getData('stageId');
+
 		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
 			$body = $args[0]->_data['body'];
 			
@@ -62,6 +64,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$body = str_replace('{$submissionReviewUrlAccept}', $matches['url']."&accept=yes", $body);
 			$body = str_replace('{$submissionReviewUrlReject}', $matches['url']."&accept=no", $body);
 			$args[0]->_data['body'] = $body;
+		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
+			return true;
 		}
 
 	}
