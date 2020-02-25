@@ -124,7 +124,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
+			$request = Application::getRequest();
+			$submissionId = $request->_requestVars["submissionId"];
+			$template = new SubmissionMailTemplate($submissionId);
+
+			$templateMgr->assign('message',$template->getBody(),AppLocale::getLocale());
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
 
 			return true;
 		}

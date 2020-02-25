@@ -53,11 +53,11 @@
 
 	{fbvFormArea id="notifyFormArea"}
 		{fbvFormSection title="stageParticipants.notify.chooseMessage" for="template" size=$fbvStyles.size.medium}
-			{fbvElement type="select" from=$templates translate=false id="template" defaultValue="" defaultLabel=""}
+			{fbvElement type="select" from=$templates translate=false id="template"}
 		{/fbvFormSection}
 
 		{fbvFormSection title="stageParticipants.notify.message" for="message"}
-			{fbvElement type="textarea" id="message" rich=true}
+			{fbvElement type="textarea" id="message" rich=true value=$message}
 		{/fbvFormSection}
 		<p><span class="formRequired">{translate key="common.requiredField"}</span></p>
 		{fbvFormButtons}
