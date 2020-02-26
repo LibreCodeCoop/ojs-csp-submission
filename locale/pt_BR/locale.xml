@@ -55,4 +55,10 @@
   <message key="plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF">Formato de arquivo inválido! Este arquivo deve estar no formato PDF.</message>
   <message key="plugins.generic.CspSubmission.DOI">Caso tenha sido colocado em algum local como preprint, favor informar o acesso (DOI ou LINK)</message>
   <message key="plugins.generic.CspSubmission.DOI.Valid">DOI inválido</message>
+  <message key="plugins.generic.cspSubmission.searchForAuthor">Informe o nome do coautor</message>
+  <message key="author.list.count">{$count} autores</message>
+  <message key="author.list.itemsOfTotal">{$count} de {$total} autores</message>
+  <message key="plugins.generic.cspSubmission.authorNotFoundCreate">Autor não encontrado, cadastrar</message>
+  <message key="plugins.generic.cspSubmission.informAName">Informe um nome</message>
+
 </locale>
