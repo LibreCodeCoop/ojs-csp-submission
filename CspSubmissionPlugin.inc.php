@@ -12,6 +12,7 @@
  * @brief CspSubmission plugin class
  */
 
+use Illuminate\Database\Capsule\Manager as Capsule;
 use Symfony\Component\HttpClient\HttpClient;
 
 import('lib.pkp.classes.plugins.GenericPlugin');
@@ -27,6 +28,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
+			HookRegistry::register('TemplateManager::display',array(&$this, 'registerJS'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
 			HookRegistry::register('Mail::send', array($this,'mail_send'));
 
@@ -49,10 +51,54 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
 			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'articleDAO_fromRow'));
+			HookRegistry::register('User::getUsers::queryObject', array($this, 'user_getUsers_queryObject'));
+			HookRegistry::register('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
+			HookRegistry::register('User::getProperties::values', array($this, 'user_getProperties_values'));
+
+			// This hook is used to register the components this plugin implements to
+			// permit administration of custom block plugins.
+			HookRegistry::register('LoadComponentHandler', array($this, 'setupGridHandler'));
 		}
 		return $success;
 	}
 
+	/**
+	 * Register JavaScript file
+	 *
+	 * Hooked to the the `display` callback in TemplateManager
+	 * @param $hookName string
+	 * @param $args array
+	 * @return boolean
+	 */
+	public function registerJS($hookName, $args) {
+		$request =& Registry::get('request');
+		$templateManager =& $args[0];
+
+		// // Load JavaScript file
+		$templateManager->addJavaScript(
+			'tinymce',
+			$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+			array(
+				'contexts' => 'backend',
+				'priority' => STYLE_SEQUENCE_LAST,
+			)
+		);
+
+		return false;
+	}
+
+	/**
+	 * Permit requests to the custom block grid handler
+	 * @param $hookName string The name of the hook being invoked
+	 * @param $args array The parameters to the invoked hook
+	 */
+	function setupGridHandler($hookName, $params) {
+		$component =& $params[0];
+		if ($component == 'plugins.generic.cspSubmission.controllers.grid.AddAuthorHandler') {
+			return true;
+		}
+		return false;
+  }
 	
 	function mail_send($hookName, $args){
 		$stageId = $this->article->getData('stageId');
@@ -67,12 +113,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
 			return true;
 		}
-
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
-		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
-		$args[1];
 		$templateMgr =& $args[0];
 		$request = Application::getRequest();
 		$stageId = $request->_requestVars["stageId"];
@@ -89,10 +132,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
 			
 			return true;
-		} elseif($args[1] == 'controllers/grid/users/author/form/authorForm.tpl'){
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
-			
-			return true;
+		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
+			$request = Application::getRequest();
+			$operation = $request->getRouter()->getRequestedOp($request);
+			switch ($operation) {
+				case 'addAuthor':
+					import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
+					$myQueueListHandler = new CoautorListHandler(array(
+						'title' => 'plugins.generic.cspSubmission.searchForAuthor',
+						'getParams' => array(
+							'roleIds' => [ROLE_ID_AUTHOR],
+							'orderBy' => 'givenName',
+							'orderDirection' => 'ASC'
+						),
+					));
+					$templateMgr->assign('myQueueListData', json_encode($myQueueListHandler->getConfig()));
+					$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
+					return true;
+				case 'updateAuthor':
+					$templateMgr->assign('csrfToken', $request->getSession()->getCSRFToken());
+					$args[4] = $templateMgr->fetch($this->getTemplateResource('authorFormAdd.tpl'));
+					return true;
+			}
 		} elseif ($args[1] == 'controllers/modals/submissionMetadata/form/issueEntrySubmissionReviewForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('issueEntrySubmissionReviewForm.tpl'));
 
@@ -146,6 +207,124 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 
 		return false;
+	}
+
+	function user_getUsers_queryObject($hookName, $args)
+	{
+		$refObject   = new ReflectionObject($args[1]);
+		$refColumns = $refObject->getProperty('columns');
+		$refColumns->setAccessible( true );
+		$columns = $refColumns->getValue($args[1]);
+		$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
+		$columns[] = Capsule::raw('\'ojs\' AS type');
+		$refColumns->setValue($args[1], $columns);
+
+		$cspQuery = Capsule::table(Capsule::raw('csp.Pessoa p'));
+		$cspQuery->leftJoin('users as u', function ($join) {
+			$join->on('u.email', '=', 'p.email');
+		});
+		$cspQuery->whereNull('u.email');
+		$cspQuery->whereIn('p.permissao', [0,2,3]);
+
+		$refSearchPhrase = $refObject->getProperty('searchPhrase');
+		$refSearchPhrase->setAccessible( true );
+		$words = $refSearchPhrase->getValue($args[1]);
+		if ($words) {
+			$words = explode(' ', $words);
+			if (count($words)) {
+				foreach ($words as $word) {
+					$cspQuery->where(function($q) use ($word) {
+						$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "%{$word}%")
+							->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "%{$word}%")
+							->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "%{$word}%");
+					});
+				}
+			}
+		}
+
+		$locale = AppLocale::getLocale();
+		$args[0]->leftJoin('user_settings as ui1', function ($join) use ($locale) {
+			$join->on('ui1.user_id', '=', 'u.user_id')
+				->where('ui1.setting_name', '=', 'instituicao1')
+				->where('ui1.locale', '=', $locale);
+		});
+		$args[0]->leftJoin('user_settings as ui2', function ($join) use ($locale) {
+			$join->on('ui2.user_id', '=', 'u.user_id')
+				->where('ui2.setting_name', '=', 'instituicao2')
+				->where('ui2.locale', '=', $locale);
+		});
+
+		$refCountOnly = $refObject->getProperty('countOnly');
+		$refCountOnly->setAccessible( true );
+		if ($refCountOnly->getValue($args[1])) {
+			$cspQuery->select(['p.idPessoa']);
+			$args[0]->select(['u.user_id'])
+				->groupBy('u.user_id');
+		} else {
+			$userDao = DAORegistry::getDAO('UserDAO');
+			// retrieve all columns of table users
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT `COLUMN_NAME`
+				  FROM `INFORMATION_SCHEMA`.`COLUMNS` 
+				 WHERE `TABLE_SCHEMA`='ojs' 
+				   AND `TABLE_NAME`='users';
+				QUERY
+			);
+			while (!$result->EOF) {
+				$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
+				$result->MoveNext();
+			}
+			// assign custom values to columns
+			$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";
+			$columnsNames['email'] = 'p.email';
+			$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
+			$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
+			$columnsNames['instituicao'] = 'p.instituicao1';
+			$columnsNames['type'] = '\'csp\'';
+			foreach ($columnsNames as $name => $value) {
+				$cspQuery->addSelect(Capsule::raw($value . ' AS ' . $name));
+			}
+			$args[0]->select($columns)
+				->groupBy('u.user_id', 'user_given', 'user_family');
+		}
+
+		$subOjsQuery = Capsule::table(Capsule::raw(
+			<<<QUERY
+			(
+				{$args[0]->toSql()}
+				UNION
+				{$cspQuery->toSql()}
+			) as u
+			QUERY
+		));
+		$subOjsQuery->mergeBindings($args[0]);
+		$subOjsQuery->mergeBindings($cspQuery);
+		$refColumns->setValue($args[1], ['*']);
+		$args[0] = $subOjsQuery;
+	}
+
+	function userDAO__returnUserFromRowWithData($hookName, $args)
+	{
+		list($user, $row) = $args;
+		if ($row['type'] == 'csp') {
+			$locale = AppLocale::getLocale();
+			$user->setData('id', (int)explode('|', $row['user_id'])[1]);
+			$user->setData('familyName', [$locale => $row['user_family']]);
+			$user->setData('givenName', [$locale => $row['user_given']]);
+		}
+		$user->setData('type', $row['type']);
+		$user->setData('instituicao', $row['instituicao']);
+	}
+
+	function user_getProperties_values($hookName, $args)
+	{
+		list(&$values, $user) = $args;
+		$type = $user->getData('type');
+		if ($type) {
+			$values['type'] = $type;
+			$values['instituicao'] = $user->getData('instituicao');
+		}
 	}
 
 	/**
