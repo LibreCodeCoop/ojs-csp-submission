@@ -74,6 +74,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		//file_put_contents('/tmp/templates.txt', $args[1] . "\n", FILE_APPEND);
 		$args[1];
 		$templateMgr =& $args[0];
+		$request = Application::getRequest();
+		$stageId = $request->_requestVars["stageId"];
+
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
 			
@@ -134,7 +137,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 
 			return true;
+		}elseif ($args[1] == 'controllers/grid/grid.tpl' && $stageId == 3) {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
+
+			return true;
 		}
+
+
 
 		return false;
 	}
