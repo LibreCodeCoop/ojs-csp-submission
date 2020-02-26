@@ -30,6 +30,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
 			HookRegistry::register('TemplateManager::display',array(&$this, 'registerJS'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
+			HookRegistry::register('Mail::send', array($this,'mail_send'));
 
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
@@ -97,10 +98,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}
 		return false;
+  }
+	
+	function mail_send($hookName, $args){
+		$stageId = $this->article->getData('stageId');
+
+		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
+			$body = $args[0]->_data['body'];
+			
+			preg_match("/href='(?P<url>.*)' class='submissionReview/",$body,$matches);
+			$body = str_replace('{$submissionReviewUrlAccept}', $matches['url']."&accept=yes", $body);
+			$body = str_replace('{$submissionReviewUrlReject}', $matches['url']."&accept=no", $body);
+			$args[0]->_data['body'] = $body;
+		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
+			return true;
+		}
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
 		$templateMgr =& $args[0];
+		$request = Application::getRequest();
+		$stageId = $request->_requestVars["stageId"];
+
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
 			
@@ -147,17 +166,45 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {	
-			$a = $this->article->getData('submissionProgress');
-			if ($this->article->getData('submissionProgress') == 0){				
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
+			$args[0];
+			$article = $args[0]->submission;
+			$submissionProgress = $this->article->getData('submissionProgress');
+
+			$request = Application::getRequest();
+			$fileStage = $request->getUserVar('fileStage');
+
+			if ($submissionProgress == 0 && $fileStage == 2){
 				$templateMgr->assign('revisionOnly',false);
 				$templateMgr->assign('isReviewAttachment',true);
 				$templateMgr->assign('submissionFileOptions',[]);
-			}
+			}			
+		}elseif ($args[1] == 'reviewer/review/step1.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
 			
+			return true;
+		}elseif ($args[1] == 'reviewer/review/step3.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep3.tpl'));
+			
+			return true;
+		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
+			$request = Application::getRequest();
+			$submissionId = $request->_requestVars["submissionId"];
+			$template = new SubmissionMailTemplate($submissionId);
 
+			$templateMgr->assign('message',$template->getBody(),AppLocale::getLocale());
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
+
+			return true;
+		}elseif ($args[1] == 'controllers/grid/grid.tpl' && $stageId == 3) {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
+
+			return true;
 		}
-			
+
+
 
 		return false;
 	}
