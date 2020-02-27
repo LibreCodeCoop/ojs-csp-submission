@@ -53,14 +53,16 @@
 			{/fbvFormSection}
 
 			{* Button to add reviews to the email automatically *}
-			{if $reviewsAvailable}
-				{fbvFormSection}
-					<a id="importPeerReviews" href="#" class="pkp_button">
-						<span class="fa fa-plus" aria-hidden="true"></span>
-						{translate key="submission.comments.addReviews"}
-					</a>
-				{/fbvFormSection}
-			{/if}
+			<div style="display:none">
+				{if $reviewsAvailable}
+					{fbvFormSection}
+						<a id="importPeerReviews" href="#" class="pkp_button">
+							<span class="fa fa-plus" aria-hidden="true"></span>
+							{translate key="submission.comments.addReviews"}
+						</a>
+					{/fbvFormSection}
+				{/if}
+			</div>
 		</div>
 
 		{if $decisionData.paymentType}
@@ -74,13 +76,13 @@
 
 		{** Some decisions can be made before review is initiated (i.e. no attachments). **}
 		{if $reviewRoundId}
-			<div id="attachments">
+			<div id="attachments" style="display:none">
 				{capture assign=reviewAttachmentsGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.files.attachment.EditorSelectableReviewAttachmentsGridHandler" op="fetchGrid" submissionId=$submissionId stageId=$stageId reviewRoundId=$reviewRoundId escape=false}{/capture}
 				{load_url_in_div id="reviewAttachmentsGridContainer" url=$reviewAttachmentsGridUrl}
 			</div>
 		{/if}
 
-		<div id="libraryFileAttachments" class="pkp_user_group_other_contexts">
+		<div id="libraryFileAttachments" class="pkp_user_group_other_contexts" style="display:none">
 			{capture assign=libraryAttachmentsGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.files.SelectableLibraryFileGridHandler" op="fetchGrid" submissionId=$submissionId escape=false}{/capture}
 			{capture assign=libraryAttachmentsGrid}{load_url_in_div id="libraryFilesAttachmentsGridContainer" url=$libraryAttachmentsGridUrl}{/capture}
 			{include file="controllers/extrasOnDemand.tpl"
