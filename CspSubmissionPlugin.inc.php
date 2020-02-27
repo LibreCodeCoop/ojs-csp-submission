@@ -116,6 +116,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
+		$args[1];
 		$templateMgr =& $args[0];
 		$request = Application::getRequest();
 		$stageId = $request->_requestVars["stageId"];
@@ -202,8 +203,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
 
 			return true;
-		}
+		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteForm.tpl'));
 
+			return true;
+		}
 
 
 		return false;
