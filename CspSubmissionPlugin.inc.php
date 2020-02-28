@@ -206,10 +206,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
 
 			return true;
-		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl' && $stageId == 3) {
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteForm.tpl'));
+		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
+			if ($stageId == 3){
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage3.tpl'));
 
-			return true;
+				return true;
+			}elseif ($stageId == 4){
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
+
+				return true;
+			}
+
+
 		}
 
 
