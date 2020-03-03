@@ -216,7 +216,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				return true;
 			}
+		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 
+			$templateMgr->assign('skipEmail',0);
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
+
+			return true;
 
 		}
 
