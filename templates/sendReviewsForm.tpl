@@ -45,12 +45,10 @@
 		{elseif $decision == $smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT}
 			{assign var="checkedResubmit" value="1"}
 		{/if}
-		{fbvFormSection title="editor.review.newReviewRound"}
-			<ul class="checkbox_and_radiobutton">
-				{fbvElement type="radio" id="decisionRevisions" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS checked=$checkedRevisions label="editor.review.NotifyAuthorRevisions"}
-				{fbvElement type="radio" id="decisionResubmit" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT checked=$checkedResubmit label="editor.review.NotifyAuthorResubmit"}
-			</ul>
-		{/fbvFormSection}
+		<ul class="checkbox_and_radiobutton" style="display:none">
+			{fbvElement type="radio" id="decisionRevisions" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS checked=$checkedRevisions label="editor.review.NotifyAuthorRevisions"}
+			{fbvElement type="radio" id="decisionResubmit" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT checked=$checkedResubmit label="editor.review.NotifyAuthorResubmit"}
+		</ul>
 	{/if}
 
 	{capture assign="sendEmailLabel"}{translate key="editor.submissionReview.sendEmail" authorName=$authorName}{/capture}

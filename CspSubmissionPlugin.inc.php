@@ -218,7 +218,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 
-			$templateMgr->assign('skipEmail',0);
+			$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
+			$templateMgr->assign('decision',3); // PARRA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
 
 			return true;
