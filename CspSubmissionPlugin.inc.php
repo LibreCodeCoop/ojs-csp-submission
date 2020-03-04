@@ -24,7 +24,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function register($category, $path, $mainContextId = null) {
 		$success = parent::register($category, $path, $mainContextId);
-		if ($success && $this->getEnabled($mainContextId)) {
+		if ($success) {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
