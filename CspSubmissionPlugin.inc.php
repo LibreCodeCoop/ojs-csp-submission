@@ -71,18 +71,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @return boolean
 	 */
 	public function registerJS($hookName, $args) {
-		$request =& Registry::get('request');
-		$templateManager =& $args[0];
+		if ($args[1] == "submission/form/index.tpl"){
 
-		// // Load JavaScript file
-		$templateManager->addJavaScript(
-			'tinymce',
-			$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
-			array(
-				'contexts' => 'backend',
-				'priority' => STYLE_SEQUENCE_LAST,
-			)
-		);
+			$request =& Registry::get('request');
+			$templateManager =& $args[0];
+	
+			// // Load JavaScript file
+			$templateManager->addJavaScript(
+				'tinymce',
+				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+				array(
+					'contexts' => 'backend',
+					'priority' => STYLE_SEQUENCE_LAST,
+				)
+			);
+		}
 
 		return false;
 	}
@@ -116,6 +119,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function additionalMetadataStep1($hookName, $args) {
+		$args[1];
 		$templateMgr =& $args[0];
 		$request = Application::getRequest();
 		$stageId = $request->_requestVars["stageId"];
@@ -202,8 +206,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
 
 			return true;
-		}
+		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
+			if ($stageId == 3){
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage3.tpl'));
 
+				return true;
+			}elseif ($stageId == 4){
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
+
+				return true;
+			}
+		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
+
+			$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
+			$templateMgr->assign('decision',3); // PARRA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
+
+			return true;
+
+		}
 
 
 		return false;
@@ -212,96 +233,103 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function user_getUsers_queryObject($hookName, $args)
 	{
 		$refObject   = new ReflectionObject($args[1]);
-		$refColumns = $refObject->getProperty('columns');
-		$refColumns->setAccessible( true );
-		$columns = $refColumns->getValue($args[1]);
-		$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
-		$columns[] = Capsule::raw('\'ojs\' AS type');
-		$refColumns->setValue($args[1], $columns);
+		$refReviewStageId = $refObject->getProperty('reviewStageId');
+		$refReviewStageId->setAccessible( true );
+		$reviewStageId = $refReviewStageId->getValue($args[1]);
 
-		$cspQuery = Capsule::table(Capsule::raw('csp.Pessoa p'));
-		$cspQuery->leftJoin('users as u', function ($join) {
-			$join->on('u.email', '=', 'p.email');
-		});
-		$cspQuery->whereNull('u.email');
-		$cspQuery->whereIn('p.permissao', [0,2,3]);
-
-		$refSearchPhrase = $refObject->getProperty('searchPhrase');
-		$refSearchPhrase->setAccessible( true );
-		$words = $refSearchPhrase->getValue($args[1]);
-		if ($words) {
-			$words = explode(' ', $words);
-			if (count($words)) {
-				foreach ($words as $word) {
-					$cspQuery->where(function($q) use ($word) {
-						$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "%{$word}%")
-							->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "%{$word}%")
-							->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "%{$word}%");
-					});
+		if (!$reviewStageId){
+			$refObject   = new ReflectionObject($args[1]);
+			$refColumns = $refObject->getProperty('columns');
+			$refColumns->setAccessible( true );
+			$columns = $refColumns->getValue($args[1]);
+			$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
+			$columns[] = Capsule::raw('\'ojs\' AS type');
+			$refColumns->setValue($args[1], $columns);
+	
+			$cspQuery = Capsule::table(Capsule::raw('csp.Pessoa p'));
+			$cspQuery->leftJoin('users as u', function ($join) {
+				$join->on('u.email', '=', 'p.email');
+			});
+			$cspQuery->whereNull('u.email');
+			$cspQuery->whereIn('p.permissao', [0,2,3]);
+	
+			$refSearchPhrase = $refObject->getProperty('searchPhrase');
+			$refSearchPhrase->setAccessible( true );
+			$words = $refSearchPhrase->getValue($args[1]);
+			if ($words) {
+				$words = explode(' ', $words);
+				if (count($words)) {
+					foreach ($words as $word) {
+						$cspQuery->where(function($q) use ($word) {
+							$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "%{$word}%");
+						});
+					}
 				}
 			}
-		}
-
-		$locale = AppLocale::getLocale();
-		$args[0]->leftJoin('user_settings as ui1', function ($join) use ($locale) {
-			$join->on('ui1.user_id', '=', 'u.user_id')
-				->where('ui1.setting_name', '=', 'instituicao1')
-				->where('ui1.locale', '=', $locale);
-		});
-		$args[0]->leftJoin('user_settings as ui2', function ($join) use ($locale) {
-			$join->on('ui2.user_id', '=', 'u.user_id')
-				->where('ui2.setting_name', '=', 'instituicao2')
-				->where('ui2.locale', '=', $locale);
-		});
-
-		$refCountOnly = $refObject->getProperty('countOnly');
-		$refCountOnly->setAccessible( true );
-		if ($refCountOnly->getValue($args[1])) {
-			$cspQuery->select(['p.idPessoa']);
-			$args[0]->select(['u.user_id'])
-				->groupBy('u.user_id');
-		} else {
-			$userDao = DAORegistry::getDAO('UserDAO');
-			// retrieve all columns of table users
-			$result = $userDao->retrieve(
+	
+			$locale = AppLocale::getLocale();
+			$args[0]->leftJoin('user_settings as ui1', function ($join) use ($locale) {
+				$join->on('ui1.user_id', '=', 'u.user_id')
+					->where('ui1.setting_name', '=', 'instituicao1')
+					->where('ui1.locale', '=', $locale);
+			});
+			$args[0]->leftJoin('user_settings as ui2', function ($join) use ($locale) {
+				$join->on('ui2.user_id', '=', 'u.user_id')
+					->where('ui2.setting_name', '=', 'instituicao2')
+					->where('ui2.locale', '=', $locale);
+			});
+	
+			$refCountOnly = $refObject->getProperty('countOnly');
+			$refCountOnly->setAccessible( true );
+			if ($refCountOnly->getValue($args[1])) {
+				$cspQuery->select(['p.idPessoa']);
+				$args[0]->select(['u.user_id'])
+					->groupBy('u.user_id');
+			} else {
+				$userDao = DAORegistry::getDAO('UserDAO');
+				// retrieve all columns of table users
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT `COLUMN_NAME`
+					  FROM `INFORMATION_SCHEMA`.`COLUMNS` 
+					 WHERE `TABLE_SCHEMA`='ojs' 
+					   AND `TABLE_NAME`='users';
+					QUERY
+				);
+				while (!$result->EOF) {
+					$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
+					$result->MoveNext();
+				}
+				// assign custom values to columns
+				$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";
+				$columnsNames['email'] = 'p.email';
+				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
+				$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
+				$columnsNames['instituicao'] = 'p.instituicao1';
+				$columnsNames['type'] = '\'csp\'';
+				foreach ($columnsNames as $name => $value) {
+					$cspQuery->addSelect(Capsule::raw($value . ' AS ' . $name));
+				}
+				$args[0]->select($columns)
+					->groupBy('u.user_id', 'user_given', 'user_family');
+			}
+	
+			$subOjsQuery = Capsule::table(Capsule::raw(
 				<<<QUERY
-				SELECT `COLUMN_NAME`
-				  FROM `INFORMATION_SCHEMA`.`COLUMNS` 
-				 WHERE `TABLE_SCHEMA`='ojs' 
-				   AND `TABLE_NAME`='users';
+				(
+					{$args[0]->toSql()}
+					UNION
+					{$cspQuery->toSql()}
+				) as u
 				QUERY
-			);
-			while (!$result->EOF) {
-				$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
-				$result->MoveNext();
-			}
-			// assign custom values to columns
-			$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";
-			$columnsNames['email'] = 'p.email';
-			$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
-			$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
-			$columnsNames['instituicao'] = 'p.instituicao1';
-			$columnsNames['type'] = '\'csp\'';
-			foreach ($columnsNames as $name => $value) {
-				$cspQuery->addSelect(Capsule::raw($value . ' AS ' . $name));
-			}
-			$args[0]->select($columns)
-				->groupBy('u.user_id', 'user_given', 'user_family');
+			));
+			$subOjsQuery->mergeBindings($args[0]);
+			$subOjsQuery->mergeBindings($cspQuery);
+			$refColumns->setValue($args[1], ['*']);
+			$args[0] = $subOjsQuery;
 		}
-
-		$subOjsQuery = Capsule::table(Capsule::raw(
-			<<<QUERY
-			(
-				{$args[0]->toSql()}
-				UNION
-				{$cspQuery->toSql()}
-			) as u
-			QUERY
-		));
-		$subOjsQuery->mergeBindings($args[0]);
-		$subOjsQuery->mergeBindings($cspQuery);
-		$refColumns->setValue($args[1], ['*']);
-		$args[0] = $subOjsQuery;
 	}
 
 	function userDAO__returnUserFromRowWithData($hookName, $args)
