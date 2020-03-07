@@ -224,7 +224,39 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
+
+
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT t.email_key, d.subject, d.body
+
+				FROM ojs.email_templates t
+
+				LEFT JOIN ojs.email_templates_data d
+
+				ON t.email_key = d.email_key
+
+				WHERE t.enabled = 1 AND t.email_key LIKE '%PRE_AVALIAC%' AND d.locale = 'pt_BR'
+				QUERY
+			);
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $result->GetRowAssoc(false)['subject'],
+				'stageId' => 3,
+				'submissionId' => $this->_submissionId,
+				'itemId' => $this->_itemId,
+				'message' => $result->GetRowAssoc(false)['body'],
+			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+
+			return true;
+
 		}
+
 
 
 		return false;
