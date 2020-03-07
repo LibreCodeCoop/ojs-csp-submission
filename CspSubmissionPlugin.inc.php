@@ -335,14 +335,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function userDAO__returnUserFromRowWithData($hookName, $args)
 	{
 		list($user, $row) = $args;
-		if ($row['type'] == 'csp') {
-			$locale = AppLocale::getLocale();
-			$user->setData('id', (int)explode('|', $row['user_id'])[1]);
-			$user->setData('familyName', [$locale => $row['user_family']]);
-			$user->setData('givenName', [$locale => $row['user_given']]);
+		if (isset($row['type'])) {
+			if ($row['type'] == 'csp') {
+				$locale = AppLocale::getLocale();
+				$user->setData('id', (int)explode('|', $row['user_id'])[1]);
+				$user->setData('familyName', [$locale => $row['user_family']]);
+				$user->setData('givenName', [$locale => $row['user_given']]);
+			}
+			$user->setData('type', $row['type']);
+			$user->setData('instituicao', $row['instituicao']);
 		}
-		$user->setData('type', $row['type']);
-		$user->setData('instituicao', $row['instituicao']);
 	}
 
 	function user_getProperties_values($hookName, $args)
