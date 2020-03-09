@@ -560,8 +560,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 				break;
 			case 10: // Fotografia / Imagem satélite (Resolução mínima de 300 dpi)
-				if (($_FILES['uploadedFile']['type'] <> 'image/bmp') /*bmp*/
-				and ($_FILES['uploadedFile']['type'] <> 'image/tiff') /*tiff*/) {
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff', 'image/svg+xml'])) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
 					);
