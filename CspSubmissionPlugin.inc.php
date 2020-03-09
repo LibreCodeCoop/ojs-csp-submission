@@ -218,8 +218,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 
-			$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
-			$templateMgr->assign('decision',3); // PARRA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
+			$decision = $request->_requestVars["decision"];
+
+			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
+				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
+				$templateMgr->assign('decision',3); // PARRA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
+
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
 
 			return true;
@@ -232,23 +237,32 @@ class CspSubmissionPlugin extends GenericPlugin {
 				<<<QUERY
 				SELECT t.email_key, d.subject, d.body
 
-				FROM ojs.email_templates t
+				FROM email_templates t
 
-				LEFT JOIN ojs.email_templates_data d
+				LEFT JOIN email_templates_data d
 
 				ON t.email_key = d.email_key
 
-				WHERE t.enabled = 1 AND t.email_key LIKE '%PRE_AVALIAC%' AND d.locale = 'pt_BR'
+				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIAC%' AND d.locale = 'pt_BR'
 				QUERY
 			);
+			$i = 0;
+			while (!$result->EOF) {
+				$i++;
+				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+
+				$result->MoveNext();
+			}
 
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
-				'templates' => $result->GetRowAssoc(false)['subject'],
+				'templates' => $templateSubject,
 				'stageId' => 3,
 				'submissionId' => $this->_submissionId,
 				'itemId' => $this->_itemId,
-				'message' => $result->GetRowAssoc(false)['body'],
+				'message' => json_encode($templateBody),
+				'default' => reset($templateBody)
 			));
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
@@ -269,7 +283,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$refReviewStageId->setAccessible( true );
 		$reviewStageId = $refReviewStageId->getValue($args[1]);
 
-		if (!$reviewStageId){
+		if (!$reviewStageId && strpos($_SERVER["HTTP_REFERER"], 'submission/wizard')  ){
 			$refObject   = new ReflectionObject($args[1]);
 			$refColumns = $refObject->getProperty('columns');
 			$refColumns->setAccessible( true );
