@@ -31,6 +31,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('TemplateManager::display',array(&$this, 'registerJS'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
 			HookRegistry::register('Mail::send', array($this,'mail_send'));
+			HookRegistry::register('submissionfilesuploadform::display', array($this,'submissionfilesuploadform_display'));
 
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
@@ -170,19 +171,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
-			$args[0];
-			$article = $args[0]->submission;
-			$submissionProgress = $this->article->getData('submissionProgress');
-
-			$request = Application::getRequest();
-			$fileStage = $request->getUserVar('fileStage');
-
-			if ($submissionProgress == 0 && $fileStage == 2){
-				$templateMgr->assign('revisionOnly',false);
-				$templateMgr->assign('isReviewAttachment',true);
-				$templateMgr->assign('submissionFileOptions',[]);
-			}			
 		}elseif ($args[1] == 'reviewer/review/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
 			
@@ -228,6 +216,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 
 		return false;
+	}
+
+	public function submissionfilesuploadform_display($hookName, $args)
+	{
+		/** @var Request */
+		$request = Application::getRequest();
+		$fileStage = $request->getUserVar('fileStage');
+		if ($fileStage != 2) {
+			return;
+		}
+		$submissionDAO = Application::getSubmissionDAO();
+		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$submissionProgress = $submission->getData('submissionProgress');
+		if ($submissionProgress == 0){
+			$templateMgr =& $args[0];
+			$templateMgr->assign('revisionOnly',false);
+			$templateMgr->assign('isReviewAttachment',true);
+			$templateMgr->assign('submissionFileOptions',[]);
+		}
+
 	}
 
 	function user_getUsers_queryObject($hookName, $args)
@@ -377,7 +385,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function metadataFieldEdit($hookName, $params) {
 		$smarty =& $params[1];
 		$output =& $params[2];
-		// $output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
 		
 		if($this->sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
