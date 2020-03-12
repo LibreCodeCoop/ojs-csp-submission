@@ -77,8 +77,8 @@ class CoautorListHandler extends ListHandler {
 			'filterRemove' => __('common.filterRemove'),
 			'viewMore' => __('list.viewMore'),
 			'viewLess' => __('list.viewLess'),
-			'notFoundAndCreate' => __('plugins.generic.cspSubmission.authorNotFoundCreate'),
-			'informAName' => __('plugins.generic.cspSubmission.informAName'),
+			'notFoundAndCreate' => __('plugins.generic.CspSubmission.authorNotFoundCreate'),
+			'informAName' => __('plugins.generic.CspSubmission.informAName'),
 		);
 
 		// Attach a CSRF token for post requests
