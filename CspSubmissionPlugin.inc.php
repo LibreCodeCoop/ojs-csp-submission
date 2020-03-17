@@ -98,7 +98,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function setupGridHandler($hookName, $params) {
 		$component =& $params[0];
-		if ($component == 'plugins.generic.cspSubmission.controllers.grid.AddAuthorHandler') {
+		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
 			return true;
 		}
 		return false;
@@ -165,9 +165,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$operation = $request->getRouter()->getRequestedOp($request);
 			switch ($operation) {
 				case 'addAuthor':
-					import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
+					import('plugins.generic.CspSubmission.controllers.list.autor.CoautorListHandler');
 					$myQueueListHandler = new CoautorListHandler(array(
-						'title' => 'plugins.generic.cspSubmission.searchForAuthor',
+						'title' => 'plugins.generic.CspSubmission.searchForAuthor',
 						'getParams' => array(
 							'roleIds' => [ROLE_ID_AUTHOR],
 							'orderBy' => 'givenName',
