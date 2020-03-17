@@ -116,8 +116,31 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[0]->_data['body'] = $body;
 		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
 			return true;
+		}elseif ($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
+			$request = Application::getRequest();
+			$subject = $request->_requestVars["subject"];
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT t.email_key, d.subject, d.body
+
+				FROM email_templates t
+
+				LEFT JOIN email_templates_data d
+
+				ON t.email_key = d.email_key
+
+				WHERE t.enabled = 1 AND t.email_key = '$subject' AND d.locale = '$locale'
+				QUERY
+			);
+
+			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);
+			
 		}
 	}
+
+	
 
 	function additionalMetadataStep1($hookName, $args) {
 		$args[1];
@@ -211,6 +234,39 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
 				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
 				$templateMgr->assign('decision',3); // PARRA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
+
+			}elseif ($decision == 4){  // BOTÃO REJEITAR SUBMISSÃO
+				$locale = AppLocale::getLocale();
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT t.email_key, d.subject, d.body
+	
+					FROM email_templates t
+	
+					LEFT JOIN email_templates_data d
+	
+					ON t.email_key = d.email_key
+	
+					WHERE t.enabled = 1 AND t.email_key LIKE 'EDITOR_DECISION_DECLINE%' AND d.locale = '$locale'
+					QUERY
+				);
+				$i = 0;
+				while (!$result->EOF) {
+					$i++;
+					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+	
+					$result->MoveNext();
+				}
+
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign(array(
+					'templates' => $templateSubject,
+					'stageId' => $stageId,
+					'message' => json_encode($templateBody),
+					'default' => reset($templateBody)
+				));				
 			}
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
@@ -219,7 +275,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
 
-
+			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
 				<<<QUERY
@@ -231,7 +287,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				ON t.email_key = d.email_key
 
-				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIAC%' AND d.locale = 'pt_BR'
+				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIACAO%' AND d.locale = '$locale'
 				QUERY
 			);
 			$i = 0;
@@ -243,10 +299,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result->MoveNext();
 			}
 
+			$x = $templateSubject;
+			$y = $stageId;
+			$z = $this->_submissionId;
+			$h = $this->_itemId;
+			$i = json_encode($templateBody);
+			$j = reset($templateBody);
+
+			
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
-				'stageId' => 3,
+				'stageId' => $stageId,
 				'submissionId' => $this->_submissionId,
 				'itemId' => $this->_itemId,
 				'message' => json_encode($templateBody),
