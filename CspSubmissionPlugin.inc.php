@@ -79,7 +79,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	
 			// // Load JavaScript file
 			$templateManager->addJavaScript(
-				'tinymce',
+				'coautor',
 				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
 				array(
 					'contexts' => 'backend',
@@ -145,8 +145,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function additionalMetadataStep1($hookName, $args) {
 		$args[1];
 		$templateMgr =& $args[0];
-		$request = Application::getRequest();
-		$stageId = $request->_requestVars["stageId"];
+		$request = \Application::get()->getRequest();
+		$stageId = $request->getUserVar('stageId');
 
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -161,7 +161,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$operation = $request->getRouter()->getRequestedOp($request);
 			switch ($operation) {
 				case 'addAuthor':
@@ -187,7 +187,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
@@ -203,7 +203,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$submissionId = $request->_requestVars["submissionId"];
 			$template = new SubmissionMailTemplate($submissionId);
 
@@ -331,7 +331,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionfilesuploadform_display($hookName, $args)
 	{
 		/** @var Request */
-		$request = Application::getRequest();
+		$request = \Application::get()->getRequest();
 		$fileStage = $request->getUserVar('fileStage');
 		if ($fileStage != 2) {
 			return;
@@ -734,7 +734,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$user = $request->getUser();
 
 			if (!$args[0]->isValid() && $user) {
