@@ -10,7 +10,7 @@ div.pkp_helpers_quarter:nth-child(1){
 
 $(function () {
 	$("input[id^='title']").attr("maxlength", 70);
-	$("label[for^='title']").html("Título resumido <span class='req'>*</span>");
+	$("label[for^='title']").html("{translate key="plugins.generic.CspSubmission.smallTitle"} <span class='req'>*</span>");
 
 });
 

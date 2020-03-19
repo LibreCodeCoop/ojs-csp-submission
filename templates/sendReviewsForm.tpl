@@ -13,6 +13,17 @@
  *  another round of review.
  *}
 <script type="text/javascript">
+	// Attach the handler.
+	$(function() {ldelim}
+		$('#sendReviews').pkpHandler(
+			'$.pkp.controllers.form.CancelActionAjaxFormHandler',
+			{ldelim}
+				cancelUrl: {if $isNew}'{url|escape:javascript op="deleteQuery" queryId=$queryId csrfToken=$csrfToken params=$actionArgs escape=false}'{else}null{/if}
+			{rdelim}
+		);
+	{rdelim});
+
+
 	$(function() {ldelim}
 		$('#sendReviews').pkpHandler(
 			'$.pkp.controllers.modals.editorDecision.form.EditorDecisionFormHandler',
@@ -28,6 +39,14 @@
 		);
 	{rdelim});
 		
+	$('#subject').on('change', function() {
+		
+		var subject = this.value;		
+		var message = {$message};
+
+		tinyMCE.get($('textarea[id^="comment"]').attr('id')).setContent(message[subject])
+	});
+
 </script>
 
 <form class="pkp_form" id="sendReviews" method="post" action="{url op=$saveFormOperation}" >
@@ -64,9 +83,12 @@
 	</ul>
 
 	<div id="sendReviews-emailContent">
-		{* Message to author textarea *}
-		{fbvFormSection for="personalMessage"}
-			{fbvElement type="textarea" name="personalMessage" id="personalMessage" value=$personalMessage rich=true variables=$allowedVariables variablesType=$allowedVariablesType}
+		{fbvFormSection title="common.subject" for="subject" required="true"}				
+			{fbvElement type="select" name="subject" id="subject" from=$templates translate=false}			
+		{/fbvFormSection}
+
+		{fbvFormSection title="stageParticipants.notify.message" for="comment" required="true"}
+			{fbvElement type="textarea" name="personalMessage" id="comment" rich=true value=$default required="true"}
 		{/fbvFormSection}
 
 		{* Button to add reviews to the email automatically *}
