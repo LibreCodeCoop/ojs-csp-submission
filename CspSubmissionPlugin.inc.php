@@ -165,7 +165,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$operation = $request->getRouter()->getRequestedOp($request);
 			switch ($operation) {
 				case 'addAuthor':
-					import('plugins.generic.CspSubmission.controllers.list.autor.CoautorListHandler');
+					import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
 					$myQueueListHandler = new CoautorListHandler(array(
 						'title' => 'plugins.generic.CspSubmission.searchForAuthor',
 						'getParams' => array(
