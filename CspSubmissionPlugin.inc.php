@@ -421,7 +421,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 					->where('ui2.locale', '=', $locale);
 			});
 
-
 			if (property_exists($args[1], 'countOnly')) {
 				$refCountOnly = $refObject->getProperty('countOnly');
 				$refCountOnly->setAccessible( true );
