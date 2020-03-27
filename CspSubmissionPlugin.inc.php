@@ -126,7 +126,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
 			return true;
 		}elseif ($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();;
 			$subject = $request->_requestVars["subject"];
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
