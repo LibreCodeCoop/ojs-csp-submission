@@ -26,17 +26,15 @@
 
 	{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFields.tpl"}	
 	
-	{fbvFormArea id="contributors"}
-		{fbvFormSection description="plugins.generic.CspSubmission.InclusaoAutores.Description"}{/fbvFormSection}
-		<!--  Contributors -->
-		{capture assign=authorGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.users.author.AuthorGridHandler" op="fetchGrid" submissionId=$submissionId escape=false}{/capture}
-		{load_url_in_div id="authorsGridContainer" url=$authorGridUrl}
+	{fbvFormSection description="plugins.generic.CspSubmission.InclusaoAutores.Description"}{/fbvFormSection}
 
-		{$additionalContributorsFields}
-	{/fbvFormArea}
+	<!--  Contributors -->
+	{capture assign=authorGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.users.author.AuthorGridHandler" op="fetchGrid" submissionId=$submissionId publicationId=$publicationId escape=false}{/capture}
+	{load_url_in_div id="authorsGridContainer" url=$authorGridUrl}
+
+	{$additionalContributorsFields}
 
 	{include file="submission/form/categories.tpl"}
-
 
 	{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFields.tpl"}
 

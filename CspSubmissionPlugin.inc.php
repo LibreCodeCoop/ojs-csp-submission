@@ -52,9 +52,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
 			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'articleDAO_fromRow'));
-			HookRegistry::register('User::getUsers::queryObject', array($this, 'user_getUsers_queryObject'));
+			HookRegistry::register('User::getMany::queryObject', array($this, 'pkp_services_pkpuserservice_getmany'));
 			HookRegistry::register('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
 			HookRegistry::register('User::getProperties::values', array($this, 'user_getProperties_values'));
+			HookRegistry::register('authorform::initdata', array($this, 'authorform_initdata'));
 
 			// This hook is used to register the components this plugin implements to
 			// permit administration of custom block plugins.
@@ -79,8 +80,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 	
 			// // Load JavaScript file
 			$templateManager->addJavaScript(
-				'tinymce',
+				'coautor',
 				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+				array(
+					'contexts' => 'backend',
+					'priority' => STYLE_SEQUENCE_LAST,
+				)
+			);
+			$templateManager->addStyleSheet(
+				'coautor',
+				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
 				array(
 					'contexts' => 'backend',
 					'priority' => STYLE_SEQUENCE_LAST,
@@ -117,7 +126,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
 			return true;
 		}elseif ($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();;
 			$subject = $request->_requestVars["subject"];
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
@@ -145,8 +154,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function additionalMetadataStep1($hookName, $args) {
 		$args[1];
 		$templateMgr =& $args[0];
-		$request = Application::getRequest();
-		$stageId = $request->_requestVars["stageId"];
+		$request = \Application::get()->getRequest();
+		$stageId = $request->getUserVar('stageId');
 
 		if ($args[1] == 'submission/form/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -161,20 +170,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$operation = $request->getRouter()->getRequestedOp($request);
 			switch ($operation) {
 				case 'addAuthor':
-					import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListHandler');
-					$myQueueListHandler = new CoautorListHandler(array(
-						'title' => 'plugins.generic.CspSubmission.searchForAuthor',
-						'getParams' => array(
-							'roleIds' => [ROLE_ID_AUTHOR],
-							'orderBy' => 'givenName',
-							'orderDirection' => 'ASC'
-						),
-					));
-					$templateMgr->assign('myQueueListData', json_encode($myQueueListHandler->getConfig()));
+					if ($request->getUserVar('userId')) {
+						$args[4] = $templateMgr->fetch($this->getTemplateResource('authorFormAdd.tpl'));
+						return true;
+					}
+					import('plugins.generic.cspSubmission.controllers.list.autor.CoautorListPanel');
+
+					$coautorListHandler = new CoautorListPanel(
+						'CoautorListPanel',
+						__('plugins.generic.CspSubmission.searchForAuthor'),
+						[
+							'apiUrl' => $request->getDispatcher()->url($request, ROUTE_API, $request->getContext()->getPath(), 'users'),
+							'getParams' => [
+								'roleIds' => [ROLE_ID_AUTHOR],
+								'orderBy' => 'givenName',
+								'orderDirection' => 'ASC'
+							]
+						]
+					);
+
+					$templateMgr->assign('containerData', ['components' => ['CoautorListPanel' => $coautorListHandler->getConfig()]]);
+					$templateMgr->assign('basejs', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js');
+					$templateMgr->assign('basecss', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css');
+
 					$args[4] = $templateMgr->fetch($this->getTemplateResource('authorForm.tpl'));
 					return true;
 				case 'updateAuthor':
@@ -187,7 +209,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
@@ -203,7 +225,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$submissionId = $request->_requestVars["submissionId"];
 			$template = new SubmissionMailTemplate($submissionId);
 
@@ -331,7 +353,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionfilesuploadform_display($hookName, $args)
 	{
 		/** @var Request */
-		$request = Application::getRequest();
+		$request = \Application::get()->getRequest();
 		$fileStage = $request->getUserVar('fileStage');
 		if ($fileStage != 2) {
 			return;
@@ -348,7 +370,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	}
 
-	function user_getUsers_queryObject($hookName, $args)
+	function pkp_services_pkpuserservice_getmany($hookName, $args)
 	{
 		$refObject   = new ReflectionObject($args[1]);
 		$refReviewStageId = $refObject->getProperty('reviewStageId');
@@ -398,13 +420,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 					->where('ui2.setting_name', '=', 'instituicao2')
 					->where('ui2.locale', '=', $locale);
 			});
-	
-			$refCountOnly = $refObject->getProperty('countOnly');
-			$refCountOnly->setAccessible( true );
-			if ($refCountOnly->getValue($args[1])) {
-				$cspQuery->select(['p.idPessoa']);
-				$args[0]->select(['u.user_id'])
-					->groupBy('u.user_id');
+
+			if (property_exists($args[1], 'countOnly')) {
+				$refCountOnly = $refObject->getProperty('countOnly');
+				$refCountOnly->setAccessible( true );
+				if ($refCountOnly->getValue($args[1])) {
+					$cspQuery->select(['p.idPessoa']);
+					$args[0]->select(['u.user_id'])
+						->groupBy('u.user_id');
+				}
 			} else {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				// retrieve all columns of table users
@@ -473,6 +497,39 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$values['type'] = $type;
 			$values['instituicao'] = $user->getData('instituicao');
 		}
+	}
+
+	public function authorform_initdata($hookName, $args)
+	{
+		$request = \Application::get()->getRequest();
+		$type = $request->getUserVar('type');
+		if ($type != 'csp') {
+			return;
+		}
+
+		$form = $args[0];
+		$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
+
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$userCsp = $userDao->retrieve(
+			<<<QUERY
+			SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
+					TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
+					email, orcid,
+					TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
+				FROM csp.Pessoa p
+				WHERE p.idPessoa = ?
+			QUERY,
+			[(int) $request->getUserVar('userId')]
+		)->GetRowAssoc(0);
+		$locale = AppLocale::getLocale();
+		$form->setData('givenName', [$locale => $userCsp['given_name']]);
+		$form->setData('familyName', [$locale => $userCsp['family_name']]);
+		$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
+		$form->setData('email', $userCsp['email']);
+		$form->setData('orcid', $userCsp['orcid']);
+
+		$args[0] = $form;
 	}
 
 	/**
@@ -734,7 +791,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
-			$request = Application::getRequest();
+			$request = \Application::get()->getRequest();
 			$user = $request->getUser();
 
 			if (!$args[0]->isValid() && $user) {
