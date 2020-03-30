@@ -363,9 +363,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionProgress = $submission->getData('submissionProgress');
 		if ($submissionProgress == 0){
 			$templateMgr =& $args[0];
-			$templateMgr->assign('revisionOnly',false);
-			$templateMgr->assign('isReviewAttachment',true);
-			$templateMgr->assign('submissionFileOptions',[]);
+			$templateMgr->setData('revisionOnly',false);
+			$templateMgr->setData('isReviewAttachment',true);
+			$templateMgr->setData('submissionFileOptions',[]);
 		}
 
 	}
@@ -699,7 +699,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
-		$genreId = $args[0]->getData('genreId');		
+		$genreId = $args[0]->getData('genreId');
 		switch($genreId) {
 			case 1:	// Corpo do artigo / Tabela (Texto)
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
