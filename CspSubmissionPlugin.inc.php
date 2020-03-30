@@ -783,6 +783,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				break;		
 				case '': 							
 					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+						if ($args[0]->_errors[0]->getField() == 'genreId') {
+							unset($args[0]->_errors[0]);
+						}
 						$args[0]->addError('typeId',
 							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 						);
