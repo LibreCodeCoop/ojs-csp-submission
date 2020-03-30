@@ -132,15 +132,42 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
 				<<<QUERY
-				SELECT t.email_key, d.subject, d.body
+				SELECT a.email_key, a.body, a.subject
 
-				FROM email_templates t
+				FROM 
+				
+				(
+					SELECT 	d.email_key, d.body, d.subject	
+					FROM 	email_templates_default_data d	
+					WHERE 	d.locale = '$locale'
+					
+					UNION ALL 
+					
+					SELECT 	t.email_key, o.body, o.subject	
+					FROM 	ojs.email_templates t
+					
+					LEFT JOIN
+					(
+						SELECT 	a.body, b.subject, a.email_id
+						FROM
+						(
+							SELECT 	setting_value as body, email_id
+							FROM 	email_templates_settings 
+							WHERE 	setting_name = 'body' AND locale = '$locale'
+						)a
+						LEFT JOIN
+						(
+								SELECT 	setting_value as subject, email_id
+								FROM 	email_templates_settings
+								WHERE 	setting_name = 'subject' AND locale = '$locale'
+						)b
+						ON a.email_id = b.email_id
+					) o	
+					ON o.email_id = t.email_id
+					WHERE t.enabled = 1
+				) a
+				WHERE 	a.email_key  = '$subject'
 
-				LEFT JOIN email_templates_data d
-
-				ON t.email_key = d.email_key
-
-				WHERE t.enabled = 1 AND t.email_key = '$subject' AND d.locale = '$locale'
 				QUERY
 			);
 
@@ -257,20 +284,48 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
 				$templateMgr->assign('decision',3); // PARRA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
 
-			}elseif ($decision == 4){  // BOTÃO REJEITAR SUBMISSÃO
+			}elseif ($decision == 4 or $decision == 9){  // BOTÃO REJEITAR SUBMISSÃO
 				$locale = AppLocale::getLocale();
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
 					<<<QUERY
-					SELECT t.email_key, d.subject, d.body
-	
-					FROM email_templates t
-	
-					LEFT JOIN email_templates_data d
-	
-					ON t.email_key = d.email_key
-	
-					WHERE t.enabled = 1 AND t.email_key LIKE 'EDITOR_DECISION_DECLINE%' AND d.locale = '$locale'
+
+					SELECT a.email_key, a.body, a.subject
+
+					FROM 
+					
+					(
+						SELECT 	d.email_key, d.body, d.subject	
+						FROM 	email_templates_default_data d	
+						WHERE 	d.locale = '$locale'
+						
+						UNION ALL 
+						
+						SELECT 	t.email_key, o.body, o.subject	
+						FROM 	ojs.email_templates t
+						
+						LEFT JOIN
+						(
+							SELECT 	a.body, b.subject, a.email_id
+							FROM
+							(
+								SELECT 	setting_value as body, email_id
+								FROM 	email_templates_settings 
+								WHERE 	setting_name = 'body' AND locale = '$locale'
+							)a
+							LEFT JOIN
+							(
+									SELECT 	setting_value as subject, email_id
+									FROM 	email_templates_settings
+									WHERE 	setting_name = 'subject' AND locale = '$locale'
+							)b
+							ON a.email_id = b.email_id
+						) o	
+						ON o.email_id = t.email_id
+						WHERE t.enabled = 1
+					) a
+					WHERE 	a.email_key LIKE 'EDITOR_DECISION_DECLINE%'					
+					
 					QUERY
 				);
 				$i = 0;
@@ -301,15 +356,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
 				<<<QUERY
-				SELECT t.email_key, d.subject, d.body
-
+				SELECT t.email_key, o.body, o.subject
 				FROM email_templates t
-
-				LEFT JOIN email_templates_data d
-
-				ON t.email_key = d.email_key
-
-				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIACAO%' AND d.locale = '$locale'
+				LEFT JOIN
+				(
+					SELECT a.body, b.subject, a.email_id
+					FROM
+					(
+						SELECT setting_value as body, email_id
+						FROM ojs.email_templates_settings 
+						WHERE setting_name = 'body' AND locale = '$locale'
+					)a
+					LEFT JOIN
+					(
+							SELECT setting_value as subject, email_id
+							FROM ojs.email_templates_settings
+							WHERE setting_name = 'subject' AND locale = '$locale'
+					)b
+					ON a.email_id = b.email_id
+				) o	
+				ON o.email_id = t.email_id
+				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIACAO%'
 				QUERY
 			);
 			$i = 0;
@@ -363,9 +430,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionProgress = $submission->getData('submissionProgress');
 		if ($submissionProgress == 0){
 			$templateMgr =& $args[0];
-			$templateMgr->assign('revisionOnly',false);
-			$templateMgr->assign('isReviewAttachment',true);
-			$templateMgr->assign('submissionFileOptions',[]);
+			$templateMgr = TemplateManager::getManager($request);
+
 		}
 
 	}
