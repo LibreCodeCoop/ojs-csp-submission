@@ -51,7 +51,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
-			HookRegistry::register('ArticleDAO::_fromRow', array($this, 'articleDAO_fromRow'));
+			HookRegistry::register('SubmissionHandler::saveSubmit', array($this, 'SubmissionHandler_saveSubmit'));
 			HookRegistry::register('User::getMany::queryObject', array($this, 'pkp_services_pkpuserservice_getmany'));
 			HookRegistry::register('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
 			HookRegistry::register('User::getProperties::values', array($this, 'user_getProperties_values'));
@@ -711,7 +711,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					break;
 				}
 
-				$sectionId = $this->article->getData('sectionId');
+				$submissionDAO = Application::getSubmissionDAO();
+				$request = \Application::get()->getRequest();
+				/** @val Submission */
+				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+				$publication = $submission->getCurrentPublication();
+				$sectionId = $publication->getData('sectionId');
 				$sectionDAO = DAORegistry::getDAO('SectionDAO');
 				$section = $sectionDAO->getById($sectionId);
 				$wordCount = $section->getData('wordCount');
@@ -726,7 +731,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
 					if ($contagemPalavras > $wordCount) {
 						$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-							'sectoin' => $this->article->getData('sectionTitle'),
+							'sectoin' => $section->getTitle($publication->getData('locale')),
 							'max'     => $wordCount,
 							'count'   => $contagemPalavras
 						]);
@@ -810,9 +815,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	public function articleDAO_fromRow($hookName, $args)
+	public function SubmissionHandler_saveSubmit($hookName, $args)
 	{
-		$this->article = $args[0];
+		$this->article = $args[1];
 	}
 
 	function fileManager_downloadFile($hookName, $args)
