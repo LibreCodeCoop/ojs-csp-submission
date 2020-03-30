@@ -492,8 +492,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionProgress = $submission->getData('submissionProgress');
 		if ($submissionProgress == 0){
 			$templateMgr =& $args[0];
-			$templateMgr = TemplateManager::getManager($request);
 
+			$templateMgr->setData('revisionOnly',false);
+			$templateMgr->setData('isReviewAttachment',true);
+			$templateMgr->setData('submissionFileOptions',[]);
 		}
 
 	}
@@ -827,7 +829,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
-		$genreId = $args[0]->getData('genreId');		
+		$genreId = $args[0]->getData('genreId');
 		switch($genreId) {
 			case 1:	// Corpo do artigo / Tabela (Texto)
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
@@ -911,6 +913,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				break;		
 				case '': 							
 					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+						if ($args[0]->_errors[0]->getField() == 'genreId') {
+							unset($args[0]->_errors[0]);
+						}
 						$args[0]->addError('typeId',
 							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 						);
