@@ -1,16 +1,3 @@
-{**
- * templates/controllers/grid/queries/form/queryForm.tpl
- *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
- *
- * @brief Query grid form
- *
- * @uses $hasParticipants boolean Are any participants available
- * @uses $queryParticipantsListData array JSON-encoded data for the SelectUserListPanel
- *}
-
  {if !$hasParticipants}
 		{translate key="submission.query.noParticipantOptions"}
  {else}
@@ -62,20 +49,24 @@
 			{fbvFormSection}
 				{assign var="uuid" value=""|uniqid|escape}
 				<div id="queryParticipants-{$uuid}">
-					<script type="text/javascript">
-						pkp.registry.init('queryParticipants-{$uuid}', 'SelectListPanel', {$queryParticipantsListData});
-					</script>
+					<list-panel
+						v-bind="components.queryParticipants"
+						@set="set"
+					/>
 				</div>
+				<script type="text/javascript">
+					pkp.registry.init('queryParticipants-{$uuid}', 'Container', {$queryParticipantsListData|json_encode});
+				</script>
 			{/fbvFormSection}
 		{/if}
 
 		{fbvFormArea id="queryContentsArea"}
-			{fbvFormSection title="common.subject" for="subject" required="true"}				
-				{fbvElement type="select" id="subject" from=$templates translate=false}			
+			{fbvFormSection title="common.subject" for="subject" required="true"}
+				{fbvElement type="select" id="subject" from=$templates translate=false}
 			{/fbvFormSection}
 
 			{fbvFormSection title="stageParticipants.notify.message" for="comment" required="true"}
-				{fbvElement type="textarea" id="comment" rich=true value=$default required="true"}
+				{fbvElement type="textarea" id="comment" rich=true value=$comment required="true"}
 			{/fbvFormSection}
 		{/fbvFormArea}
 

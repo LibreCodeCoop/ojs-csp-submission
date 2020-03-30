@@ -27,7 +27,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($success) {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
-			HookRegistry::register('TemplateManager::fetch', array($this, 'additionalMetadataStep1'));
+			HookRegistry::register('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
 			HookRegistry::register('TemplateManager::display',array(&$this, 'registerJS'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
 			HookRegistry::register('Mail::send', array($this,'mail_send'));
@@ -177,9 +177,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 	}
 
-	
-
-	function additionalMetadataStep1($hookName, $args) {
+	function TemplateManager_fetch($hookName, $args) {
 		$args[1];
 		$templateMgr =& $args[0];
 		$request = \Application::get()->getRequest();
@@ -450,14 +448,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result->MoveNext();
 			}
 
-			$x = $templateSubject;
-			$y = $stageId;
-			$z = $this->_submissionId;
-			$h = $this->_itemId;
-			$i = json_encode($templateBody);
-			$j = reset($templateBody);
-
-			
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
@@ -465,7 +455,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'submissionId' => $this->_submissionId,
 				'itemId' => $this->_itemId,
 				'message' => json_encode($templateBody),
-				'default' => reset($templateBody)
+				'comment' => reset($templateBody)
 			));
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
