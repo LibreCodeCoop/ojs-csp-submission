@@ -33,6 +33,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Mail::send', array($this,'mail_send'));
 			HookRegistry::register('submissionfilesuploadform::display', array($this,'submissionfilesuploadform_display'));
 
+			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
+
 			// Hook for initData in two forms -- init the new field
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
 
@@ -174,6 +176,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);
 			
+		}
+	}
+
+	public function APIHandler_endpoints($hookName, $args) {
+		if (isset($args[0]['GET'])) {
+			foreach($args[0]['GET'] as $key => $endpoint) {
+				if ($endpoint['pattern'] == '/{contextPath}/api/{version}/users') {
+					if (!in_array(ROLE_ID_AUTHOR, $endpoint['roles'])) {
+						$args[0]['GET'][$key]['roles'][] = ROLE_ID_AUTHOR;
+					}
+				}
+			}
 		}
 	}
 
