@@ -265,20 +265,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
-			$request = \Application::get()->getRequest();
-			$submissionId = $request->_requestVars["submissionId"];
-			$template = new SubmissionMailTemplate($submissionId);
+			
+			//$request = \Application::get()->getRequest();
+			//$submissionId = $request->_requestVars["submissionId"];
+			//$template = new SubmissionMailTemplate($submissionId);
 
-			$templateMgr->assign('message',$template->getBody(),AppLocale::getLocale());
+			//$templateMgr->assign('message',$template->getBody(),AppLocale::getLocale());
 
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+			//$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
 
 
-			return true;
-		}elseif ($args[1] == 'controllers/grid/grid.tpl' && $stageId == 3) {
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
+			//return true;
+	//	}elseif ($args[1] == 'controllers/grid/grid.tpl' && $stageId == 3) {
+			//$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
 
-			return true;
+			//return true;
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
 			if ($stageId == 3){
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage3.tpl'));
@@ -698,7 +699,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('ConflitoInteresse.tpl'));
-		$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
+		//$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('Agradecimentos.tpl'));
 		
 		if($this->sectionId == 6){	
@@ -718,8 +719,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars =& $params[1];
 		$userVars[] = 'ConflitoInteresse';
 		$userVars[] = 'ConflitoInteresseQual';
-		$userVars[] = 'FonteFinanciamento';
-		$userVars[] = 'FonteFinanciamentoQual';		
+		//$userVars[] = 'FonteFinanciamento';
+		//$userVars[] = 'FonteFinanciamentoQual';		
 		$userVars[] = 'Agradecimentos';		
 		$userVars[] = 'CodigoTematico';
 		$userVars[] = 'Tema';
@@ -738,8 +739,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article = $form->submission;
 		$article->setData('ConflitoInteresse', $form->getData('ConflitoInteresse'));
 		$article->setData('ConflitoInteresseQual', $form->getData('ConflitoInteresseQual'));
-		$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
-		$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
+		//$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
+		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
 		$article->setData('Agradecimentos', $form->getData('Agradecimentos'));	
 		$article->setData('CodigoTematico', $form->getData('CodigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
@@ -776,8 +777,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$this->sectionId = $article->getData('sectionId');
 		$form->setData('ConflitoInteresse', $article->getData('ConflitoInteresse'));				
 		$form->setData('ConflitoInteresseQual', $article->getData('ConflitoInteresseQual'));	
-		$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
-		$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
+		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
+		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
 		$form->setData('Agradecimentos', $article->getData('Agradecimentos'));			
 		$form->setData('CodigoTematico', $article->getData('CodigoTematico'));	
 		$form->setData('Tema', $article->getData('Tema'));	
@@ -797,9 +798,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$form->addCheck(new FormValidatorLength($form, 'ConflitoInteresseQual', 'required', 'plugins.generic.CspSubmission.ConflitoInteresseQual.Valid', '>', 0));
 			
 		}
-		if($_POST['FonteFinanciamento'] == "yes"){
-			$form->addCheck(new FormValidatorLength($form, 'FonteFinanciamentoQual', 'required', 'plugins.generic.CspSubmission.FonteFinanciamentoQual.Valid', '>', 0));			
-		}		
+		//if($_POST['FonteFinanciamento'] == "yes"){
+		//	$form->addCheck(new FormValidatorLength($form, 'FonteFinanciamentoQual', 'required', 'plugins.generic.CspSubmission.FonteFinanciamentoQual.Valid', '>', 0));			
+		//}		
 
 		if($this->sectionId == 4){		
 			$form->addCheck(new FormValidatorLength($form, 'CodigoTematico', 'required', 'plugins.generic.CspSubmission.CodigoTematico.Valid', '>', 0));			
