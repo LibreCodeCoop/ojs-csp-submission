@@ -249,6 +249,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
+			return;
 			$request = \Application::get()->getRequest();
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
@@ -295,10 +296,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
-			return;
+			
 			$decision = $request->_requestVars["decision"];
 
 			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
+				return;
 				
 				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
 				$templateMgr->assign('decision',3); // PASSA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
