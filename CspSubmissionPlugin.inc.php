@@ -295,7 +295,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
-
+			return;
 			$decision = $request->_requestVars["decision"];
 
 			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
@@ -430,7 +430,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
-
+			return;	
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
