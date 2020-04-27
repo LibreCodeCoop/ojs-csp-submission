@@ -198,9 +198,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$stageId = $request->getUserVar('stageId');
 
 		if ($args[1] == 'submission/form/step1.tpl') {
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
+			//$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
 			
-			return true;
+			//return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 			
