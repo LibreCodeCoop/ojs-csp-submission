@@ -116,6 +116,7 @@ class CspSubmissionPlugin extends GenericPlugin {
   }
 	
 	function mail_send($hookName, $args){
+		return;
 		//$stageId = $this->article->getData('stageId');
 		$stageId = $args[0]->submission->_data["stageId"];
 
@@ -366,6 +367,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				));						
 
 			}elseif ($decision == 4 or $decision == 9){  // BOTÃO REJEITAR SUBMISSÃO
+				return;
 				$locale = AppLocale::getLocale();
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
@@ -405,7 +407,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						ON o.email_id = t.email_id
 						WHERE t.enabled = 1
 					) a
-					WHERE 	a.email_key LIKE 'EDITOR_DECISION_DECLINE%'					
+					WHERE 	a.email_key LIKE 'EDITOR_DECISION_INITIAL_DECLINE%'					
 					
 					QUERY
 				);
@@ -431,8 +433,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
-			return;	
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "1") {
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
@@ -483,6 +484,106 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "4") {
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT t.email_key, o.body, o.subject
+				FROM email_templates t
+				LEFT JOIN
+				(
+					SELECT a.body, b.subject, a.email_id
+					FROM
+					(
+						SELECT setting_value as body, email_id
+						FROM ojs.email_templates_settings 
+						WHERE setting_name = 'body' AND locale = '$locale'
+					)a
+					LEFT JOIN
+					(
+							SELECT setting_value as subject, email_id
+							FROM ojs.email_templates_settings
+							WHERE setting_name = 'subject' AND locale = '$locale'
+					)b
+					ON a.email_id = b.email_id
+				) o	
+				ON o.email_id = t.email_id
+				WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO%'
+				QUERY
+			);
+			$i = 0;
+			while (!$result->EOF) {
+				$i++;
+				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+
+				$result->MoveNext();
+			}
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $templateSubject,
+				'stageId' => $stageId,
+				'submissionId' => $this->_submissionId,
+				'itemId' => $this->_itemId,
+				'message' => json_encode($templateBody),
+				'comment' => reset($templateBody)
+			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+
+			return true;			
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "5") {
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT t.email_key, o.body, o.subject
+				FROM email_templates t
+				LEFT JOIN
+				(
+					SELECT a.body, b.subject, a.email_id
+					FROM
+					(
+						SELECT setting_value as body, email_id
+						FROM ojs.email_templates_settings 
+						WHERE setting_name = 'body' AND locale = '$locale'
+					)a
+					LEFT JOIN
+					(
+							SELECT setting_value as subject, email_id
+							FROM ojs.email_templates_settings
+							WHERE setting_name = 'subject' AND locale = '$locale'
+					)b
+					ON a.email_id = b.email_id
+				) o	
+				ON o.email_id = t.email_id
+				WHERE t.enabled = 1 AND t.email_key LIKE 'EDITORACAO%'
+				QUERY
+			);
+			$i = 0;
+			while (!$result->EOF) {
+				$i++;
+				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+
+				$result->MoveNext();
+			}
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $templateSubject,
+				'stageId' => $stageId,
+				'submissionId' => $this->_submissionId,
+				'itemId' => $this->_itemId,
+				'message' => json_encode($templateBody),
+				'comment' => reset($templateBody)
+			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+
+			return true;			
 		}
 
 
