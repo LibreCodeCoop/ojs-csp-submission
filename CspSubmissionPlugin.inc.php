@@ -36,13 +36,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
 
 			// Hook for initData in two forms -- init the new field
-			//HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
+			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
 
 			// Hook for readUserVars in two forms -- consider the new field entry
-			//HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));
+			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));
 
 			// Hook for execute in two forms -- consider the new field in the article settings
-			//HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecuteStep3'));
+			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecuteStep3'));
 			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
 
 			// Hook for save in two forms -- add validation for the new field
@@ -949,7 +949,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$output .= $smarty->fetch($this->getTemplateResource('CodigoTematico.tpl'));
 		}
 
-		//$output .= $smarty->fetch($this->getTemplateResource('ConflitoInteresse.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('ConflitoInteresse.tpl'));
 		//$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('Agradecimentos.tpl'));
 		
