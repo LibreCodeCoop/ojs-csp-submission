@@ -9,14 +9,12 @@
  * submission metadata.
  *}
 
-{fbvElement id="metadataModal" type="hidden" name="metadataModal" value=$metadataModal|default:0}
 {if $citationsEnabled && array_intersect(array(ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR, ROLE_ID_ASSISTANT, ROLE_ID_REVIEWER, ROLE_ID_AUTHOR), (array)$userRoles)}
 	{assign var=citationsEnabled value=true}
 {else}
 	{assign var=citationsEnabled value=false}
 {/if}
-{if $coverageEnabled || $typeEnabled || $sourceEnabled || $rightsEnabled ||
-		$languagesEnabled || $subjectsEnabled || $keywordsEnabled || $agenciesEnabled || ($citationsEnabled && !$metadataModal) || $disciplinesEnabled}
+{if $coverageEnabled || $typeEnabled || $sourceEnabled || $rightsEnabled || $languagesEnabled || $subjectsEnabled || $keywordsEnabled || $citationsEnabled || $disciplinesEnabled}
 	{* {fbvFormSection title="submission.metadata"}
 		<p class="description">{translate key="submission.metadataDescription"}</p>
 	{/fbvFormSection} *}
@@ -46,8 +44,8 @@
 	{/fbvFormArea}
 {/if}
 
-{if $languagesEnabled || $subjectsEnabled || $keywordsEnabled || $agenciesEnabled || ($citationsEnabled && !$metadataModal) || $disciplinesEnabled}
-	{fbvFormArea id="tagitFields" }
+{if $languagesEnabled || $subjectsEnabled || $agenciesEnabled || $keywordsEnabled || $citationsEnabled || $disciplinesEnabled}
+	{fbvFormArea id="tagitFields"}
 		{if $languagesEnabled}
 			{$languagesField}
 		{/if}
@@ -71,9 +69,9 @@
 				{fbvElement type="keyword" id="agencies" multilingual=true current=$agencies disabled=$readOnly required=$agenciesRequired}
 			{/fbvFormSection}
 		{/if}
-		{if $citationsEnabled && !$metadataModal}
+		{if $citationsEnabled}
 			{fbvFormSection label="submission.citations" required=$citationsRequired}
-				{fbvElement type="textarea" id="citations" value=$citations multilingual=false disabled=$readOnly required=$citationsRequired}
+				{fbvElement type="textarea" id="citationsRaw" value=$citationsRaw multilingual=false disabled=$readOnly required=$citationsRequired}
 			{/fbvFormSection}
 		{/if}
 	{/fbvFormArea}

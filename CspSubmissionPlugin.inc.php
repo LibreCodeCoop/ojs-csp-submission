@@ -271,17 +271,161 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
-			
-			//$request = \Application::get()->getRequest();
-			//$submissionId = $request->_requestVars["submissionId"];
-			//$template = new SubmissionMailTemplate($submissionId);
+			if($stageId == 5){
+				$locale = AppLocale::getLocale();
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT t.email_key, o.body, o.subject
+					FROM email_templates t
+					LEFT JOIN
+					(
+						SELECT a.body, b.subject, a.email_id
+						FROM
+						(
+							SELECT setting_value as body, email_id
+							FROM ojs.email_templates_settings 
+							WHERE setting_name = 'body' AND locale = '$locale'
+						)a
+						LEFT JOIN
+						(
+								SELECT setting_value as subject, email_id
+								FROM ojs.email_templates_settings
+								WHERE setting_name = 'subject' AND locale = '$locale'
+						)b
+						ON a.email_id = b.email_id
+					) o	
+					ON o.email_id = t.email_id
+					WHERE t.enabled = 1 AND t.email_key LIKE 'LAYOUT%'
+					QUERY
+				);
+				$i = 0;
+				while (!$result->EOF) {
+					$i++;
+					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+	
+					$result->MoveNext();
+				}
+	
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign(array(
+					'templates' => $templateSubject,
+					//'stageId' => $stageId,
+					//'submissionId' => $this->_submissionId,
+					//'itemId' => $this->_itemId,
+					'message' => json_encode($templateBody),
+					'comment' => reset($templateBody)
+				));
 
-			//$templateMgr->assign('message',$template->getBody(),AppLocale::getLocale());
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
 
-			//$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+				return true;				
+			}elseif($stageId == 4){
+				$locale = AppLocale::getLocale();
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT t.email_key, o.body, o.subject
+					FROM email_templates t
+					LEFT JOIN
+					(
+						SELECT a.body, b.subject, a.email_id
+						FROM
+						(
+							SELECT setting_value as body, email_id
+							FROM ojs.email_templates_settings 
+							WHERE setting_name = 'body' AND locale = '$locale'
+						)a
+						LEFT JOIN
+						(
+								SELECT setting_value as subject, email_id
+								FROM ojs.email_templates_settings
+								WHERE setting_name = 'subject' AND locale = '$locale'
+						)b
+						ON a.email_id = b.email_id
+					) o	
+					ON o.email_id = t.email_id
+					WHERE t.enabled = 1 AND t.email_key LIKE 'COPYEDIT%'
+					QUERY
+				);
+				$i = 0;
+				while (!$result->EOF) {
+					$i++;
+					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+	
+					$result->MoveNext();
+				}
+	
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign(array(
+					'templates' => $templateSubject,
+					//'stageId' => $stageId,
+					//'submissionId' => $this->_submissionId,
+					//'itemId' => $this->_itemId,
+					'message' => json_encode($templateBody),
+					'comment' => reset($templateBody)
+				));
+
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
+				return true;				
+
+			}elseif($stageId == 3 OR $stageId == 1){
+				$locale = AppLocale::getLocale();
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT t.email_key, o.body, o.subject
+					FROM email_templates t
+					LEFT JOIN
+					(
+						SELECT a.body, b.subject, a.email_id
+						FROM
+						(
+							SELECT setting_value as body, email_id
+							FROM ojs.email_templates_settings 
+							WHERE setting_name = 'body' AND locale = '$locale'
+						)a
+						LEFT JOIN
+						(
+								SELECT setting_value as subject, email_id
+								FROM ojs.email_templates_settings
+								WHERE setting_name = 'subject' AND locale = '$locale'
+						)b
+						ON a.email_id = b.email_id
+					) o	
+					ON o.email_id = t.email_id
+					WHERE t.enabled = 1 AND t.email_key = 'EDITOR_ASSIGN'
+					QUERY
+				);
+				$i = 0;
+				while (!$result->EOF) {
+					$i++;
+					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+	
+					$result->MoveNext();
+				}
+	
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign(array(
+					'templates' => $templateSubject,
+					//'stageId' => $stageId,
+					//'submissionId' => $this->_submissionId,
+					//'itemId' => $this->_itemId,
+					'message' => json_encode($templateBody),
+					'comment' => reset($templateBody)
+				));
+
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
+				return true;				
+
+			}
 
 
-			//return true;
 	//	}elseif ($args[1] == 'controllers/grid/grid.tpl' && $stageId == 3) {
 			//$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
 
@@ -794,7 +938,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function metadataFieldEdit($hookName, $params) {
 		$smarty =& $params[1];
 		$output =& $params[2];
-		$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
+		//$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
 		
 		if($this->sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
@@ -825,7 +969,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'ConflitoInteresse';
-		$userVars[] = 'ConflitoInteresseQual';
+		//$userVars[] = 'ConflitoInteresseQual';
 		//$userVars[] = 'FonteFinanciamento';
 		//$userVars[] = 'FonteFinanciamentoQual';		
 		$userVars[] = 'Agradecimentos';		
@@ -836,16 +980,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'DOI';
 		
 		return false;
-	}
+	} 
 
 	/**
 	 * Set article Campo1
 	 */
-	function metadataExecuteStep3($hookName, $params) {
+ 	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$article->setData('ConflitoInteresse', $form->getData('ConflitoInteresse'));
-		$article->setData('ConflitoInteresseQual', $form->getData('ConflitoInteresseQual'));
+		//$article->setData('ConflitoInteresseQual', $form->getData('ConflitoInteresseQual'));
 		//$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
 		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
 		$article->setData('Agradecimentos', $form->getData('Agradecimentos'));	
@@ -855,7 +999,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('DOI', $form->getData('DOI'));		
 		
 		return false;
-	}
+	} 
 
 	function metadataExecuteStep4($hookName, $params) {
 		$form =& $params[0];
@@ -878,12 +1022,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * Init article Campo1
 	 */
-	function metadataInitData($hookName, $params) {
+ 	function metadataInitData($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
 		$form->setData('ConflitoInteresse', $article->getData('ConflitoInteresse'));				
-		$form->setData('ConflitoInteresseQual', $article->getData('ConflitoInteresseQual'));	
+		//$form->setData('ConflitoInteresseQual', $article->getData('ConflitoInteresseQual'));	
 		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
 		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
 		$form->setData('Agradecimentos', $article->getData('Agradecimentos'));			
@@ -893,7 +1037,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('DOI', $article->getData('DOI'));	
 		
 		return false;
-	}
+	} 
 
 	/**
 	 * Add check/validation for the Campo1 field (= 6 numbers)
@@ -901,10 +1045,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function addCheck($hookName, $params) {
 		$form =& $params[0];
 		//$form->addCheck(new FormValidatorRegExp($form, 'ConflitoInteresse', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/')); // COLOCAR UMA VALIDACAO DE QUANTIDADE MAXIMA DE CARACTERES 	
-		if($_POST['ConflitoInteresse'] == "yes"){
+/* 		if($_POST['ConflitoInteresse'] == "yes"){
 			$form->addCheck(new FormValidatorLength($form, 'ConflitoInteresseQual', 'required', 'plugins.generic.CspSubmission.ConflitoInteresseQual.Valid', '>', 0));
 			
-		}
+		} */
 		//if($_POST['FonteFinanciamento'] == "yes"){
 		//	$form->addCheck(new FormValidatorLength($form, 'FonteFinanciamentoQual', 'required', 'plugins.generic.CspSubmission.FonteFinanciamentoQual.Valid', '>', 0));			
 		//}		
