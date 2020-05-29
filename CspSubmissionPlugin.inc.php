@@ -250,7 +250,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
-			return;
+			
 			$request = \Application::get()->getRequest();
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));

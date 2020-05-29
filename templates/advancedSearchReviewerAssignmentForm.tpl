@@ -1,13 +1,4 @@
-{**
- * templates/controllers/grid/user/reviewer/form/advancedSearchReviewerAssignmentForm.tpl
- *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
- *
- * Assigns the reviewer (selected from the reviewerSelect grid) to review the submission.
- *
- *}
+
 <script type="text/javascript">
 	$(function() {ldelim}
 		// Attach the form handler for second form.

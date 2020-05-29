@@ -1,9 +1,9 @@
 {**
  * templates/controllers/grid/user/reviewer/form/reviewerFormFooter.tpl
  *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2014-2020 Simon Fraser University
+ * Copyright (c) 2003-2020 John Willinsky
+ * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * The non-searching part of the add reviewer form
  *
@@ -51,8 +51,8 @@
 			extraContent=$extraContent
 		}
 	</div>
-
-	{fbvFormSection list=true }
+	<div style="display:none">
+	{fbvFormSection list=true title="editor.submissionReview.reviewType"}
 		{foreach from=$reviewMethods key=methodId item=methodTranslationKey}
 			{assign var=elementId value="reviewMethod"|concat:"-"|concat:$methodId}
 			{if $reviewMethod == $methodId}
@@ -60,10 +60,10 @@
 			{else}
 				{assign var=elementChecked value=false}
 			{/if}
-			{fbvElement type="hidden" name="reviewMethod" id=$elementId value=$methodId checked=$elementChecked label=$methodTranslationKey}
+			{fbvElement type="radio" name="reviewMethod" id=$elementId value=$methodId checked=$elementChecked label=$methodTranslationKey}
 		{/foreach}
 	{/fbvFormSection}
-
+	</div>
 	{if count($reviewForms)>0}
 		{fbvFormSection title="submission.reviewForm"}
 			{fbvElement type="select" name="reviewFormId" id="reviewFormId" defaultLabel="manager.reviewForms.noneChosen"|translate defaultValue="0" translate=false from=$reviewForms selected=$reviewFormId}
