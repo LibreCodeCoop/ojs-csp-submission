@@ -445,7 +445,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$decision = $request->_requestVars["decision"];
 
 			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
-				return;
+				/* 
 				
 				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
 				$templateMgr->assign('decision',3); // PASSA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
@@ -508,7 +508,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'stageId' => $stageId,
 					'message' => json_encode($templateBody),
 					'default' => reset($templateBody)
-				));						
+				));						 */
 
 			}elseif ($decision == 4 or $decision == 9){  // BOTÃO REJEITAR SUBMISSÃO
 				return;

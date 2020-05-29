@@ -1,9 +1,9 @@
 {**
  * templates/controllers/modals/editorDecision/form/sendReviewsForm.tpl
  *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2014-2020 Simon Fraser University
+ * Copyright (c) 2003-2020 John Willinsky
+ * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * @brief Form used to send reviews to author
  *
@@ -13,17 +13,6 @@
  *  another round of review.
  *}
 <script type="text/javascript">
-	// Attach the handler.
-	$(function() {ldelim}
-		$('#sendReviews').pkpHandler(
-			'$.pkp.controllers.form.CancelActionAjaxFormHandler',
-			{ldelim}
-				cancelUrl: {if $isNew}'{url|escape:javascript op="deleteQuery" queryId=$queryId csrfToken=$csrfToken params=$actionArgs escape=false}'{else}null{/if}
-			{rdelim}
-		);
-	{rdelim});
-
-
 	$(function() {ldelim}
 		$('#sendReviews').pkpHandler(
 			'$.pkp.controllers.modals.editorDecision.form.EditorDecisionFormHandler',
@@ -38,15 +27,6 @@
 			{rdelim}
 		);
 	{rdelim});
-		
-	$('#subject').on('change', function() {
-		
-		var subject = this.value;		
-		var message = {$message};
-
-		tinyMCE.get($('textarea[id^="comment"]').attr('id')).setContent(message[subject])
-	});
-
 </script>
 
 <form class="pkp_form" id="sendReviews" method="post" action="{url op=$saveFormOperation}" >
@@ -64,31 +44,32 @@
 		{elseif $decision == $smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT}
 			{assign var="checkedResubmit" value="1"}
 		{/if}
-		<ul class="checkbox_and_radiobutton" style="display:none">
-			{fbvElement type="radio" id="decisionRevisions" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS checked=$checkedRevisions label="editor.review.NotifyAuthorRevisions"}
-			{fbvElement type="radio" id="decisionResubmit" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT checked=$checkedResubmit label="editor.review.NotifyAuthorResubmit"}
-		</ul>
+		{fbvFormSection title="editor.review.newReviewRound"}
+			<ul class="checkbox_and_radiobutton">
+				{fbvElement type="radio" id="decisionRevisions" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS checked=$checkedRevisions label="editor.review.NotifyAuthorRevisions"}
+				{fbvElement type="radio" id="decisionResubmit" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT checked=$checkedResubmit label="editor.review.NotifyAuthorResubmit"}
+			</ul>
+		{/fbvFormSection}
 	{/if}
 
+	<div style="display:none">
 	{capture assign="sendEmailLabel"}{translate key="editor.submissionReview.sendEmail" authorName=$authorName}{/capture}
 	{if $skipEmail}
 		{assign var="skipEmailSkip" value=true}
 	{else}
 		{assign var="skipEmailSend" value=true}
 	{/if}
-
-	<ul class="checkbox_and_radiobutton" style="display:none">
-		{fbvElement type="radio" id="skipEmail-send" name="skipEmail" value="0" checked=$skipEmailSend label=$sendEmailLabel translate=false}
-		{fbvElement type="radio" id="skipEmail-skip" name="skipEmail" value="1" checked=$skipEmailSkip label="editor.submissionReview.skipEmail"}
-	</ul>
-
+	{fbvFormSection title="common.sendEmail"}
+		<ul class="checkbox_and_radiobutton">
+			{fbvElement type="radio" id="skipEmail-send" name="skipEmail" value="0" checked=$skipEmailSend label=$sendEmailLabel translate=false}
+			{fbvElement type="radio" id="skipEmail-skip" name="skipEmail" value="1" checked=$skipEmailSkip label="editor.submissionReview.skipEmail"}
+		</ul>
+	{/fbvFormSection}
+	</div>
 	<div id="sendReviews-emailContent">
-		{fbvFormSection title="common.subject" for="subject" required="true"}				
-			{fbvElement type="select" name="subject" id="subject" from=$templates translate=false}			
-		{/fbvFormSection}
-
-		{fbvFormSection title="stageParticipants.notify.message" for="comment" required="true"}
-			{fbvElement type="textarea" name="personalMessage" id="comment" rich=true value=$default required="true"}
+		{* Message to author textarea *}
+		{fbvFormSection for="personalMessage"}
+			{fbvElement type="textarea" name="personalMessage" id="personalMessage" value=$personalMessage rich=true variables=$allowedVariables variablesType=$allowedVariablesType}
 		{/fbvFormSection}
 
 		{* Button to add reviews to the email automatically *}
