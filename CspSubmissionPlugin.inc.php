@@ -728,8 +728,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
 			return true;			
-		}
 
+		}elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadForm.tpl'));
+
+			return true;
+
+		}
 
 
 		return false;
