@@ -746,18 +746,143 @@ class CspSubmissionPlugin extends GenericPlugin {
 		/** @var Request */
 		$request = \Application::get()->getRequest();
 		$fileStage = $request->getUserVar('fileStage');
-		if ($fileStage != 2) {
-			return;
-		}
 		$submissionDAO = Application::getSubmissionDAO();
 		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 		$submissionProgress = $submission->getData('submissionProgress');
-		if ($submissionProgress == 0){
-			$templateMgr =& $args[0];
+		$stageId = $request->getUserVar('stageId');		
 
-			$templateMgr->setData('revisionOnly',false);
+		$templateMgr =& $args[0];
+
+		if ($fileStage == 2){			
+
+/* 			$templateMgr->setData('revisionOnly',false);
 			$templateMgr->setData('isReviewAttachment',true);
 			$templateMgr->setData('submissionFileOptions',[]);
+ */
+			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+		}	
+
+		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
+
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT A.genre_id, setting_value
+				FROM ojs.genre_settings A
+				LEFT JOIN ojs.genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA%'							
+				QUERY
+			);
+			while (!$result->EOF) {
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+				$result->MoveNext();
+			}
+			
+			$templateMgr->setData('submissionFileGenres', $genreList);	
+			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
+
+		}
+
+		if ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
+
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT A.genre_id, setting_value
+				FROM ojs.genre_settings A
+				LEFT JOIN ojs.genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AVALIADOR%'							
+				QUERY
+			);
+			while (!$result->EOF) {
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+				$result->MoveNext();
+			}
+			
+			$templateMgr->setData('submissionFileGenres', $genreList);	
+			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
+
+		}
+		if ($fileStage == 6) { // AVALIADOR FAZENDO UPLOAD DE PARECER
+
+			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+
+		}		
+		if ($fileStage == 9) { // EDITORES ASSISTENTES ENVIANDO ARQUIVOS PARA EDIÇÃO DE TEXTO
+
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT A.genre_id, setting_value
+				FROM ojs.genre_settings A
+				LEFT JOIN ojs.genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'							
+				QUERY
+			);
+			while (!$result->EOF) {
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+				$result->MoveNext();
+			}
+			
+			$templateMgr->setData('submissionFileGenres', $genreList);			
+
+		}		
+		if ($fileStage == 15) { // AUTOR SUBMETENDO REVISÃO
+
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT A.genre_id, setting_value
+				FROM ojs.genre_settings A
+				LEFT JOIN ojs.genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_%'							
+				QUERY
+			);
+			while (!$result->EOF) {
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+				$result->MoveNext();
+			}
+			
+			$templateMgr->setData('submissionFileGenres', $genreList);			
+
+		}		
+		if ($fileStage == 18) {  // UPLOADS NO BOX DISCUSSÃO 
+			if($stageId == 5){
+				$locale = AppLocale::getLocale();
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT A.genre_id, setting_value
+					FROM ojs.genre_settings A
+					LEFT JOIN ojs.genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'							
+					QUERY
+				);
+				while (!$result->EOF) {
+					$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+	
+					$result->MoveNext();
+				}
+				
+				$templateMgr->setData('submissionFileGenres', $genreList);			
+	
+			}else{
+				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+			}
+				
 		}
 
 	}
