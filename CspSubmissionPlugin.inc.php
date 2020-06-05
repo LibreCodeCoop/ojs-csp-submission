@@ -116,20 +116,21 @@ class CspSubmissionPlugin extends GenericPlugin {
   }
 	
 	function mail_send($hookName, $args){
-		return;
-		//$stageId = $this->article->getData('stageId');
-		$stageId = $args[0]->submission->_data["stageId"];
+		//return;
+		$request = \Application::get()->getRequest();
+		$stageId = $request->getUserVar('stageId');		
 
-		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
+/* 		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
 			$body = $args[0]->_data['body'];
 			
 			preg_match("/href='(?P<url>.*)' class='submissionReview/",$body,$matches);
 			$body = str_replace('{$submissionReviewUrlAccept}', $matches['url']."&accept=yes", $body);
 			$body = str_replace('{$submissionReviewUrlReject}', $matches['url']."&accept=no", $body);
 			$args[0]->_data['body'] = $body;
-		}elseif ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
+		}
+		if ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
 			return true;
-		}elseif ($args[0]->emailKey == "EDITOR_DECISION_INITIAL_DECLINE"){
+		}if ($args[0]->emailKey == "EDITOR_DECISION_INITIAL_DECLINE"){
 			$request = \Application::get()->getRequest();;
 			$subject = $request->_requestVars["subject"];
 			$locale = AppLocale::getLocale();
@@ -175,8 +176,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 				QUERY
 			);
 
-			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);
+			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);			
+		} */
+
+		if($request->_router->_page == "reviewer"){ // AVALIADOR RECEBE E-MAIL DE AGRADECIMENTO APÓS SUBMETER AVALIAÇÃO
+			//// FALTA ADICIONAR A VERIFICAÇÃO DA PRIMEIRA ETAPA POIS ESTÁ SE APLICANDO
 			
+			$args[0]->_data['body'] = "xxxx";	
+			$args[0]->emailKey = "REVIEW_THANK";
+			$args[0]->_data["recipients"][0]["name"] = $args[0]->params["senderName"];
+			$args[0]->_data["recipients"][0]["email"] = $args[0]->params["senderEmail"];
+
 		}
 	}
 
@@ -759,7 +769,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('isReviewAttachment',true);
 			$templateMgr->setData('submissionFileOptions',[]);
  */
-			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+			//$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT A.genre_id, setting_value
+				FROM ojs.genre_settings A
+				LEFT JOIN ojs.genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = '$locale' AND entry_key = 'SUBMISSAO_PDF'							
+				QUERY
+			);
+			while (!$result->EOF) {
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+				$result->MoveNext();
+			}
+			
+			$templateMgr->setData('submissionFileGenres', $genreList);	
+			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES			
 		}	
 
 		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
@@ -1292,7 +1322,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;		
-				case '': 							
+				case '46': 	// PDF DA SECRETARIA			
 					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
 						if ($args[0]->_errors[0]->getField() == 'genreId') {
 							unset($args[0]->_errors[0]);
@@ -1300,13 +1330,51 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$args[0]->addError('typeId',
 							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 						);
-					}else{				
-						$args[0]->setData('genreId',8);			
-						$args[1] = true;														
+					}else{ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA				
+						//$args[0]->setData('genreId',8);			
+						//$args[1] = true;					
+						
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$result = $userDao->retrieve(
+							<<<QUERY
+							SELECT s.user_group_id , g.user_id 
+							FROM ojs.user_user_groups g
+							LEFT JOIN ojs.user_group_settings s
+							ON s.user_group_id = g.user_group_id
+							WHERE s.setting_value = 'Editor da revista'							
+							QUERY
+						);
+						while (!$result->EOF) {
+																							
+							$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
+							$userId = $result->GetRowAssoc(0)['user_id'];
 
-						return true;
+							$request = \Application::get()->getRequest();		
+							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+							$stageAssignment = $stageAssignmentDao->newDataObject();
+							$stageAssignment->setSubmissionId($request->getUserVar('submissionId'));
+							$stageAssignment->setUserGroupId($userGroupId);
+							$stageAssignment->setUserId($userId);
+							$stageAssignment->setRecommendOnly(1);
+							$stageAssignment->setCanChangeMetadata(1);
+							$stageAssignmentDao->insertObject($stageAssignment);
+	
+							$submissionDAO = Application::getSubmissionDAO();
+							$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+	
+							$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+							$assignedUser = $userDao->getById($userId);
+							$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+							$userGroup = $userGroupDao->getById($userGroupId);
+	
+							import('lib.pkp.classes.log.SubmissionLog');
+							SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName())); 							
+							
+							$result->MoveNext();
+						}															
 					}					
-					break;																				
+					break;															
+				return true;										
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
