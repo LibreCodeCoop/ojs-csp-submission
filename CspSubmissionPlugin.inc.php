@@ -1333,44 +1333,51 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}else{ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA				
 						//$args[0]->setData('genreId',8);			
 						//$args[1] = true;					
-						
+						$request = \Application::get()->getRequest();		
+						$submissionId = $request->getUserVar('submissionId');
+
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
 							<<<QUERY
-							SELECT s.user_group_id , g.user_id 
+							SELECT s.user_group_id , g.user_id, a.user_id as assigned 
 							FROM ojs.user_user_groups g
 							LEFT JOIN ojs.user_group_settings s
 							ON s.user_group_id = g.user_group_id
-							WHERE s.setting_value = 'Editor da revista'							
+							LEFT JOIN ojs.stage_assignments a
+							ON g.user_id = a.user_id AND a.submission_id = $submissionId
+							WHERE s.setting_value = 'Editor da revista'
 							QUERY
 						);
 						while (!$result->EOF) {
-																							
-							$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-							$userId = $result->GetRowAssoc(0)['user_id'];
 
-							$request = \Application::get()->getRequest();		
-							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-							$stageAssignment = $stageAssignmentDao->newDataObject();
-							$stageAssignment->setSubmissionId($request->getUserVar('submissionId'));
-							$stageAssignment->setUserGroupId($userGroupId);
-							$stageAssignment->setUserId($userId);
-							$stageAssignment->setRecommendOnly(1);
-							$stageAssignment->setCanChangeMetadata(1);
-							$stageAssignmentDao->insertObject($stageAssignment);
-	
-							$submissionDAO = Application::getSubmissionDAO();
-							$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
-	
-							$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-							$assignedUser = $userDao->getById($userId);
-							$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-							$userGroup = $userGroupDao->getById($userGroupId);
-	
-							import('lib.pkp.classes.log.SubmissionLog');
-							SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName())); 							
-							
-							$result->MoveNext();
+							if($result->GetRowAssoc(0)['assigned'] == NULL){
+
+								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
+								$userId = $result->GetRowAssoc(0)['user_id'];
+									
+								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+								$stageAssignment = $stageAssignmentDao->newDataObject();
+								$stageAssignment->setSubmissionId($submissionId);
+								$stageAssignment->setUserGroupId($userGroupId);
+								$stageAssignment->setUserId($userId);
+								$stageAssignment->setRecommendOnly(1);
+								$stageAssignment->setCanChangeMetadata(1);
+								$stageAssignmentDao->insertObject($stageAssignment);
+		
+								$submissionDAO = Application::getSubmissionDAO();
+								$submission = $submissionDAO->getById($submissionId);
+		
+								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+								$assignedUser = $userDao->getById($userId);
+								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+								$userGroup = $userGroupDao->getById($userGroupId);
+		
+								import('lib.pkp.classes.log.SubmissionLog');
+								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName())); 							
+																
+							}
+
+							$result->MoveNext();																							
 						}															
 					}					
 					break;															
