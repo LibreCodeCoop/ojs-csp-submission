@@ -119,6 +119,44 @@ class CspSubmissionPlugin extends GenericPlugin {
 		//return;
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');		
+		$decision = $request->getUserVar('decision');		
+		$submissionId = $request->getUserVar('submissionId');		
+
+		if($stageId == 3 && $decision == 1){  // AO ACEITAR SUBMISSÃO, OS EDITORES ASSISTENTES DEVEM SER NOTIFICADOS
+			$locale = AppLocale::getLocale();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT 		a.user_id, u.email, b.setting_value
+				FROM 		( 	SELECT s.user_group_id, g.user_id 
+								FROM ojs.user_user_groups g
+								LEFT JOIN ojs.user_group_settings s
+								ON s.user_group_id = g.user_group_id
+								LEFT JOIN ojs.stage_assignments a
+								ON g.user_id = a.user_id AND a.submission_id = $submissionId
+								WHERE s.setting_value = 'Assistente editorial'
+							)a
+				LEFT JOIN 	ojs.users u
+				ON 			u.user_id = a.user_id 
+				LEFT JOIN	( 	SELECT user_id, setting_value
+								FROM ojs.user_settings
+								WHERE setting_name = 'givenName' AND locale = '$locale'
+							)b 
+				ON b.user_id = a.user_id				
+				QUERY
+			);
+
+			$args[0]->_data["recipients"] = [];
+
+			while (!$result->EOF) {
+				
+				$args[0]->_data["recipients"][]= ["name" => $result->GetRowAssoc(0)['setting_value'], "email" => $result->GetRowAssoc(0)['email']];
+
+				$result->MoveNext();																
+			}
+			
+		}
+
 
 /* 		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
 			$body = $args[0]->_data['body'];
@@ -441,10 +479,62 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			//return true;
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
+			$decision = $request->_requestVars["decision"];
 			if ($stageId == 3){
+				if($decision == 1){
+					
+						$request = \Application::get()->getRequest();		
+						$submissionId = $request->getUserVar('submissionId');
+
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$result = $userDao->retrieve(
+							<<<QUERY
+							SELECT s.user_group_id , g.user_id, a.user_id as assigned 
+							FROM ojs.user_user_groups g
+							LEFT JOIN ojs.user_group_settings s
+							ON s.user_group_id = g.user_group_id
+							LEFT JOIN ojs.stage_assignments a
+							ON g.user_id = a.user_id AND a.submission_id = $submissionId
+							WHERE s.setting_value = 'Assistente editorial'
+							QUERY
+						);
+						while (!$result->EOF) {
+
+							if($result->GetRowAssoc(0)['assigned'] == NULL){
+
+								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
+								$userId = $result->GetRowAssoc(0)['user_id'];
+									
+								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+								$stageAssignment = $stageAssignmentDao->newDataObject();
+								$stageAssignment->setSubmissionId($submissionId);
+								$stageAssignment->setUserGroupId($userGroupId);
+								$stageAssignment->setUserId($userId);
+								$stageAssignment->setRecommendOnly(1);
+								$stageAssignment->setCanChangeMetadata(1);
+								$stageAssignmentDao->insertObject($stageAssignment);
+		
+								$submissionDAO = Application::getSubmissionDAO();
+								$submission = $submissionDAO->getById($submissionId);
+		
+								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+								$assignedUser = $userDao->getById($userId);
+								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+								$userGroup = $userGroupDao->getById($userGroupId);
+		
+								import('lib.pkp.classes.log.SubmissionLog');
+								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName())); 							
+																
+							}
+
+							$result->MoveNext();																
+						}
+
+				}
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage3.tpl'));
 
 				return true;
+
 			}elseif ($stageId == 4){
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
 
