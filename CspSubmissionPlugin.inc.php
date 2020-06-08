@@ -934,32 +934,42 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 
 		}		
-		if ($fileStage == 9) { // EDITORES ASSISTENTES ENVIANDO ARQUIVOS PARA EDIÇÃO DE TEXTO
-			$request = \Application::get()->getRequest();
-			$uploaderRoles = $args[0]->_uploaderRoles;
-			$defaultReviewMode = $request->_router->_contexts[1]->_data["defaultReviewMode"];
-			$submissionDAO->authorDao->primaryTableColumns["userGroupId"];
-			$roleAssignments = $request->_router->_handler->_roleAssignments;
-			
-			$operation = $request->getRouter()->getRequestedOp($request);
+		if ($fileStage == 9) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS DE REVISÃO DE TEXTO
 
-			$userVars = $request->getUserVars();
+			$userId = $_SESSION["userId"];			
+			$locale = AppLocale::getLocale();					
 
-			$router = $request->getRouter();
-
-			$page = $request->_router->_page;
-			$userId = $request->getUserVar('userId');
-			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
+			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE REVISOR/TRADUTOR
 				<<<QUERY
-				SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
-				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'							
+				SELECT g.user_group_id , g.user_id 
+				FROM ojs.user_user_groups g
+				WHERE g.user_group_id = 7 AND user_id = $userId
 				QUERY
-			);
+			);			
+
+			if($result->_numOfRows == 0){
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT A.genre_id, setting_value
+					FROM ojs.genre_settings A
+					LEFT JOIN ojs.genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'							
+					QUERY
+				);				
+			}else{
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT A.genre_id, setting_value
+					FROM ojs.genre_settings A
+					LEFT JOIN ojs.genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TRADUT%'							
+					QUERY
+				);
+			}
+
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
 
