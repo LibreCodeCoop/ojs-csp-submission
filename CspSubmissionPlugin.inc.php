@@ -763,7 +763,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		$templateMgr =& $args[0];
 
-		if ($fileStage == 2){			
+		if ($fileStage == 2 && $submissionProgress == 0){			
 
 /* 			$templateMgr->setData('revisionOnly',false);
 			$templateMgr->setData('isReviewAttachment',true);
@@ -845,7 +845,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		}		
 		if ($fileStage == 9) { // EDITORES ASSISTENTES ENVIANDO ARQUIVOS PARA EDIÇÃO DE TEXTO
+			$request = \Application::get()->getRequest();
+			$uploaderRoles = $args[0]->_uploaderRoles;
+			$defaultReviewMode = $request->_router->_contexts[1]->_data["defaultReviewMode"];
+			$submissionDAO->authorDao->primaryTableColumns["userGroupId"];
+			$roleAssignments = $request->_router->_handler->_roleAssignments;
+			
+			$operation = $request->getRouter()->getRequestedOp($request);
 
+			$userVars = $request->getUserVars();
+
+			$router = $request->getRouter();
+
+			$page = $request->_router->_page;
+			$userId = $request->getUserVar('userId');
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
@@ -1330,9 +1343,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$args[0]->addError('typeId',
 							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 						);
-					}else{ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA				
-						//$args[0]->setData('genreId',8);			
-						//$args[1] = true;					
+					}else{ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA								
 						$request = \Application::get()->getRequest();		
 						$submissionId = $request->getUserVar('submissionId');
 
@@ -1381,6 +1392,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}															
 					}					
 					break;															
+					case '':
+						$args[0]->setData('genreId',47);
+						$args[1] = true;	
+					break;
 				return true;										
 		}
 
