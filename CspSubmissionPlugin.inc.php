@@ -850,6 +850,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 		$submissionProgress = $submission->getData('submissionProgress');
 		$stageId = $request->getUserVar('stageId');		
+		$userId = $_SESSION["userId"];			
+		$locale = AppLocale::getLocale();	
+		$userDao = DAORegistry::getDAO('UserDAO');	
 
 		$templateMgr =& $args[0];
 
@@ -860,9 +863,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileOptions',[]);
  */
 			//$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
-
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
+			
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT A.genre_id, setting_value
@@ -883,9 +884,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}	
 
 		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
-
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
+			
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT A.genre_id, setting_value
@@ -908,8 +907,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
 
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT A.genre_id, setting_value
@@ -936,10 +933,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}		
 		if ($fileStage == 9) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS DE REVISÃO DE TEXTO
 
-			$userId = $_SESSION["userId"];			
-			$locale = AppLocale::getLocale();					
-
-			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE REVISOR/TRADUTOR
 				<<<QUERY
 				SELECT g.user_group_id , g.user_id 
@@ -979,10 +972,65 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileGenres', $genreList);			
 
 		}		
+
+		if ($fileStage == 11) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS PRONTOS PARA LAYOUT
+
+			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE DIAGRAMADOR
+				<<<QUERY
+				SELECT g.user_group_id 
+				FROM ojs.user_user_groups g
+				WHERE user_id = $userId
+				QUERY
+			);			
+
+			while (!$result->EOF) {
+				if($result->GetRowAssoc(0)['user_group_id'] == 24){ // ASSISTENTE EDITORIAL
+					$result_genre = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%'							
+						QUERY
+					);	
+				break;
+				}elseif($result->GetRowAssoc(0)['user_group_id'] == 22){ // DIAGRAMADOR
+					$result_genre = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_DIAGRM%'							
+						QUERY
+					);
+				break;
+				}
+
+				$result->MoveNext();
+			}
+
+			if(isset($result_genre)){
+				
+				while (!$result_genre->EOF) {
+					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
+	
+					$result_genre->MoveNext();
+				}
+				
+				$templateMgr->setData('submissionFileGenres', $genreList);	
+
+			}else{
+				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+			}
+
+		
+
+		}
+
 		if ($fileStage == 15) { // AUTOR SUBMETENDO REVISÃO
 
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT A.genre_id, setting_value
@@ -1002,18 +1050,39 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		}		
 		if ($fileStage == 18) {  // UPLOADS NO BOX DISCUSSÃO 
+
 			if($stageId == 5){
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
+
+				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL	
 					<<<QUERY
-					SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'							
+					SELECT g.user_group_id , g.user_id 
+					FROM ojs.user_user_groups g
+					WHERE g.user_group_id = 14 AND user_id = $userId
 					QUERY
-				);
+				);	
+
+				if($result->_numOfRows > 0){
+					$result = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_AUTOR%'							
+						QUERY
+					);
+				}else{
+					$result = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'							
+						QUERY
+					);
+				}								
+
 				while (!$result->EOF) {
 					$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
 	
@@ -1022,6 +1091,37 @@ class CspSubmissionPlugin extends GenericPlugin {
 				
 				$templateMgr->setData('submissionFileGenres', $genreList);			
 	
+			}elseif($stageId == 4){			
+	
+				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL	
+					<<<QUERY
+					SELECT g.user_group_id , g.user_id 
+					FROM ojs.user_user_groups g
+					WHERE g.user_group_id = 14 AND user_id = $userId
+					QUERY
+				);			
+	
+				if($result->_numOfRows > 0){
+					$result = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_AUTOR%'							
+						QUERY
+					);	
+					while (!$result->EOF) {
+						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+		
+						$result->MoveNext();
+					}
+					
+					$templateMgr->setData('submissionFileGenres', $genreList);	
+				}else{
+					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+				}
+				
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
