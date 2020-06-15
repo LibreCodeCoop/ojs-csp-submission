@@ -835,9 +835,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
+			$tplvars = $templateMgr->getFBV();
+			$locale = AppLocale::getLocale();
+
+			$genreId = $tplvars->_form->_submissionFile->_data["genreId"];			
+			if($genreId == 47){ // SEM PRE-DEFINIÇÃO DE GÊNERO
+
+				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$tplvars->_form->_submissionFile->_data["originalFileName"];
+
+			}else{
+	
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT setting_value
+					FROM ojs.genre_settings
+					WHERE genre_id = $genreId AND locale = '$locale'
+					QUERY
+				);
+				$genreName = $result->GetRowAssoc(false)['setting_value'];
+				$genreName = str_replace(" ","_",$genreName);
+				
+				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
+			
+				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$genreName.".".$extensao;
+
+			}
+					
 		}
-
-
 		return false;
 	}
 
