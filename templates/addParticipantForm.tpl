@@ -76,14 +76,15 @@
 		{else}
 			{capture assign=userSelectGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.users.userSelect.UserSelectGridHandler" op="fetchGrid" submissionId=$submissionId stageId=$stageId escape=false}{/capture}
 			{load_url_in_div id='userSelectGridContainer' url=$userSelectGridUrl}
+			<div style="display:none">
+				{fbvFormSection title="stageParticipants.options" list="true" class="recommendOnlyWrapper" }
+					{fbvElement type="checkbox" name="recommendOnly" id="recommendOnly" label="stageParticipants.recommendOnly" }
+				{/fbvFormSection}
 
-			{fbvFormSection title="stageParticipants.options" list="true" class="recommendOnlyWrapper"}
-				{fbvElement type="checkbox" name="recommendOnly" id="recommendOnly" label="stageParticipants.recommendOnly"}
-			{/fbvFormSection}
-
-			{fbvFormSection title="stageParticipants.submissionEditMetadataOptions" list="true" class="submissionEditMetadataPermit"}
-				{fbvElement type="checkbox" name="canChangeMetadata" id="canChangeMetadata" label="stageParticipants.canChangeMetadata"}
-			{/fbvFormSection}
+				{fbvFormSection title="stageParticipants.submissionEditMetadataOptions" list="true" class="submissionEditMetadataPermit"}
+					{fbvElement type="checkbox" name="canChangeMetadata" id="canChangeMetadata" label="stageParticipants.canChangeMetadata"}
+				{/fbvFormSection}
+			</div>
 		{/if}
 	{/fbvFormArea}
 
