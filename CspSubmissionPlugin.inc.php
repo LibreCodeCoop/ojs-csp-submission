@@ -900,8 +900,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$genreName.".".$extensao;
 
 			}
-					
+
+		} elseif ($args[1] == 'controllers/grid/users/reviewer/readReview.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('readReview.tpl'));
+
+			return true;
 		}
+
+
 		return false;
 	}
 
