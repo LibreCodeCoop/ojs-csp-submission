@@ -905,6 +905,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('readReview.tpl'));
 
 			return true;
+
+		} elseif ($args[1] == 'controllers/modals/editorDecision/form/recommendationForm.tpl'){
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'skipEmail' => true
+			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('recommendationForm.tpl'));
+			return true;
 		}
 
 
