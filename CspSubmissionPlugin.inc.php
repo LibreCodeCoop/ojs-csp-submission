@@ -731,31 +731,69 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "4") {
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
+			$userId = $_SESSION["userId"];
+			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É AUTOR
 				<<<QUERY
-				SELECT t.email_key, o.body, o.subject
-				FROM email_templates t
-				LEFT JOIN
-				(
-					SELECT a.body, b.subject, a.email_id
-					FROM
-					(
-						SELECT setting_value as body, email_id
-						FROM ojs.email_templates_settings 
-						WHERE setting_name = 'body' AND locale = '$locale'
-					)a
-					LEFT JOIN
-					(
-							SELECT setting_value as subject, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'subject' AND locale = '$locale'
-					)b
-					ON a.email_id = b.email_id
-				) o	
-				ON o.email_id = t.email_id
-				WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO%'
+				SELECT g.user_group_id , g.user_id
+				FROM ojs.user_user_groups g
+				WHERE g.user_group_id = 14 AND user_id = $userId
 				QUERY
 			);
+
+			if($result->_numOfRows == 0){
+
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT t.email_key, o.body, o.subject
+					FROM email_templates t
+					LEFT JOIN
+					(
+						SELECT a.body, b.subject, a.email_id
+						FROM
+						(
+							SELECT setting_value as body, email_id
+							FROM ojs.email_templates_settings
+							WHERE setting_name = 'body' AND locale = '$locale'
+						)a
+						LEFT JOIN
+						(
+								SELECT setting_value as subject, email_id
+								FROM ojs.email_templates_settings
+								WHERE setting_name = 'subject' AND locale = '$locale'
+						)b
+						ON a.email_id = b.email_id
+					) o
+					ON o.email_id = t.email_id
+					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO%'
+					QUERY
+				);
+			}else{
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT t.email_key, o.body, o.subject
+					FROM email_templates t
+					LEFT JOIN
+					(
+						SELECT a.body, b.subject, a.email_id
+						FROM
+						(
+							SELECT setting_value as body, email_id
+							FROM ojs.email_templates_settings
+							WHERE setting_name = 'body' AND locale = '$locale'
+						)a
+						LEFT JOIN
+						(
+								SELECT setting_value as subject, email_id
+								FROM ojs.email_templates_settings
+								WHERE setting_name = 'subject' AND locale = '$locale'
+						)b
+						ON a.email_id = b.email_id
+					) o
+					ON o.email_id = t.email_id
+					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO_MSG_AUTOR%'
+					QUERY
+				);
+			}
 			$i = 0;
 			while (!$result->EOF) {
 				$i++;
@@ -1481,7 +1519,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		// Retorna o tipo do arquivo enviado
 		$genreId = $args[0]->getData('genreId');
 		switch($genreId) {
-			case 1:	// Corpo do artigo / Tabela (Texto)
+			case 1: // CORPO DO ARTIGO
+			case 13: // TABELA
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
@@ -1526,7 +1565,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;		
-			case 14: // Fluxograma (Texto ou Desenho Vetorial)
+			case 15: // Fluxograma (Texto ou Desenho Vetorial)
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*doc*/
 					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/
@@ -1538,7 +1577,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;	
-			case 15: // Gráfico (Planilha ou Desenho Vetorial)
+			case 16: // Gráfico (Planilha ou Desenho Vetorial)
 				$_FILES['uploadedFile']['type'];
 				if (($_FILES['uploadedFile']['type'] <> 'application/vnd.ms-excel') /*xls*/
 					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') /*xlsx*/
@@ -1551,7 +1590,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;	
-			case 13: // Mapa (Desenho Vetorial)
+			case 17: // Mapa (Desenho Vetorial)
 				$_FILES['uploadedFile']['type'];
 				if (($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
@@ -1597,7 +1636,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 								$stageAssignment->setSubmissionId($submissionId);
 								$stageAssignment->setUserGroupId($userGroupId);
 								$stageAssignment->setUserId($userId);
-								$stageAssignment->setRecommendOnly(1);
+								$stageAssignment->setRecommendOnly(0);
 								$stageAssignment->setCanChangeMetadata(1);
 								$stageAssignmentDao->insertObject($stageAssignment);
 		
