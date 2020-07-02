@@ -909,7 +909,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 		} elseif ($args[1] == 'controllers/modals/editorDecision/form/recommendationForm.tpl'){
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
-				'skipEmail' => true
+				'skipEmail' => true,
+				'recommendationOptions' =>	array(
+												'' => 'common.chooseOne',
+												SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => 'editor.submission.decision.requestRevisions',
+												SUBMISSION_EDITOR_RECOMMEND_ACCEPT => 'editor.submission.decision.accept',
+												SUBMISSION_EDITOR_RECOMMEND_DECLINE => 'editor.submission.decision.decline',
+											)
 			));
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('recommendationForm.tpl'));
@@ -1116,7 +1122,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_%'							
+				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AUTOR%'
 				QUERY
 			);
 			while (!$result->EOF) {
