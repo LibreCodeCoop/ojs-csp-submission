@@ -311,9 +311,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		}elseif ($args[1] == 'reviewer/review/step3.tpl') {
-			//$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep3.tpl'));
-
-			//return true;
+			$templateMgr->assign(array(
+				'reviewerRecommendationOptions' =>	array(
+															'' => 'common.chooseOne',
+															SUBMISSION_REVIEWER_RECOMMENDATION_ACCEPT => 'reviewer.article.decision.accept',
+															SUBMISSION_REVIEWER_RECOMMENDATION_PENDING_REVISIONS => 'reviewer.article.decision.pendingRevisions',
+															SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => 'reviewer.article.decision.decline',
+														)
+			));
 		}elseif ($args[1] == 'reviewer/review/reviewCompleted.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewCompleted.tpl'));
 
