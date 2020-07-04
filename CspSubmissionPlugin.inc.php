@@ -25,6 +25,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function register($category, $path, $mainContextId = null) {
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success) {
+
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
@@ -62,6 +63,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// This hook is used to register the components this plugin implements to
 			// permit administration of custom block plugins.
 			HookRegistry::register('LoadComponentHandler', array($this, 'setupGridHandler'));
+
+			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
+			
 		}
 		return $success;
 	}
@@ -925,8 +929,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('recommendationForm.tpl'));
 			return true;
+
+		} elseif ($args[1] == 'controllers/grid/gridRow.tpl' && $request->_requestPath == '/ojs/index.php/csp/$$$call$$$/grid/users/user-select/user-select-grid/fetch-grid'){
+			$templateMgr = TemplateManager::getManager($request);
+			$columns = $templateMgr->getVariable('columns');
+			$cells = $templateMgr->getVariable('cells');
+			$row = $templateMgr->getVariable('row');
+			$cells->value[] = $row->value->_data->_data["assigns"];
+			$columns->value['assigns'] = clone $columns->value["name"];
+			$columns->value["assigns"]->_title = "author.users.contributor.assign";
+
 		}
 
+
+		
 
 		return false;
 	}
@@ -1336,7 +1352,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 			$user->setData('type', $row['type']);
 			$user->setData('instituicao', $row['instituicao']);
+		}elseif(isset($row['assigns'])){
+			$user->setData('assigns', $row['assigns']);
 		}
+	}
+
+	function userstageassignmentdao_filterusersnotassignedtostageinusergroup($hookName, $args){
+		$args[0] = <<<QUERY
+					SELECT q1.*, COALESCE(q2.assigns,0) AS assigns FROM ({$args[0]}) q1
+					LEFT JOIN (SELECT COUNT(*) AS assigns, user_id
+					FROM ojs.stage_assignments a
+					JOIN ojs.submissions s
+					ON s.submission_id = a.submission_id AND s.stage_id <= 3
+					WHERE a.user_group_id = ?
+					GROUP BY a.user_id) q2
+					ON q1.user_id = q2.user_id					
+					QUERY;
+		$args[1][] = $args[1][10];
+		
+
 	}
 
 	function user_getProperties_values($hookName, $args)
