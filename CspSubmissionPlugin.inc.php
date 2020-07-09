@@ -491,7 +491,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			//return true;
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
 			$decision = $request->_requestVars["decision"];
-			if ($stageId == 3){
+			if ($stageId == 3 or $stageId == 1){
 				if($decision == 1){
 					
 						$request = \Application::get()->getRequest();		
@@ -542,14 +542,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}
 
 				}
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage3.tpl'));
+				$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
+
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage1And3.tpl'));
 
 				return true;
 
 			}elseif ($stageId == 4){
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
+//				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
 
-				return true;
+//				return true;
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 			
