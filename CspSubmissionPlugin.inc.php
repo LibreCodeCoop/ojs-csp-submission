@@ -249,6 +249,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$templateMgr =& $args[0];
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');
+		$submissionId = $request->getUserVar('submissionId');
+		//$itemId = $request->getUserVar('istemId');
 
 		if ($args[1] == 'submission/form/step1.tpl') {
 			//$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
@@ -861,13 +863,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
-
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
 				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
-				'itemId' => $this->_itemId,
+				'submissionId' => $submissionId,
+				//'itemId' => $itemId,
 				'message' => json_encode($templateBody),
 				'comment' => reset($templateBody)
 			));
@@ -1159,15 +1160,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			if($stageId == 5){
 
-				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL	
+				$autor = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
 					<<<QUERY
 					SELECT g.user_group_id , g.user_id 
 					FROM ojs.user_user_groups g
 					WHERE g.user_group_id = 14 AND user_id = $userId
 					QUERY
-				);	
+				);
 
-				if($result->_numOfRows > 0){
+				$editor_assistente = $userDao->retrieve( // VERIFICA SE O PERFIL É DE ASSISTENTE EDITORIAL PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
+					<<<QUERY
+					SELECT g.user_group_id , g.user_id
+					FROM ojs.user_user_groups g
+					WHERE g.user_group_id = 24 AND user_id = $userId
+					QUERY
+				);
+
+				if($autor->_numOfRows > 0){
 					$result = $userDao->retrieve(
 						<<<QUERY
 						SELECT A.genre_id, setting_value
@@ -1177,7 +1186,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_AUTOR%'							
 						QUERY
 					);
-				}else{
+
+					while (!$result->EOF) {
+						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+						$result->MoveNext();
+					}
+
+					$templateMgr->setData('submissionFileGenres', $genreList);
+				}elseif($editor_assistente->_numOfRows > 0) {
 					$result = $userDao->retrieve(
 						<<<QUERY
 						SELECT A.genre_id, setting_value
@@ -1187,16 +1204,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'							
 						QUERY
 					);
-				}								
 
-				while (!$result->EOF) {
-					$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-	
-					$result->MoveNext();
+					while (!$result->EOF) {
+						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+						$result->MoveNext();
+					}
+
+					$templateMgr->setData('submissionFileGenres', $genreList);	
+				}else{
+					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 				}
-				
-				$templateMgr->setData('submissionFileGenres', $genreList);			
-	
+
+
 			}elseif($stageId == 4){			
 	
 				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL	
