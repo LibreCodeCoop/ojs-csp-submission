@@ -532,13 +532,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 								$assignedUser = $userDao->getById($userId);
 								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 								$userGroup = $userGroupDao->getById($userGroupId);
-		
+
 								import('lib.pkp.classes.log.SubmissionLog');
-								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName())); 							
-																
+								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
+
 							}
 
-							$result->MoveNext();																
+							$result->MoveNext();
 						}
 
 				}
@@ -1603,6 +1603,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		switch($genreId) {
 			case 1: // CORPO DO ARTIGO
 			case 13: // TABELA
+			case 14: // QUADRO
+			case 19: // NOVA VERSÃO CORPO DO ARTIGO
+			case 20: // NOVA VERSÃO TABELA
+			case 21: // NOVA VERSÃO QUADRO
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
@@ -1640,14 +1644,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				break;
-			case 10: // Fotografia / Imagem satélite (Resolução mínima de 300 dpi)
+			case 10: // Fotografia
+			case 24: // Nova versão Fotografia
 				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff', 'image/svg+xml'])) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
 					);
 				}
 				break;		
-			case 15: // Fluxograma (Texto ou Desenho Vetorial)
+			case 15: // Fluxograma
+			case 25: // Nova versão fluxograma
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*doc*/
 					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/
@@ -1659,7 +1665,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;	
-			case 16: // Gráfico (Planilha ou Desenho Vetorial)
+			case 16: // Gráfico
+			case 26: // Nova versão gráfico
 				$_FILES['uploadedFile']['type'];
 				if (($_FILES['uploadedFile']['type'] <> 'application/vnd.ms-excel') /*xls*/
 					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') /*xlsx*/
@@ -1672,7 +1679,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;	
-			case 17: // Mapa (Desenho Vetorial)
+			case 17: // Mapa
+			case 27: // Nova versão mapa
 				$_FILES['uploadedFile']['type'];
 				if (($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
 					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
@@ -1682,62 +1690,101 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 				break;		
-				case '46': 	// PDF DA SECRETARIA			
+				case '46': 	// PDF para avaliação
+				case '30': 	// Nova versão PDF
+					$request = \Application::get()->getRequest();
+					$submissionId = $request->getUserVar('submissionId');
+					$userDao = DAORegistry::getDAO('UserDAO');
+
 					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
-						if ($args[0]->_errors[0]->getField() == 'genreId') {
-							unset($args[0]->_errors[0]);
-						}
 						$args[0]->addError('typeId',
 							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 						);
-					}else{ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA								
-						$request = \Application::get()->getRequest();		
-						$submissionId = $request->getUserVar('submissionId');
+					}else{
+						if($genreId == '46'){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA
 
-						$userDao = DAORegistry::getDAO('UserDAO');
-						$result = $userDao->retrieve(
-							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned 
-							FROM ojs.user_user_groups g
-							LEFT JOIN ojs.user_group_settings s
-							ON s.user_group_id = g.user_group_id
-							LEFT JOIN ojs.stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = $submissionId
-							WHERE s.setting_value = 'Editor da revista'
-							QUERY
-						);
-						while (!$result->EOF) {
+							$result = $userDao->retrieve(
+								<<<QUERY
+								SELECT s.user_group_id , g.user_id, a.user_id as assigned
+								FROM ojs.user_user_groups g
+								LEFT JOIN ojs.user_group_settings s
+								ON s.user_group_id = g.user_group_id
+								LEFT JOIN ojs.stage_assignments a
+								ON g.user_id = a.user_id AND a.submission_id = $submissionId
+								WHERE s.setting_value = 'Editor da revista'
+								QUERY
+							);
+							while (!$result->EOF) {
 
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
+								if($result->GetRowAssoc(0)['assigned'] == NULL){
 
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
+									$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
+									$userId = $result->GetRowAssoc(0)['user_id'];
+
+									$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+									$stageAssignment = $stageAssignmentDao->newDataObject();
+									$stageAssignment->setSubmissionId($submissionId);
+									$stageAssignment->setUserGroupId($userGroupId);
+									$stageAssignment->setUserId($userId);
+									$stageAssignment->setRecommendOnly(0);
+									$stageAssignment->setCanChangeMetadata(1);
+									$stageAssignmentDao->insertObject($stageAssignment);
+
+									$submissionDAO = Application::getSubmissionDAO();
+									$submission = $submissionDAO->getById($submissionId);
+
+									$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+									$assignedUser = $userDao->getById($userId);
+									$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+									$userGroup = $userGroupDao->getById($userGroupId);
+
+									import('lib.pkp.classes.log.SubmissionLog');
+									SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 									
-								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-								$stageAssignment = $stageAssignmentDao->newDataObject();
-								$stageAssignment->setSubmissionId($submissionId);
-								$stageAssignment->setUserGroupId($userGroupId);
-								$stageAssignment->setUserId($userId);
-								$stageAssignment->setRecommendOnly(0);
-								$stageAssignment->setCanChangeMetadata(1);
-								$stageAssignmentDao->insertObject($stageAssignment);
-		
-								$submissionDAO = Application::getSubmissionDAO();
-								$submission = $submissionDAO->getById($submissionId);
-		
-								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-								$assignedUser = $userDao->getById($userId);
-								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-								$userGroup = $userGroupDao->getById($userGroupId);
-		
-								import('lib.pkp.classes.log.SubmissionLog');
-								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName())); 							
-																
-							}
+								}
 
-							$result->MoveNext();																							
-						}															
-					}					
+								$result->MoveNext();
+							}
+						}
+						if($genreId == 30){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
+							$locale = AppLocale::getLocale();
+
+							$submissionDAO = Application::getSubmissionDAO();
+							$submission = $submissionDAO->getById($submissionId);
+							$submissionTitle = $submission->_data["publications"][0]->_data["title"][$locale];
+							$contextId = $submission->_data["contextId"];
+
+							$userDao = DAORegistry::getDAO('UserDAO');
+							$result = $userDao->retrieve(
+								<<<QUERY
+								SELECT u.email, x.setting_value as name
+								FROM ojs.stage_assignments a
+								LEFT JOIN ojs.users u
+								ON a.user_id = u.user_id
+								LEFT JOIN (SELECT user_id, setting_value FROM ojs.user_settings WHERE setting_name = 'givenName' AND locale = '$locale') x
+								ON x.user_id = u.user_id
+								WHERE submission_id = $submissionId AND user_group_id = 5
+								QUERY
+							);
+
+							import('lib.pkp.classes.mail.MailTemplate');
+
+							while (!$result->EOF) {
+
+								$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
+								$mail->addRecipient($result->GetRowAssoc(0)['email'], $result->GetRowAssoc(0)['name']);
+								$mail->setBody(str_replace('{$submissionTitle}',$submissionTitle,$mail->_data["body"]));
+
+								if (!$mail->send()) {
+									import('classes.notification.NotificationManager');
+									$notificationMgr = new NotificationManager();
+									$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+								}
+
+								$result->MoveNext();
+							}
+						}
+					}
 					break;															
 					case '':
 						$args[0]->setData('genreId',47);
