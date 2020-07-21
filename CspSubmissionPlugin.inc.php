@@ -222,12 +222,61 @@ class CspSubmissionPlugin extends GenericPlugin {
 		} */
 
 		if($request->_router->_page == "reviewer"){ // AVALIADOR RECEBE E-MAIL DE AGRADECIMENTO APÓS SUBMETER AVALIAÇÃO
-			//// FALTA ADICIONAR A VERIFICAÇÃO DA PRIMEIRA ETAPA POIS ESTÁ SE APLICANDO
-			
-			$args[0]->_data['body'] = "xxxx";	
-			$args[0]->emailKey = "REVIEW_THANK";
-			$args[0]->_data["recipients"][0]["name"] = $args[0]->params["senderName"];
-			$args[0]->_data["recipients"][0]["email"] = $args[0]->params["senderEmail"];
+			if($request->_requestVars["step"] == 1){
+				return true;
+			}
+			if($request->_requestVars["step"] == 3){
+
+				$locale = AppLocale::getLocale();
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT a.email_key, a.body, a.subject
+
+					FROM
+
+					(
+						SELECT 	d.email_key, d.body, d.subject
+						FROM 	email_templates_default_data d
+						WHERE 	d.locale = '$locale'
+
+						UNION ALL
+
+						SELECT 	t.email_key, o.body, o.subject
+						FROM 	ojs.email_templates t
+
+						LEFT JOIN
+						(
+							SELECT 	a.body, b.subject, a.email_id
+							FROM
+							(
+								SELECT 	setting_value as body, email_id
+								FROM 	email_templates_settings
+								WHERE 	setting_name = 'body' AND locale = '$locale'
+							)a
+							LEFT JOIN
+							(
+									SELECT 	setting_value as subject, email_id
+									FROM 	email_templates_settings
+									WHERE 	setting_name = 'subject' AND locale = '$locale'
+							)b
+							ON a.email_id = b.email_id
+						) o
+						ON o.email_id = t.email_id
+						WHERE t.enabled = 1
+					) a
+					WHERE 	a.email_key  = 'REVIEW_THANK'
+
+					QUERY
+				);
+				/// O EMAIL ESTÁ SENDO EVIADO DIVERSAR VEZES PARA O AVALIADO - RESOLVER !!!!
+				$args[0]->_data['body'] = $result->GetRowAssoc(false)['body'];
+				$args[0]->_data['subject'] = $result->GetRowAssoc(false)['subject'];
+				$args[0]->_data["from"]["name"] = "CSP";
+				$args[0]->_data["from"]["email"] = "noreply@lt.coop.br";
+				$args[0]->_data["recipients"][0]["name"] = $args[0]->params["senderName"];
+				$args[0]->_data["recipients"][0]["email"] = $args[0]->params["senderEmail"];
+			}
 
 		}
 	}
