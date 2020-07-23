@@ -533,11 +533,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			}
 
-
-	//	}elseif ($args[1] == 'controllers/grid/grid.tpl' && $stageId == 3) {
-			//$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
-
-			//return true;
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
 			$decision = $request->_requestVars["decision"];
 			if ($stageId == 3 or $stageId == 1){
@@ -1204,7 +1199,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result->MoveNext();
 			}
 			
-			$templateMgr->setData('submissionFileGenres', $genreList);			
+			$templateMgr->setData('submissionFileGenres', $genreList);
+
+			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
+
 
 		}		
 		if ($fileStage == 18) {  // UPLOADS NO BOX DISCUSSÃO 
