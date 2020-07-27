@@ -279,6 +279,32 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 		}
+		if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // QUANDO AUTOR SUBMETE TEXTO REVISADO, EMAIL VAI PARA SECRETARIA
+
+			unset($args[0]->_data["recipients"]);
+
+			$locale = AppLocale::getLocale();
+
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT u.email, x.setting_value as name
+				FROM ojs.stage_assignments a
+				LEFT JOIN ojs.users u
+				ON a.user_id = u.user_id
+				LEFT JOIN (SELECT user_id, setting_value FROM ojs.user_settings WHERE setting_name = 'givenName' AND locale = '$locale') x
+				ON x.user_id = u.user_id
+				WHERE submission_id = $submissionId AND user_group_id = 23
+				QUERY
+			);
+
+			while (!$result->EOF) {
+				$args[0]->_data["recipients"][] =  array("name" => $result->GetRowAssoc(0)['name'], "email" => $result->GetRowAssoc(0)['email']);
+				//$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
+
+				$result->MoveNext();
+			}
+		}
 	}
 
 	public function APIHandler_endpoints($hookName, $args) {
