@@ -66,6 +66,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
 			
+			HookRegistry::register('Template::Workflow::Publication', array($this, 'workflowFieldEdit'));
 		}
 		return $success;
 	}
@@ -1526,6 +1527,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function getDescription() {
 		return __('plugins.generic.CspSubmission.description');
+	}
+
+
+	function workflowFieldEdit($hookName, $params) {
+		$smarty =& $params[1];
+		$output =& $params[2];
+		$output .= $smarty->fetch($this->getTemplateResource('ExclusaoPrefixo.tpl'));
+		return false;
 	}
 
 	/**
