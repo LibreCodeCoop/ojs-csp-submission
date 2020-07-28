@@ -400,6 +400,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 															SUBMISSION_REVIEWER_RECOMMENDATION_DECLINE => 'reviewer.article.decision.decline',
 														)
 			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep3.tpl'));
+			return true;
 		}elseif ($args[1] == 'reviewer/review/reviewCompleted.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewCompleted.tpl'));
 

@@ -1,14 +1,12 @@
 {**
  * templates/reviewer/review/step3.tpl
  *
- * Copyright (c) 2014-2019 Simon Fraser University
- * Copyright (c) 2003-2019 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Copyright (c) 2014-2020 Simon Fraser University
+ * Copyright (c) 2003-2020 John Willinsky
+ * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * Show the step 3 review page
  *}
- 
-
 <script type="text/javascript">
 	$(function() {ldelim}
 		// Attach the form handler.
@@ -39,11 +37,11 @@
 		{if $reviewForm}
 			{include file="reviewer/review/reviewFormResponse.tpl"}
 		{else}
-			{fbvFormSection}
-				{fbvElement type="textarea" id="comments" name="comments" value=$comments readonly=$reviewIsClosed label="submission.comments.canShareWithAuthor" rich=true}
+			{fbvFormSection title="reviewer.title.canShareWithAuthor"}
+				{fbvElement type="textarea" id="comments" name="comments" value=$comments readonly=$reviewIsClosed rich=true}
 			{/fbvFormSection}
-			{fbvFormSection}
-				{fbvElement type="textarea" id="commentsPrivate" name="commentsPrivate" value=$commentsPrivate readonly=$reviewIsClosed label="submission.comments.cannotShareWithAuthor" rich=true}
+			{fbvFormSection title="reviewer.title.cannotShareWithAuthor"}
+				{fbvElement type="textarea" id="commentsPrivate" name="commentsPrivate" value=$commentsPrivate readonly=$reviewIsClosed rich=true}
 			{/fbvFormSection}
 		{/if}
 	{/fbvFormSection}
@@ -52,6 +50,10 @@
 		{capture assign="reviewAttachmentsGridUrl"}{url router=$smarty.const.ROUTE_COMPONENT component="grid.files.attachment.ReviewerReviewAttachmentsGridHandler" op="fetchGrid" assocType=$smarty.const.ASSOC_TYPE_REVIEW_ASSIGNMENT assocId=$submission->getReviewId() submissionId=$submission->getId() stageId=$submission->getStageId() reviewIsClosed=$reviewIsClosed escape=false}{/capture}
 		{load_url_in_div id="reviewAttachmentsGridContainer" url=$reviewAttachmentsGridUrl}
 	{/fbvFormSection}
+
+	<!-- Display queries grid -->
+	{capture assign="queriesGridUrl"}{url router=$smarty.const.ROUTE_COMPONENT component="grid.queries.QueriesGridHandler" op="fetchGrid" submissionId=$submission->getId() stageId=$smarty.const.WORKFLOW_STAGE_ID_EXTERNAL_REVIEW escape=false}{/capture}
+	{load_url_in_div id="queriesGrid" url=$queriesGridUrl}	
 
 	{$additionalFormFields}	
 
