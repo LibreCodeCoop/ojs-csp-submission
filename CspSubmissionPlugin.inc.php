@@ -67,6 +67,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
 			
 			HookRegistry::register('Template::Workflow::Publication', array($this, 'workflowFieldEdit'));
+
+			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 		}
 		return $success;
 	}
@@ -118,6 +120,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}
 		return false;
+  }
+
+
+  function addparticipantformExecute($hookName, $args){
+	$args[0]->_data["userGroupId"] = 1;
+	$request = \Application::get()->getRequest();	
+
   }
 	
 	function mail_send($hookName, $args){
@@ -1531,6 +1540,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 
 	function workflowFieldEdit($hookName, $params) {
+		return;
 		$smarty =& $params[1];
 		$output =& $params[2];
 		$output .= $smarty->fetch($this->getTemplateResource('ExclusaoPrefixo.tpl'));
