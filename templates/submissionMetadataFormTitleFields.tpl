@@ -25,8 +25,8 @@
 {/fbvFormSection}
 
 
-{fbvFormSection title="plugins.generic.CspSubmission.DOI" for="DOI"}
-	{fbvElement type="text" name="DOI" id="DOI" value=$DOI readonly=$readOnly}
+{fbvFormSection title="plugins.generic.CspSubmission.doi" for="doi"}
+	{fbvElement type="text" name="doi" multilingual=true id="doi" value=$doi readonly=$readOnly required=false}
 {/fbvFormSection}
 
 
