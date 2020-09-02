@@ -347,6 +347,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 			
 			return true;
+
+		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
+
+			return true;
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
 			
