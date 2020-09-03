@@ -116,7 +116,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'value' => 1,
 				'title' => '> Aguardando secretaria'
 			];
+
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 2,
+				'title' => '> Aguardando decisão'
+			];			
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 3,
+				'title' => '> Com o editor assiciado'
+			];
+
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 4,
+				'title' => '> Aguardando decisão'
+			];			
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
 			$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
@@ -140,7 +157,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 		switch ($substage) {
 			case 1:
 				$qb->where('s.stage_id', '=', 1);
+				$qb->where('sa.user_group_id', '<>', 3);				
 				break;
+			case 2:
+				$qb->where('s.stage_id', '=', 1);
+				$qb->where('sa.user_group_id', '=', 3);				
+				break;				
+			case 3:
+				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
+				$qb->where('s.stage_id', '=', 3);	
+				$qb->where('ed.decision', '=', 8);
+				$qb->whereNotIn('ed.decision', array(11,12,14));
+				break;		
+			case 4:
+				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
+				$qb->where('s.stage_id', '=', 3);
+				$qb->whereIn('ed.decision', array(11,12,14));				
+				break;								
 		}
 		$params = $args[1];
 	}
