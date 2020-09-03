@@ -70,6 +70,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
 			
 			HookRegistry::register('Template::Workflow::Publication', array($this, 'workflowFieldEdit'));
+
+			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
+
+			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
 		}
 		return $success;
 	}
@@ -152,6 +156,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}
 		return false;
+	}
+
+	function addparticipantformExecute($hookName, $args){
+		$args[0]->_data["userGroupId"] = 1;
+		$request = \Application::get()->getRequest();	
 	}
 	
 	function mail_send($hookName, $args){
@@ -369,6 +378,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 			
+			return true;
+
+		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
+
+			return true;
+		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadConfirmationForm.tpl'));
+
 			return true;
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
@@ -1575,25 +1593,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * Insert Campo1 field into author submission step 3 and metadata edit form
 	 */
 	function metadataFieldEdit($hookName, $params) {
+
+		$submissionDAO = Application::getSubmissionDAO();
+		$request = \Application::get()->getRequest();
+		/** @val Submission */
+		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$publication = $submission->getCurrentPublication();
+		$sectionId = $publication->getData('sectionId');
+
 		$smarty =& $params[1];
 		$output =& $params[2];
 		//$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
 		
-		if($this->sectionId == 5){
+		if($sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
 		}
 		
-		if($this->sectionId == 4){					
+		if($sectionId == 4){
 			$output .= $smarty->fetch($this->getTemplateResource('Tema.tpl'));
-			$output .= $smarty->fetch($this->getTemplateResource('CodigoTematico.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
 		}
 
-		$output .= $smarty->fetch($this->getTemplateResource('ConflitoInteresse.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
 		//$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
-		$output .= $smarty->fetch($this->getTemplateResource('Agradecimentos.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
 		
-		if($this->sectionId == 6){	
-			$output .= $smarty->fetch($this->getTemplateResource('CodigoArtigoRelacionado.tpl'));
+		if($sectionId == 6){
+			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
@@ -1604,16 +1630,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 
  	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
-		$userVars[] = 'ConflitoInteresse';
-		//$userVars[] = 'ConflitoInteresseQual';
+		$userVars[] = 'conflitoInteresse';
+		//$userVars[] = 'conflitoInteresseQual';
 		//$userVars[] = 'FonteFinanciamento';
 		//$userVars[] = 'FonteFinanciamentoQual';		
-		$userVars[] = 'Agradecimentos';		
-		$userVars[] = 'CodigoTematico';
+		$userVars[] = 'agradecimentos';
+		$userVars[] = 'codigoTematico';
 		$userVars[] = 'Tema';
-		$userVars[] = 'CodigoArtigoRelacionado';
+		$userVars[] = 'codigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
-		$userVars[] = 'DOI';
+		$userVars[] = 'doi';
 		
 		return false;
 	} 
@@ -1621,15 +1647,15 @@ class CspSubmissionPlugin extends GenericPlugin {
  	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
-		$article->setData('ConflitoInteresse', $form->getData('ConflitoInteresse'));
-		//$article->setData('ConflitoInteresseQual', $form->getData('ConflitoInteresseQual'));
+		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
+		//$article->setData('conflitoInteresseQual', $form->getData('conflitoInteresseQual'));
 		//$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
 		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
-		$article->setData('Agradecimentos', $form->getData('Agradecimentos'));	
-		$article->setData('CodigoTematico', $form->getData('CodigoTematico'));
+		$article->setData('agradecimentos', $form->getData('agradecimentos'));
+		$article->setData('codigoTematico', $form->getData('codigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
-		$article->setData('CodigoArtigoRelacionado', $form->getData('CodigoArtigoRelacionado'));
-		$article->setData('DOI', $form->getData('DOI'));		
+		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
+		$article->setData('doi', $form->getData('doi'));
 		
 		return false;
 	} 
@@ -1659,55 +1685,71 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
-		$form->setData('ConflitoInteresse', $article->getData('ConflitoInteresse'));				
-		//$form->setData('ConflitoInteresseQual', $article->getData('ConflitoInteresseQual'));	
+		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
+		//$form->setData('conflitoInteresseQual', $article->getData('conflitoInteresseQual'));
 		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
 		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
-		$form->setData('Agradecimentos', $article->getData('Agradecimentos'));			
-		$form->setData('CodigoTematico', $article->getData('CodigoTematico'));	
+		$form->setData('agradecimentos', $article->getData('agradecimentos'));
+		$form->setData('codigoTematico', $article->getData('codigoTematico'));
 		$form->setData('Tema', $article->getData('Tema'));	
-		$form->setData('CodigoArtigoRelacionado', $article->getData('CodigoArtigoRelacionado'));	
-		$form->setData('DOI', $article->getData('DOI'));	
+		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
+		$form->setData('doi', $article->getData('doi'));
 		
 		return false;
 	} 
 
+
+	function publicationEdit($hookName, $params) {
+		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
+		$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
+		$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
+
+		$params[0]->setData('doi', $params[3]->_requestVars["doi"]);
+		$params[1]->setData('doi', $params[3]->_requestVars["doi"]);
+		$params[2]["doi"] = $params[3]->_requestVars["doi"];
+
+		$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
+		$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
+		$params[2]["codigoTematico"] = $params[3]->_requestVars["codigoTematico"];
+
+		$params[0]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
+		$params[1]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
+		$params[2]["codigoArtigoRelacionado"] = $params[3]->_requestVars["codigoArtigoRelacionado"];
+
+		$params[0]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
+		$params[1]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
+		$params[2]["conflitoInteresse"] = $params[3]->_requestVars["conflitoInteresse"];
+
+		return false;
+	}
 	/**
 	 * Add check/validation for the Campo1 field (= 6 numbers)
 	 */
 	function addCheck($hookName, $params) {
 		$form =& $params[0];
-		//$form->addCheck(new FormValidatorRegExp($form, 'ConflitoInteresse', 'optional', 'plugins.generic.CspSubmission.Campo1Valid', '/^\d{6}$/')); // COLOCAR UMA VALIDACAO DE QUANTIDADE MAXIMA DE CARACTERES 	
-/* 		if($_POST['ConflitoInteresse'] == "yes"){
-			$form->addCheck(new FormValidatorLength($form, 'ConflitoInteresseQual', 'required', 'plugins.generic.CspSubmission.ConflitoInteresseQual.Valid', '>', 0));
-			
-		} */
-		//if($_POST['FonteFinanciamento'] == "yes"){
-		//	$form->addCheck(new FormValidatorLength($form, 'FonteFinanciamentoQual', 'required', 'plugins.generic.CspSubmission.FonteFinanciamentoQual.Valid', '>', 0));			
-		//}		
 
 		if($this->sectionId == 4){		
-			$form->addCheck(new FormValidatorLength($form, 'CodigoTematico', 'required', 'plugins.generic.CspSubmission.CodigoTematico.Valid', '>', 0));			
+			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));			
 			$form->addCheck(new FormValidatorLength($form, 'Tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));			
 		}
 
 		if($this->sectionId == 6){		
-			$form->addCheck(new FormValidatorLength($form, 'CodigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.CodigoArtigoRelacionado.Valid', '>', 0));			
+			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));			
 		}
 
-		$form->addCheck(new FormValidatorCustom($form, 'DOI', 'optional', 'plugins.generic.CspSubmission.DOI.Valid', function($DOI) {
-			if (!filter_var($DOI, FILTER_VALIDATE_URL)) {
-				if (strpos($DOI, 'doi.org') === false){
-					$DOI = 'http://dx.doi.org/'.$DOI;
-				} elseif (strpos($DOI,'http') === false) {
-					$DOI = 'http://'.$DOI;
+		$form->addCheck(new FormValidatorCustom($form, 'doi', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function($doi) {
+			if (!filter_var($doi, FILTER_VALIDATE_URL)) {
+				if (strpos(reset($doi), 'doi.org') === false){
+					$doi = 'http://dx.doi.org/'.reset($doi);
+				} elseif (strpos(reset($doi),'http') === false) {
+					$doi = 'http://'.reset($doi);
 				} else {
 					return false;
 				}				
 			}
 
 			$client = HttpClient::create();
-			$response = $client->request('GET', $DOI);
+			$response = $client->request('GET', $doi);
 			$statusCode = $response->getStatusCode();			
 			return in_array($statusCode,[303,200]);
 		}));

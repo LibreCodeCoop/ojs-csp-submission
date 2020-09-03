@@ -36,8 +36,14 @@
 		var message = {$message};
 
 		tinyMCE.get($('textarea[id^="comment"]').attr('id')).setContent(message[subject])
+		
 	});
 
+
+	$( "#queryForm" ).submit(function( event ) {
+		var optionText = $("#subject option:selected").text();
+		$("#subject option:selected").val(optionText);
+	});
 </script>
 
 	<form class="pkp_form" id="queryForm" method="post" action="{url op="updateQuery" queryId=$queryId params=$actionArgs}">
