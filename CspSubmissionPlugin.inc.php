@@ -12,6 +12,7 @@
  * @brief CspSubmission plugin class
  */
 
+use APP\Services\QueryBuilders\SubmissionQueryBuilder;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Symfony\Component\HttpClient\HttpClient;
 
@@ -29,10 +30,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
-			HookRegistry::register('TemplateManager::display',array(&$this, 'registerJS'));
+			HookRegistry::register('TemplateManager::display',array(&$this, 'templateManager_display'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
 			HookRegistry::register('Mail::send', array($this,'mail_send'));
 			HookRegistry::register('submissionfilesuploadform::display', array($this,'submissionfilesuploadform_display'));
+
+			HookRegistry::register('Submission::getMany::queryObject', array($this,'submission_getMany_queryObject'));
 
 			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
 
@@ -72,15 +75,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	/**
-	 * Register JavaScript file
-	 *
 	 * Hooked to the the `display` callback in TemplateManager
 	 * @param $hookName string
 	 * @param $args array
 	 * @return boolean
 	 */
-	public function registerJS($hookName, $args) {
-		if ($args[1] == "submission/form/index.tpl"){
+	public function templateManager_display($hookName, $args) {
+		if ($args[1] == "submission/form/index.tpl") {
 
 			$request =& Registry::get('request');
 			$templateManager =& $args[0];
@@ -102,9 +103,42 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'priority' => STYLE_SEQUENCE_LAST,
 				)
 			);
+		} elseif ($args[1] == "dashboard/index.tpl") {
+			$templateManager =& $args[0];
+			$containerData = $templateManager->get_template_vars('containerData');
+			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][0];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 1,
+				'title' => '> Aguardando secretaria'
+			];
+			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
+			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
+			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
+			$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
+			$templateManager->assign('containerData', $containerData);
 		}
 
 		return false;
+	}
+
+	public function submission_getMany_queryObject($hookName, $args) {
+		$request = \Application::get()->getRequest();
+		/**
+		 * @var SubmissionQueryBuilder
+		 */
+		$qb = $args[0];
+		$request = \Application::get()->getRequest();
+		$substage = $request->getUserVar('substage');
+		if ($substage) {
+			$substage = $substage[0];
+		}
+		switch ($substage) {
+			case 1:
+				$qb->where('s.stage_id', '=', 1);
+				break;
+		}
+		$params = $args[1];
 	}
 
 	/**
@@ -118,7 +152,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}
 		return false;
-  }
+	}
 	
 	function mail_send($hookName, $args){
 		//return;
