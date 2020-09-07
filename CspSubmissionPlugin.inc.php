@@ -1240,7 +1240,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileGenres', $genreList);			
 
 		}		
-
+		if ($fileStage == 10) { // UPLOAD DE PDF PARA PUBLICAÇÃO
+			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+		}
 		if ($fileStage == 11) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS PRONTOS PARA LAYOUT
 
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE DIAGRAMADOR
