@@ -116,26 +116,99 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'value' => 1,
 				'title' => '> Aguardando secretaria'
 			];
-
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 2,
 				'title' => '> Aguardando decisão'
-			];			
+			];
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 3,
 				'title' => '> Com o editor assiciado'
 			];
-
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 4,
 				'title' => '> Aguardando decisão'
-			];			
+			];
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 5,
+				'title' => '> Aguardando envio para avaliação de ilustração'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 6,
+				'title' => '> Em avaliação de ilustração'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 7,
+				'title' => '> Aguardando envio de Carta de aprovação'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 8,
+				'title' => '> Aguardando revisão/Tradução'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 9,
+				'title' => '> Revisão/Tradução prontas'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 10,
+				'title' => '> Tradução de metadados'
+			];			
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 11,
+				'title' => '> Aguardando padronização'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 12,
+				'title' => '> Padronização Concluída'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 13,
+				'title' => '> Aguardando formatação de Figura'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 14,
+				'title' => '> Produção de PDF padronizado'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 15,
+				'title' => '> Prova de Prelo e declaração enviadas'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 16,
+				'title' => '> Prova de prelo e declarações recebidas'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 17,
+				'title' => '> Enviado para diagramação'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 18,
+				'title' => '> PDF diagramado'
+			];
+			$stages[] = [
+				'param' => 'substage',
+				'value' => 19,
+				'title' => '> Aguardando publicação'
+			];
 			$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
 			$templateManager->assign('containerData', $containerData);
 		}
@@ -155,25 +228,282 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$substage = $substage[0];
 		}
 		switch ($substage) {
-			case 1:
+			case 1: // Aguardando secretaria
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryEditorChefeDesignado = Capsule::table('stage_assignments');
+				$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
+
+				$qb->whereNotIn('s.submission_id',$queryEditorChefeDesignado); // Não designadas a editores chefe
+
+			break;
+			case 2: // Aguardando decisão
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryEditorChefeDesignado = Capsule::table('stage_assignments');
+				$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
+
 				$qb->where('s.stage_id', '=', 1);
-				$qb->where('sa.user_group_id', '<>', 3);				
-				break;
-			case 2:
-				$qb->where('s.stage_id', '=', 1);
-				$qb->where('sa.user_group_id', '=', 3);				
-				break;				
-			case 3:
+				$qb->whereIn('s.submission_id',$queryEditorChefeDesignado); // Designadas a editores chefe
+
+			break;
+			case 3: // Com o editor associado
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
 				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
-				$qb->where('s.stage_id', '=', 3);	
-				$qb->where('ed.decision', '=', 8);
-				$qb->whereNotIn('ed.decision', array(11,12,14));
-				break;		
-			case 4:
-				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
+
+				$lastdecisionIds = Capsule::table('edit_decisions');
+				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
+				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
+				$lastdecisionIds->groupBy('edit_decisions.submission_id');
+
+				$editoresAssociados = Capsule::table('user_user_groups');
+				$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
+				$editoresAssociados->where('user_user_groups.user_group_id', '=', 3); //Última decisão feita pelos editores chefes
+
+				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
+				$qb->whereIn('ed.editor_id', $editoresAssociados);
 				$qb->where('s.stage_id', '=', 3);
-				$qb->whereIn('ed.decision', array(11,12,14));				
-				break;								
+
+			break;
+			case 4: // Aguardando decisão
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+				
+				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
+
+				$lastdecisionIds = Capsule::table('edit_decisions');
+				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
+				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
+				$lastdecisionIds->groupBy('edit_decisions.submission_id');
+
+				$editoresAssociados = Capsule::table('user_user_groups');
+				$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
+				$editoresAssociados->where('user_user_groups.user_group_id', '=', 5); // Última decisão feita pelo editor associado
+
+				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
+				$qb->whereIn('ed.editor_id', $editoresAssociados);
+				$qb->where('s.stage_id', '=', 3);
+
+			break;
+			case 5: // Aguardando envio para avaliação de ilustração
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryRevisorFiguraNãoDesignado = Capsule::table('stage_assignments');
+				$queryRevisorFiguraNãoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryRevisorFiguraNãoDesignado->where('stage_assignments.user_group_id', '=', 19); 
+				$qb->whereNotIn('s.submission_id',$queryRevisorFiguraNãoDesignado); // Não designadas a revisor de figura
+
+				$qb->where('s.stage_id', '=', 4);
+
+			break;
+			case 6: // Aguardando decisão 
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryRevisorFiguraDesignado = Capsule::table('stage_assignments');
+				$queryRevisorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryRevisorFiguraDesignado->where('stage_assignments.user_group_id', '=', 19); // Designadas a revisor de figura
+
+				$queryDiscussaoRevisaoFigura = Capsule::table('queries');
+				$queryDiscussaoRevisaoFigura->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoRevisaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoRevisaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoRevisaoFigura->where('notes.title', 'LIKE', '%figura%'); 
+				$queryDiscussaoRevisaoFigura->where('queries.closed', '=', 0); // Com discussão de revisão de figura em aberto 
+
+				$qb->whereIn('s.submission_id',$queryDiscussaoRevisaoFigura);
+				$qb->whereIn('s.submission_id',$queryRevisorFiguraDesignado);
+				$qb->where('s.stage_id', '=', 4);
+
+			break;
+			case 7: // Aguardando envio de Carta de aprovação
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryDiscussaoRevisaoFigura = Capsule::table('queries');
+				$queryDiscussaoRevisaoFigura->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoRevisaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoRevisaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoRevisaoFigura->where('notes.title', 'LIKE', '%figura%'); 
+				$queryDiscussaoRevisaoFigura->where('queries.closed', '=', 1); // Com discussão de revisão de figura fechadas
+
+				$queryCartaAprovacao = Capsule::table('queries');
+				$queryCartaAprovacao->select(Capsule::raw('queries.assoc_id'));
+				$queryCartaAprovacao->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryCartaAprovacao->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryCartaAprovacao->where('notes.title', 'LIKE', '%aprova%'); // Com discussão de aprovação enviada
+
+				$qb->whereIn('s.submission_id',$queryDiscussaoRevisaoFigura);
+				$qb->whereNotIn('s.submission_id',$queryCartaAprovacao);
+				$qb->where('s.stage_id', '=', 4);
+
+			break;
+			case 8: //Aguardando revisão/Tradução'
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
+				$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
+
+				$uploadRevisorTradutor = Capsule::table('submission_files');
+				$uploadRevisorTradutor->select(Capsule::raw('submission_files.submission_id'));
+				$uploadRevisorTradutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
+				$uploadRevisorTradutor->where('user_user_groups.user_group_id', '=', 7); // Existe arquivo de upload realizado por revisor / tradutor
+
+				//$qb->whereIn('s.submission_id',$queryCartaAprovacao);
+				//$qb->whereIn('s.submission_id',$queryRevisaoFigura);
+				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado);
+				$qb->whereNotIn('s.submission_id',$uploadRevisorTradutor);
+				$qb->where('s.stage_id', '=', 4);
+
+			break;
+			case 9: // Revisão/Tradução prontas
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
+				$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
+
+				$uploadRevisorTradutor = Capsule::table('submission_files');
+				$uploadRevisorTradutor->select(Capsule::raw('submission_files.submission_id'));
+				$uploadRevisorTradutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
+				$uploadRevisorTradutor->where('user_user_groups.user_group_id', '=', 7); // Existe arquivo de upload realizado por revisor / tradutor
+
+				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado);
+				$qb->whereIn('s.submission_id',$uploadRevisorTradutor);
+				$qb->where('s.stage_id', '=', 4);
+
+			break;
+			case 11: // Aguardando padronização
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryPadronizadorDesignado = Capsule::table('stage_assignments');
+				$queryPadronizadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryPadronizadorDesignado->where('stage_assignments.user_group_id', '=', 20);  // Designadas a padrozinador
+
+				$qb->whereNotIn('s.submission_id',$queryPadronizadorDesignado);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 12: // Em padronização
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryPadronizadorDesignado = Capsule::table('stage_assignments');
+				$queryPadronizadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryPadronizadorDesignado->where('stage_assignments.user_group_id', '=', 20);  // Designadas a padrozinador
+
+				$qb->whereIn('s.submission_id',$queryPadronizadorDesignado);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 13: // Aguardando formatação de Figura
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryEditorFiguraDesignado = Capsule::table('stage_assignments');
+				$queryEditorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryEditorFiguraDesignado->where('stage_assignments.user_group_id', '=', 21);  // Designadas a editores de figura
+
+				$queryDiscussaoEdicaoFigura = Capsule::table('queries');
+				$queryDiscussaoEdicaoFigura->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoEdicaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoEdicaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoEdicaoFigura->where('notes.title', 'LIKE', '%figura%');
+				$queryDiscussaoEdicaoFigura->where('queries.closed', '=', 0); // Com discussão de edição de figura em aberto 
+
+				$qb->whereIn('s.submission_id',$queryEditorFiguraDesignado);
+				$qb->whereIn('s.submission_id',$queryDiscussaoEdicaoFigura);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 14: // Produção de PDF padronizado
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryEditorFiguraDesignado = Capsule::table('stage_assignments');
+				$queryEditorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryEditorFiguraDesignado->where('stage_assignments.user_group_id', '=', 21);  // Designadas a editores de figura
+
+				$queryDiscussaoEdicaoFigura = Capsule::table('queries');
+				$queryDiscussaoEdicaoFigura->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoEdicaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoEdicaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoEdicaoFigura->where('notes.title', 'LIKE', '%figura%'); 
+				$queryDiscussaoEdicaoFigura->where('queries.closed', '=', 1); // Com discussão de edição de figura fechada 
+
+				$qb->whereIn('s.submission_id',$queryEditorFiguraDesignado);
+				$qb->whereIn('s.submission_id',$queryDiscussaoEdicaoFigura);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 15: // Prova de Prelo e declaração enviadas
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryDiscussaoProvaPrelo = Capsule::table('queries');
+				$queryDiscussaoProvaPrelo->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoProvaPrelo->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoProvaPrelo->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoProvaPrelo->where('notes.title', 'LIKE', '%prelo%'); 
+				$queryDiscussaoProvaPrelo->where('queries.closed', '=', 0); // Com discussão de prova de prelo aberta
+
+				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPrelo);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 16: // Prova de Prelo e declaração enviadas
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryDiscussaoProvaPrelo = Capsule::table('queries');
+				$queryDiscussaoProvaPrelo->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoProvaPrelo->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoProvaPrelo->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoProvaPrelo->whereNull('notes.title'); // Com discussão de prova de prelo respondida
+
+				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPrelo);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 17: // Enviado para diagramação
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$queryDiagramadorDesignado = Capsule::table('stage_assignments');
+				$queryDiagramadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryDiagramadorDesignado->where('stage_assignments.user_group_id', '=', 22);  // Designadas a diagramadores
+
+				$qb->whereIn('s.submission_id',$queryDiagramadorDesignado);
+				$qb->where('s.stage_id', '=', 5);
+
+			break;
 		}
 		$params = $args[1];
 	}
