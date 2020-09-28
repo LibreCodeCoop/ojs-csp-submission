@@ -14,19 +14,14 @@
 	{assign var=readOnly value=0}
 {/if}
 {fbvElement type="hidden" name="submissionVersion" id="submissionVersion" value=$formParams.submissionVersion}
-<div class="pkp_helpers_clear">
-	{fbvFormSection for="title" title="common.title" inline="true" size=$fbvStyles.size.LARGE required=true}
-		{fbvElement type="text" multilingual=true name="title" id="title" value=$title readonly=$readOnly maxlength="255" required=true}
-	{/fbvFormSection}	
-</div>
+
+
+{fbvFormSection title="common.title" for="title" required=true}
+	{fbvElement type="text" multilingual=true name="title" id="title" value=$title readonly=$readOnly maxlength="255" required=true}
+{/fbvFormSection}
 
 {fbvFormSection title="common.subtitle" for="subtitle"}
 	{fbvElement type="text" multilingual=true name="subtitle" id="subtitle" label="common.subtitle.tip" maxlength="70" value=$subtitle readonly=$readOnly}
-{/fbvFormSection}
-
-
-{fbvFormSection title="plugins.generic.CspSubmission.doi" for="doi"}
-	{fbvElement type="text" name="doi" multilingual=true id="doi" value=$doi readonly=$readOnly required=false}
 {/fbvFormSection}
 
 

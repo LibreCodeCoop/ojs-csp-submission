@@ -2039,7 +2039,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'Tema';
 		$userVars[] = 'codigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
-		$userVars[] = 'doi';
+		//$userVars[] = 'doi';
 
 		return false;
 	}
@@ -2055,7 +2055,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('codigoTematico', $form->getData('codigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
 		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
-		$article->setData('doi', $form->getData('doi'));
+		//$article->setData('doi', $form->getData('doi'));
 
 		return false;
 	}
@@ -2093,7 +2093,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('codigoTematico', $article->getData('codigoTematico'));
 		$form->setData('Tema', $article->getData('Tema'));
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
-		$form->setData('doi', $article->getData('doi'));
+		//$form->setData('doi', $article->getData('doi'));
 
 		return false;
 	}
@@ -2104,9 +2104,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 		$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
 
-		$params[0]->setData('doi', $params[3]->_requestVars["doi"]);
-		$params[1]->setData('doi', $params[3]->_requestVars["doi"]);
-		$params[2]["doi"] = $params[3]->_requestVars["doi"];
+		//$params[0]->setData('doi', $params[3]->_requestVars["doi"]);
+		//$params[1]->setData('doi', $params[3]->_requestVars["doi"]);
+		//$params[2]["doi"] = $params[3]->_requestVars["doi"];
 
 		$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
 		$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
@@ -2137,7 +2137,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
 		}
 
-		$form->addCheck(new FormValidatorCustom($form, 'doi', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function($doi) {
+		$form->addCheck(new FormValidatorCustom($form, 'source', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function($doi) {
 			if (!filter_var($doi, FILTER_VALIDATE_URL)) {
 				if (strpos(reset($doi), 'doi.org') === false){
 					$doi = 'http://dx.doi.org/'.reset($doi);
