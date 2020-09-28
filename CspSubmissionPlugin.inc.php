@@ -68,7 +68,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('LoadComponentHandler', array($this, 'setupGridHandler'));
 
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
-			
+
 			HookRegistry::register('Template::Workflow::Publication', array($this, 'workflowFieldEdit'));
 
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
@@ -89,7 +89,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$request =& Registry::get('request');
 			$templateManager =& $args[0];
-	
+
 			// // Load JavaScript file
 			$templateManager->addJavaScript(
 				'coautor',
@@ -158,22 +158,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'value' => 9,
 				'title' => '> Revisão/Tradução prontas'
 			];
-			$stages[] = [
+/* 			$stages[] = [
 				'param' => 'substage',
 				'value' => 10,
 				'title' => '> Tradução de metadados'
-			];			
+			]; */
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 11,
-				'title' => '> Aguardando padronização'
+				'title' => '> Aguardando padronizador'
 			];
-			$stages[] = [
+/* 			$stages[] = [
 				'param' => 'substage',
 				'value' => 12,
 				'title' => '> Padronização Concluída'
-			];
+			]; */
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 13,
@@ -182,7 +182,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 14,
-				'title' => '> Produção de PDF padronizado'
+				'title' => '> Aguardando produção de PDF padronizado'
 			];
 			$stages[] = [
 				'param' => 'substage',
@@ -197,7 +197,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 17,
-				'title' => '> Enviado para diagramação'
+				'title' => '> Aguardando diagramação'
 			];
 			$stages[] = [
 				'param' => 'substage',
@@ -218,6 +218,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submission_getMany_queryObject($hookName, $args) {
 		$request = \Application::get()->getRequest();
+		$locale = AppLocale::getLocale();
 		/**
 		 * @var SubmissionQueryBuilder
 		 */
@@ -227,6 +228,66 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($substage) {
 			$substage = $substage[0];
 		}
+
+		$uploadRevisorTradutor = Capsule::table('submission_files');
+		$uploadRevisorTradutor->select(Capsule::raw('submission_files.submission_id'));
+		$uploadRevisorTradutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
+		$uploadRevisorTradutor->where('user_user_groups.user_group_id', '=', 7); // Arquivo de upload realizado por revisor / tradutor
+
+		$queryDiagramadorDesignado = Capsule::table('stage_assignments');
+		$queryDiagramadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+		$queryDiagramadorDesignado->where('stage_assignments.user_group_id', '=', 22);  // Designadas a diagramadores
+
+		$queryEditorFiguraDesignado = Capsule::table('stage_assignments');
+		$queryEditorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+		$queryEditorFiguraDesignado->where('stage_assignments.user_group_id', '=', 21);  // Designadas a editores de figura
+
+		$queryUploadFiguraAlterada = Capsule::table('submission_files');
+		$queryUploadFiguraAlterada->select(Capsule::raw('submission_files.submission_id'));
+		$queryUploadFiguraAlterada->leftJoin('submission_file_settings','submission_file_settings.file_id','=','submission_files.file_id');
+		$queryUploadFiguraAlterada->where('submission_files.file_stage', '=', 6); // Box Arquivos para edição de texto
+		$queryUploadFiguraAlterada->where('submission_file_settings.setting_value', 'LIKE', '%Figura_alterada%');
+		$queryUploadFiguraAlterada->where('submission_file_settings.locale', '=', $locale);
+
+		$queryDiscussaoProvaPrelo = Capsule::table('queries');
+		$queryDiscussaoProvaPrelo->select(Capsule::raw('queries.assoc_id'));
+		$queryDiscussaoProvaPrelo->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+		$queryDiscussaoProvaPrelo->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+		$queryDiscussaoProvaPrelo->where('notes.title', 'LIKE', '%prelo%'); // Com discussão de prova de prelo
+
+/* 				$queryUploadAutor = Capsule::table('submission_files');
+		$queryUploadAutor->select(Capsule::raw('submission_files.submission_id'));
+		$queryUploadAutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
+		$queryUploadAutor->where('user_user_groups.user_group_id', '=', 14); // Autor
+		$queryUploadAutor->where('submission_files.file_stage', '=', 18); // Box Discussão da Editoração */
+
+		$queryDiscussaoProvaPreloRespondida = Capsule::table('queries');
+		$queryDiscussaoProvaPreloRespondida->select(Capsule::raw('queries.assoc_id'));
+		$queryDiscussaoProvaPreloRespondida->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+		$queryDiscussaoProvaPreloRespondida->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+		$queryDiscussaoProvaPreloRespondida->leftJoin('user_user_groups','user_user_groups.user_id','=','notes.user_id');
+		$queryDiscussaoProvaPreloRespondida->where('user_user_groups.user_group_id', '=', 14); // Autor
+		$queryDiscussaoProvaPreloRespondida->where('queries.stage_id', '=', 5); // Estágio editoração
+		$queryDiscussaoProvaPreloRespondida->whereNull('notes.title'); // Com discussão de prova de prelo respondida
+
+		$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
+		$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+		$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
+
+		$queryUploadFiguraParaFormatar = Capsule::table('submission_files');
+		$queryUploadFiguraParaFormatar->select(Capsule::raw('submission_files.submission_id'));
+		$queryUploadFiguraParaFormatar->leftJoin('submission_file_settings','submission_file_settings.file_id','=','submission_files.file_id');
+		$queryUploadFiguraParaFormatar->where('submission_files.file_stage', '=', 11); // Box Arquivos prontos para o Leiaute
+		$queryUploadFiguraParaFormatar->where('submission_file_settings.setting_value', 'LIKE', '%Figura_para_formatar%');
+		$queryUploadFiguraParaFormatar->where('submission_file_settings.locale', '=', $locale); // Arquivo Figura para formatar no box Arquivos prontos para o Leiaute
+
+		$queryUploadFiguraFormatada = Capsule::table('submission_files');
+		$queryUploadFiguraFormatada->select(Capsule::raw('submission_files.submission_id'));
+		$queryUploadFiguraFormatada->leftJoin('submission_file_settings','submission_file_settings.file_id','=','submission_files.file_id');
+		$queryUploadFiguraFormatada->where('submission_files.file_stage', '=', 11); // Box Arquivos prontos para o Leiaute
+		$queryUploadFiguraFormatada->where('submission_file_settings.setting_value', 'LIKE', '%Figura_formatada%');
+		$queryUploadFiguraFormatada->where('submission_file_settings.locale', '=', $locale); // Arquivo Figura formatada no box Arquivos prontos para o Leiaute
+
 		switch ($substage) {
 			case 1: // Aguardando secretaria
 				unset($qb->wheres[2]);
@@ -245,12 +306,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryEditorChefeDesignado = Capsule::table('stage_assignments');
-				$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
+				$qb->where(function ($qb) {
+					$queryEditorChefeDesignado = Capsule::table('stage_assignments');
+					$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+					$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
 
-				$qb->where('s.stage_id', '=', 1);
-				$qb->whereIn('s.submission_id',$queryEditorChefeDesignado); // Designadas a editores chefe
+					$qb->where('s.stage_id', '=', 1); // No estágio submissão
+					$qb->whereIn('s.submission_id',$queryEditorChefeDesignado); // Designadas a editores chefe
+				});
+
+				$qb->orWhere(function ($qb) {
+					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
+					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
+
+					$qb->where('s.stage_id', '=', 3); // No estágio avaliação
+					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado); // Não designada a editor associado
+				});
+
 
 			break;
 			case 3: // Com o editor associado
@@ -263,14 +336,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$lastdecisionIds = Capsule::table('edit_decisions');
 				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
 				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
+				$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
 				$lastdecisionIds->groupBy('edit_decisions.submission_id');
 
 				$editoresAssociados = Capsule::table('user_user_groups');
 				$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
-				$editoresAssociados->where('user_user_groups.user_group_id', '=', 3); //Última decisão feita pelos editores chefes
+				$editoresAssociados->where('user_user_groups.user_group_id', '=', 3);
 
-				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
-				$qb->whereIn('ed.editor_id', $editoresAssociados);
+				//Última decisão feita pelos editores chefes
+				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds); // Pega útima decisão excluindo nova rodada de avaliação
+				$qb->whereIn('ed.editor_id', $editoresAssociados); // Onde a última decisão foi dada por um editor chefe
 				$qb->where('s.stage_id', '=', 3);
 
 			break;
@@ -278,21 +353,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
-				
+
 				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
 
-				$lastdecisionIds = Capsule::table('edit_decisions');
-				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
-				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
-				$lastdecisionIds->groupBy('edit_decisions.submission_id');
+				$qb->where(function ($qb) {
+					$lastdecisionIds = Capsule::table('edit_decisions');
+					$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
+					$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
+					$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
+					$lastdecisionIds->groupBy('edit_decisions.submission_id');
 
-				$editoresAssociados = Capsule::table('user_user_groups');
-				$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
-				$editoresAssociados->where('user_user_groups.user_group_id', '=', 5); // Última decisão feita pelo editor associado
+					$editoresAssociados = Capsule::table('user_user_groups');
+					$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
+					$editoresAssociados->where('user_user_groups.user_group_id', '=', 5);
 
-				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
-				$qb->whereIn('ed.editor_id', $editoresAssociados);
-				$qb->where('s.stage_id', '=', 3);
+					$qb->where('s.stage_id', '=', 3);
+					$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
+					$qb->whereIn('ed.editor_id', $editoresAssociados);
+				});
+
+				$qb->orWhere(function ($qb) {
+
+					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
+					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
+
+					$qb->where('s.stage_id', '=', 3);
+					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado);
+
+				});
 
 			break;
 			case 5: // Aguardando envio para avaliação de ilustração
@@ -302,13 +391,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$queryRevisorFiguraNãoDesignado = Capsule::table('stage_assignments');
 				$queryRevisorFiguraNãoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryRevisorFiguraNãoDesignado->where('stage_assignments.user_group_id', '=', 19); 
-				$qb->whereNotIn('s.submission_id',$queryRevisorFiguraNãoDesignado); // Não designadas a revisor de figura
+				$queryRevisorFiguraNãoDesignado->where('stage_assignments.user_group_id', '=', 19); // Designadas a revisor de figura
 
+				$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
+				$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
+
+				$qb->whereNotIn('s.submission_id',$queryRevisorFiguraNãoDesignado); // Não designadas a revisor de figura
+				$qb->whereNotIn('s.submission_id',$queryRevisorTradutorDesignado); // Não designadas a revisor / tradutor
 				$qb->where('s.stage_id', '=', 4);
 
 			break;
-			case 6: // Aguardando decisão 
+			case 6: // Em avaliação de ilustração'
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
@@ -317,15 +411,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$queryRevisorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
 				$queryRevisorFiguraDesignado->where('stage_assignments.user_group_id', '=', 19); // Designadas a revisor de figura
 
-				$queryDiscussaoRevisaoFigura = Capsule::table('queries');
+/* 				$queryDiscussaoRevisaoFigura = Capsule::table('queries');
 				$queryDiscussaoRevisaoFigura->select(Capsule::raw('queries.assoc_id'));
 				$queryDiscussaoRevisaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
 				$queryDiscussaoRevisaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoRevisaoFigura->where('notes.title', 'LIKE', '%figura%'); 
-				$queryDiscussaoRevisaoFigura->where('queries.closed', '=', 0); // Com discussão de revisão de figura em aberto 
+				$queryDiscussaoRevisaoFigura->where('notes.title', 'LIKE', '%figura%');
+				$queryDiscussaoRevisaoFigura->where('queries.closed', '=', 0); // Com discussão de revisão de figura em aberto
+				$qb->whereIn('s.submission_id',$queryDiscussaoRevisaoFigura);*/
 
-				$qb->whereIn('s.submission_id',$queryDiscussaoRevisaoFigura);
-				$qb->whereIn('s.submission_id',$queryRevisorFiguraDesignado);
+				$qb->whereIn('s.submission_id',$queryRevisorFiguraDesignado); // Designadas a revisor de figura
+				$qb->whereNotIn('s.submission_id',$queryUploadFiguraAlterada); // Sem upload de figura alterada
 				$qb->where('s.stage_id', '=', 4);
 
 			break;
@@ -334,21 +429,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryDiscussaoRevisaoFigura = Capsule::table('queries');
-				$queryDiscussaoRevisaoFigura->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoRevisaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoRevisaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoRevisaoFigura->where('notes.title', 'LIKE', '%figura%'); 
-				$queryDiscussaoRevisaoFigura->where('queries.closed', '=', 1); // Com discussão de revisão de figura fechadas
-
 				$queryCartaAprovacao = Capsule::table('queries');
 				$queryCartaAprovacao->select(Capsule::raw('queries.assoc_id'));
 				$queryCartaAprovacao->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
 				$queryCartaAprovacao->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryCartaAprovacao->where('notes.title', 'LIKE', '%aprova%'); // Com discussão de aprovação enviada
+				$queryCartaAprovacao->where('notes.title', 'LIKE', '%aprova%'); // Discussão de aprovação
 
-				$qb->whereIn('s.submission_id',$queryDiscussaoRevisaoFigura);
-				$qb->whereNotIn('s.submission_id',$queryCartaAprovacao);
+				$qb->whereIn('s.submission_id',$queryUploadFiguraAlterada); // Com figura revisada no box de Arquivos para edição de texto
+				$qb->whereNotIn('s.submission_id',$queryCartaAprovacao); // Com carta de aprovação não enviada
 				$qb->where('s.stage_id', '=', 4);
 
 			break;
@@ -357,19 +445,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
-				$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
-
-				$uploadRevisorTradutor = Capsule::table('submission_files');
-				$uploadRevisorTradutor->select(Capsule::raw('submission_files.submission_id'));
-				$uploadRevisorTradutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
-				$uploadRevisorTradutor->where('user_user_groups.user_group_id', '=', 7); // Existe arquivo de upload realizado por revisor / tradutor
-
-				//$qb->whereIn('s.submission_id',$queryCartaAprovacao);
-				//$qb->whereIn('s.submission_id',$queryRevisaoFigura);
-				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado);
-				$qb->whereNotIn('s.submission_id',$uploadRevisorTradutor);
+				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado); // Com Revisor/Tradutor designado
+				$qb->whereNotIn('s.submission_id',$uploadRevisorTradutor); // Sem arquivo de upload realizado por revisor/tradutor
 				$qb->where('s.stage_id', '=', 4);
 
 			break;
@@ -378,21 +455,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
-				$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
-
-				$uploadRevisorTradutor = Capsule::table('submission_files');
-				$uploadRevisorTradutor->select(Capsule::raw('submission_files.submission_id'));
-				$uploadRevisorTradutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
-				$uploadRevisorTradutor->where('user_user_groups.user_group_id', '=', 7); // Existe arquivo de upload realizado por revisor / tradutor
-
-				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado);
-				$qb->whereIn('s.submission_id',$uploadRevisorTradutor);
+				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado); // Com Revisor/Tradutor designado
+				$qb->whereIn('s.submission_id',$uploadRevisorTradutor); // Com arquivo de upload realizado por revisor/tradutor
 				$qb->where('s.stage_id', '=', 4);
 
 			break;
-			case 11: // Aguardando padronização
+			case 11: // Aguardando padronizador
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
@@ -405,58 +473,31 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->where('s.stage_id', '=', 5);
 
 			break;
-			case 12: // Em padronização
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryPadronizadorDesignado = Capsule::table('stage_assignments');
-				$queryPadronizadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryPadronizadorDesignado->where('stage_assignments.user_group_id', '=', 20);  // Designadas a padrozinador
-
-				$qb->whereIn('s.submission_id',$queryPadronizadorDesignado);
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
 			case 13: // Aguardando formatação de Figura
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryEditorFiguraDesignado = Capsule::table('stage_assignments');
-				$queryEditorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryEditorFiguraDesignado->where('stage_assignments.user_group_id', '=', 21);  // Designadas a editores de figura
-
-				$queryDiscussaoEdicaoFigura = Capsule::table('queries');
+/* 				$queryDiscussaoEdicaoFigura = Capsule::table('queries');
 				$queryDiscussaoEdicaoFigura->select(Capsule::raw('queries.assoc_id'));
 				$queryDiscussaoEdicaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
 				$queryDiscussaoEdicaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
 				$queryDiscussaoEdicaoFigura->where('notes.title', 'LIKE', '%figura%');
-				$queryDiscussaoEdicaoFigura->where('queries.closed', '=', 0); // Com discussão de edição de figura em aberto 
+				$queryDiscussaoEdicaoFigura->where('queries.closed', '=', 0); // Com discussão de edição de figura em aberto */
 
-				$qb->whereIn('s.submission_id',$queryEditorFiguraDesignado);
-				$qb->whereIn('s.submission_id',$queryDiscussaoEdicaoFigura);
+				$qb->whereIn('s.submission_id',$queryEditorFiguraDesignado); // Designada a editor de figura
+				$qb->whereIn('s.submission_id',$queryUploadFiguraParaFormatar); // Com arquivo Figura para formatar no box Arquivos prontos para Layout
+				$qb->whereNotIn('s.submission_id',$queryUploadFiguraFormatada); // Sem arquivo Figura formatada no box Arquivos prontos para Layout
 				$qb->where('s.stage_id', '=', 5);
 
 			break;
-			case 14: // Produção de PDF padronizado
+			case 14: // Aguardando produção de PDF padronizado
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryEditorFiguraDesignado = Capsule::table('stage_assignments');
-				$queryEditorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryEditorFiguraDesignado->where('stage_assignments.user_group_id', '=', 21);  // Designadas a editores de figura
-
-				$queryDiscussaoEdicaoFigura = Capsule::table('queries');
-				$queryDiscussaoEdicaoFigura->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoEdicaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoEdicaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoEdicaoFigura->where('notes.title', 'LIKE', '%figura%'); 
-				$queryDiscussaoEdicaoFigura->where('queries.closed', '=', 1); // Com discussão de edição de figura fechada 
-
-				$qb->whereIn('s.submission_id',$queryEditorFiguraDesignado);
-				$qb->whereIn('s.submission_id',$queryDiscussaoEdicaoFigura);
+				$qb->whereIn('s.submission_id',$queryUploadFiguraFormatada); // Com arquivo Figura formatada no box Arquivos prontos para Layout
+				$qb->whereNotIn('s.submission_id',$queryDiscussaoProvaPrelo); // Sem discussão de prova de prelo aberta
 				$qb->where('s.stage_id', '=', 5);
 
 			break;
@@ -465,40 +506,34 @@ class CspSubmissionPlugin extends GenericPlugin {
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryDiscussaoProvaPrelo = Capsule::table('queries');
-				$queryDiscussaoProvaPrelo->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoProvaPrelo->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoProvaPrelo->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoProvaPrelo->where('notes.title', 'LIKE', '%prelo%'); 
-				$queryDiscussaoProvaPrelo->where('queries.closed', '=', 0); // Com discussão de prova de prelo aberta
-
-				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPrelo);
+				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPrelo); // Com discussão de prova de prelo
+				$qb->whereNotIn('s.submission_id',$queryDiscussaoProvaPreloRespondida); // Sem discussão de prova de prelo respondida pelo autor
+				//$qb->whereNotIn('s.submission_id',$queryUploadAutor); // Sem arquivo enviado por autor no box Discussão da Editoração
 				$qb->where('s.stage_id', '=', 5);
 
 			break;
-			case 16: // Prova de Prelo e declaração enviadas
+			case 16: // Prova de Prelo e declaração recebidas
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
 
-				$queryDiscussaoProvaPrelo = Capsule::table('queries');
-				$queryDiscussaoProvaPrelo->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoProvaPrelo->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoProvaPrelo->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoProvaPrelo->whereNull('notes.title'); // Com discussão de prova de prelo respondida
+				$queryDiscussaoProvaPreloRespondida = Capsule::table('queries');
+				$queryDiscussaoProvaPreloRespondida->select(Capsule::raw('queries.assoc_id'));
+				$queryDiscussaoProvaPreloRespondida->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
+				$queryDiscussaoProvaPreloRespondida->leftJoin('notes','notes.assoc_id','=','queries.query_id');
+				$queryDiscussaoProvaPreloRespondida->leftJoin('user_user_groups','user_user_groups.user_id','=','notes.user_id');
+				$queryDiscussaoProvaPreloRespondida->where('user_user_groups.user_group_id', '=', 14); // Autor
+				$queryDiscussaoProvaPreloRespondida->where('queries.stage_id', '=', 5); // Estágio editoração
+				$queryDiscussaoProvaPreloRespondida->whereNull('notes.title'); // Com discussão de prova de prelo respondida
 
-				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPrelo);
+				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPreloRespondida); // Com discussão de prova de prelo respondida pelo autor
 				$qb->where('s.stage_id', '=', 5);
 
 			break;
-			case 17: // Enviado para diagramação
+			case 17: // Aguardando diagramação
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
-
-				$queryDiagramadorDesignado = Capsule::table('stage_assignments');
-				$queryDiagramadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryDiagramadorDesignado->where('stage_assignments.user_group_id', '=', 22);  // Designadas a diagramadores
 
 				$qb->whereIn('s.submission_id',$queryDiagramadorDesignado);
 				$qb->where('s.stage_id', '=', 5);
@@ -523,15 +558,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function addparticipantformExecute($hookName, $args){
 		$args[0]->_data["userGroupId"] = 1;
-		$request = \Application::get()->getRequest();	
+		$request = \Application::get()->getRequest();
 	}
-	
+
 	function mail_send($hookName, $args){
 		//return;
 		$request = \Application::get()->getRequest();
-		$stageId = $request->getUserVar('stageId');		
-		$decision = $request->getUserVar('decision');		
-		$submissionId = $request->getUserVar('submissionId');		
+		$stageId = $request->getUserVar('stageId');
+		$decision = $request->getUserVar('decision');
+		$submissionId = $request->getUserVar('submissionId');
 
 		if($stageId == 3 && $decision == 1){  // AO ACEITAR SUBMISSÃO, OS EDITORES ASSISTENTES DEVEM SER NOTIFICADOS
 			$locale = AppLocale::getLocale();
@@ -539,7 +574,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT 		a.user_id, u.email, b.setting_value
-				FROM 		( 	SELECT s.user_group_id, g.user_id 
+				FROM 		( 	SELECT s.user_group_id, g.user_id
 								FROM ojs.user_user_groups g
 								LEFT JOIN ojs.user_group_settings s
 								ON s.user_group_id = g.user_group_id
@@ -548,30 +583,30 @@ class CspSubmissionPlugin extends GenericPlugin {
 								WHERE s.setting_value = 'Assistente editorial'
 							)a
 				LEFT JOIN 	ojs.users u
-				ON 			u.user_id = a.user_id 
+				ON 			u.user_id = a.user_id
 				LEFT JOIN	( 	SELECT user_id, setting_value
 								FROM ojs.user_settings
 								WHERE setting_name = 'givenName' AND locale = '$locale'
-							)b 
-				ON b.user_id = a.user_id				
+							)b
+				ON b.user_id = a.user_id
 				QUERY
 			);
 
 			$args[0]->_data["recipients"] = [];
 
 			while (!$result->EOF) {
-				
+
 				$args[0]->_data["recipients"][]= ["name" => $result->GetRowAssoc(0)['setting_value'], "email" => $result->GetRowAssoc(0)['email']];
 
-				$result->MoveNext();																
+				$result->MoveNext();
 			}
-			
+
 		}
 
 
-/* 		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){			
+/* 		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){
 			$body = $args[0]->_data['body'];
-			
+
 			preg_match("/href='(?P<url>.*)' class='submissionReview/",$body,$matches);
 			$body = str_replace('{$submissionReviewUrlAccept}', $matches['url']."&accept=yes", $body);
 			$body = str_replace('{$submissionReviewUrlReject}', $matches['url']."&accept=no", $body);
@@ -588,25 +623,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 				<<<QUERY
 				SELECT a.email_key, a.body, a.subject
 
-				FROM 
-				
+				FROM
+
 				(
-					SELECT 	d.email_key, d.body, d.subject	
-					FROM 	email_templates_default_data d	
+					SELECT 	d.email_key, d.body, d.subject
+					FROM 	email_templates_default_data d
 					WHERE 	d.locale = '$locale'
-					
-					UNION ALL 
-					
-					SELECT 	t.email_key, o.body, o.subject	
+
+					UNION ALL
+
+					SELECT 	t.email_key, o.body, o.subject
 					FROM 	ojs.email_templates t
-					
+
 					LEFT JOIN
 					(
 						SELECT 	a.body, b.subject, a.email_id
 						FROM
 						(
 							SELECT 	setting_value as body, email_id
-							FROM 	email_templates_settings 
+							FROM 	email_templates_settings
 							WHERE 	setting_name = 'body' AND locale = '$locale'
 						)a
 						LEFT JOIN
@@ -616,7 +651,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 								WHERE 	setting_name = 'subject' AND locale = '$locale'
 						)b
 						ON a.email_id = b.email_id
-					) o	
+					) o
 					ON o.email_id = t.email_id
 					WHERE t.enabled = 1
 				) a
@@ -625,7 +660,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				QUERY
 			);
 
-			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);			
+			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);
 		} */
 
 		if($request->_router->_page == "reviewer"){ // AVALIADOR RECEBE E-MAIL DE AGRADECIMENTO APÓS SUBMETER AVALIAÇÃO
@@ -736,11 +771,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($args[1] == 'submission/form/step1.tpl') {
 			//$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
-			
+
 			//return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
-			
+
 			return true;
 
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
@@ -753,7 +788,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionArtworkFileMetadataForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionArtworkFileMetadataForm.tpl'));
-			
+
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
 			$request = \Application::get()->getRequest();
@@ -795,7 +830,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
-			
+
 			$request = \Application::get()->getRequest();
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
@@ -805,7 +840,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}elseif ($args[1] == 'reviewer/review/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
-			
+
 			return true;
 		}elseif ($args[1] == 'reviewer/review/step3.tpl') {
 			$templateMgr->assign(array(
@@ -837,7 +872,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM
 						(
 							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings 
+							FROM ojs.email_templates_settings
 							WHERE setting_name = 'body' AND locale = '$locale'
 						)a
 						LEFT JOIN
@@ -847,7 +882,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 								WHERE setting_name = 'subject' AND locale = '$locale'
 						)b
 						ON a.email_id = b.email_id
-					) o	
+					) o
 					ON o.email_id = t.email_id
 					WHERE t.enabled = 1 AND t.email_key LIKE 'LAYOUT%'
 					QUERY
@@ -857,10 +892,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$i++;
 					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
 					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-	
+
 					$result->MoveNext();
 				}
-	
+
 				$templateMgr = TemplateManager::getManager($request);
 				$templateMgr->assign(array(
 					'templates' => $templateSubject,
@@ -873,7 +908,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
 
-				return true;				
+				return true;
 			}elseif($stageId == 4){
 				$locale = AppLocale::getLocale();
 				$userDao = DAORegistry::getDAO('UserDAO');
@@ -887,7 +922,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM
 						(
 							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings 
+							FROM ojs.email_templates_settings
 							WHERE setting_name = 'body' AND locale = '$locale'
 						)a
 						LEFT JOIN
@@ -897,7 +932,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 								WHERE setting_name = 'subject' AND locale = '$locale'
 						)b
 						ON a.email_id = b.email_id
-					) o	
+					) o
 					ON o.email_id = t.email_id
 					WHERE t.enabled = 1 AND t.email_key LIKE 'COPYEDIT%'
 					QUERY
@@ -907,10 +942,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$i++;
 					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
 					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-	
+
 					$result->MoveNext();
 				}
-	
+
 				$templateMgr = TemplateManager::getManager($request);
 				$templateMgr->assign(array(
 					'templates' => $templateSubject,
@@ -923,7 +958,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
 
-				return true;				
+				return true;
 
 			}elseif($stageId == 3 OR $stageId == 1){
 				$locale = AppLocale::getLocale();
@@ -938,7 +973,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM
 						(
 							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings 
+							FROM ojs.email_templates_settings
 							WHERE setting_name = 'body' AND locale = '$locale'
 						)a
 						LEFT JOIN
@@ -948,7 +983,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 								WHERE setting_name = 'subject' AND locale = '$locale'
 						)b
 						ON a.email_id = b.email_id
-					) o	
+					) o
 					ON o.email_id = t.email_id
 					WHERE t.enabled = 1 AND t.email_key = 'EDITOR_ASSIGN'
 					QUERY
@@ -958,10 +993,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$i++;
 					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
 					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-	
+
 					$result->MoveNext();
 				}
-	
+
 				$templateMgr = TemplateManager::getManager($request);
 				$templateMgr->assign(array(
 					'templates' => $templateSubject,
@@ -974,7 +1009,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
 
-				return true;				
+				return true;
 
 			}
 
@@ -982,14 +1017,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$decision = $request->_requestVars["decision"];
 			if ($stageId == 3 or $stageId == 1){
 				if($decision == 1){
-					
-						$request = \Application::get()->getRequest();		
+
+						$request = \Application::get()->getRequest();
 						$submissionId = $request->getUserVar('submissionId');
 
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
 							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned 
+							SELECT s.user_group_id , g.user_id, a.user_id as assigned
 							FROM ojs.user_user_groups g
 							LEFT JOIN ojs.user_group_settings s
 							ON s.user_group_id = g.user_group_id
@@ -1004,7 +1039,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
 								$userId = $result->GetRowAssoc(0)['user_id'];
-									
+
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
 								$stageAssignment->setSubmissionId($submissionId);
@@ -1013,10 +1048,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 								$stageAssignment->setRecommendOnly(1);
 								$stageAssignment->setCanChangeMetadata(1);
 								$stageAssignmentDao->insertObject($stageAssignment);
-		
+
 								$submissionDAO = Application::getSubmissionDAO();
 								$submission = $submissionDAO->getById($submissionId);
-		
+
 								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 								$assignedUser = $userDao->getById($userId);
 								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
@@ -1043,12 +1078,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 //				return true;
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
-			
+
 			$decision = $request->_requestVars["decision"];
 
 			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
-				/* 
-				
+				/*
+
 				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
 				$templateMgr->assign('decision',3); // PASSA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
 
@@ -1059,25 +1094,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					SELECT a.email_key, a.body, a.subject
 
-					FROM 
-					
+					FROM
+
 					(
-						SELECT 	d.email_key, d.body, d.subject	
-						FROM 	email_templates_default_data d	
+						SELECT 	d.email_key, d.body, d.subject
+						FROM 	email_templates_default_data d
 						WHERE 	d.locale = '$locale'
-						
-						UNION ALL 
-						
-						SELECT 	t.email_key, o.body, o.subject	
+
+						UNION ALL
+
+						SELECT 	t.email_key, o.body, o.subject
 						FROM 	ojs.email_templates t
-						
+
 						LEFT JOIN
 						(
 							SELECT 	a.body, b.subject, a.email_id
 							FROM
 							(
 								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings 
+								FROM 	email_templates_settings
 								WHERE 	setting_name = 'body' AND locale = '$locale'
 							)a
 							LEFT JOIN
@@ -1087,12 +1122,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 									WHERE 	setting_name = 'subject' AND locale = '$locale'
 							)b
 							ON a.email_id = b.email_id
-						) o	
+						) o
 						ON o.email_id = t.email_id
 						WHERE t.enabled = 1
 					) a
-					WHERE 	a.email_key LIKE 'REQUEST_REVISIONS%'					
-					
+					WHERE 	a.email_key LIKE 'REQUEST_REVISIONS%'
+
 					QUERY
 				);
 				$i = 0;
@@ -1100,7 +1135,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$i++;
 					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
 					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-	
+
 					$result->MoveNext();
 				}
 
@@ -1121,25 +1156,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					SELECT a.email_key, a.body, a.subject
 
-					FROM 
-					
+					FROM
+
 					(
-						SELECT 	d.email_key, d.body, d.subject	
-						FROM 	email_templates_default_data d	
+						SELECT 	d.email_key, d.body, d.subject
+						FROM 	email_templates_default_data d
 						WHERE 	d.locale = '$locale'
-						
-						UNION ALL 
-						
-						SELECT 	t.email_key, o.body, o.subject	
+
+						UNION ALL
+
+						SELECT 	t.email_key, o.body, o.subject
 						FROM 	ojs.email_templates t
-						
+
 						LEFT JOIN
 						(
 							SELECT 	a.body, b.subject, a.email_id
 							FROM
 							(
 								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings 
+								FROM 	email_templates_settings
 								WHERE 	setting_name = 'body' AND locale = '$locale'
 							)a
 							LEFT JOIN
@@ -1149,12 +1184,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 									WHERE 	setting_name = 'subject' AND locale = '$locale'
 							)b
 							ON a.email_id = b.email_id
-						) o	
+						) o
 						ON o.email_id = t.email_id
 						WHERE t.enabled = 1
 					) a
-					WHERE 	a.email_key LIKE 'EDITOR_DECISION_INITIAL_DECLINE%'					
-					
+					WHERE 	a.email_key LIKE 'EDITOR_DECISION_INITIAL_DECLINE%'
+
 					QUERY
 				);
 				$i = 0;
@@ -1162,7 +1197,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$i++;
 					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
 					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-	
+
 					$result->MoveNext();
 				}
 
@@ -1172,7 +1207,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'stageId' => $stageId,
 					'message' => json_encode($templateBody),
 					'default' => reset($templateBody)
-				));				
+				));
 			}
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
@@ -1192,7 +1227,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					FROM
 					(
 						SELECT setting_value as body, email_id
-						FROM ojs.email_templates_settings 
+						FROM ojs.email_templates_settings
 						WHERE setting_name = 'body' AND locale = '$locale'
 					)a
 					LEFT JOIN
@@ -1202,7 +1237,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							WHERE setting_name = 'subject' AND locale = '$locale'
 					)b
 					ON a.email_id = b.email_id
-				) o	
+				) o
 				ON o.email_id = t.email_id
 				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIACAO%'
 				QUERY
@@ -1292,7 +1327,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						ON a.email_id = b.email_id
 					) o
 					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO_MSG_AUTOR%'
+					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO_APROVD%'
 					QUERY
 				);
 			}
@@ -1317,7 +1352,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
-			return true;			
+			return true;
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "5") {
 			$locale = AppLocale::getLocale();
 			$userDao = DAORegistry::getDAO('UserDAO');
@@ -1331,7 +1366,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					FROM
 					(
 						SELECT setting_value as body, email_id
-						FROM ojs.email_templates_settings 
+						FROM ojs.email_templates_settings
 						WHERE setting_name = 'body' AND locale = '$locale'
 					)a
 					LEFT JOIN
@@ -1341,7 +1376,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							WHERE setting_name = 'subject' AND locale = '$locale'
 					)b
 					ON a.email_id = b.email_id
-				) o	
+				) o
 				ON o.email_id = t.email_id
 				WHERE t.enabled = 1 AND t.email_key LIKE 'EDITORACAO%'
 				QUERY
@@ -1366,7 +1401,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
-			return true;			
+			return true;
 
 		}elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
 
@@ -1378,13 +1413,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$tplvars = $templateMgr->getFBV();
 			$locale = AppLocale::getLocale();
 
-			$genreId = $tplvars->_form->_submissionFile->_data["genreId"];			
+			$genreId = $tplvars->_form->_submissionFile->_data["genreId"];
 			if($genreId == 47){ // SEM PRE-DEFINIÇÃO DE GÊNERO
 
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$tplvars->_form->_submissionFile->_data["originalFileName"];
 
 			}else{
-	
+
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
 					<<<QUERY
@@ -1395,9 +1430,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 				$genreName = $result->GetRowAssoc(false)['setting_value'];
 				$genreName = str_replace(" ","_",$genreName);
-				
+
 				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
-			
+
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$genreName.".".$extensao;
 
 			}
@@ -1434,7 +1469,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 
-		
+
 
 		return false;
 	}
@@ -1447,28 +1482,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionDAO = Application::getSubmissionDAO();
 		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 		$submissionProgress = $submission->getData('submissionProgress');
-		$stageId = $request->getUserVar('stageId');		
-		$userId = $_SESSION["userId"];			
-		$locale = AppLocale::getLocale();	
-		$userDao = DAORegistry::getDAO('UserDAO');	
+		$stageId = $request->getUserVar('stageId');
+		$userId = $_SESSION["userId"];
+		$locale = AppLocale::getLocale();
+		$userDao = DAORegistry::getDAO('UserDAO');
 
 		$templateMgr =& $args[0];
 
-		if ($fileStage == 2 && $submissionProgress == 0){			
+		if ($fileStage == 2 && $submissionProgress == 0){
 
 /* 			$templateMgr->setData('revisionOnly',false);
 			$templateMgr->setData('isReviewAttachment',true);
 			$templateMgr->setData('submissionFileOptions',[]);
  */
 			//$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
-			
+
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT A.genre_id, setting_value
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key = 'SUBMISSAO_PDF'							
+				WHERE locale = '$locale' AND entry_key = 'SUBMISSAO_PDF'
 				QUERY
 			);
 			while (!$result->EOF) {
@@ -1476,20 +1511,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
-			
-			$templateMgr->setData('submissionFileGenres', $genreList);	
-			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES			
-		}	
+
+			$templateMgr->setData('submissionFileGenres', $genreList);
+			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
+		}
 
 		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
-			
+
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT A.genre_id, setting_value
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA%'							
+				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA%'
 				QUERY
 			);
 			while (!$result->EOF) {
@@ -1497,8 +1532,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
-			
-			$templateMgr->setData('submissionFileGenres', $genreList);	
+
+			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
 
 		}
@@ -1511,7 +1546,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AVALIADOR%'							
+				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AVALIADOR%'
 				QUERY
 			);
 			while (!$result->EOF) {
@@ -1519,8 +1554,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
-			
-			$templateMgr->setData('submissionFileGenres', $genreList);	
+
+			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
 
 		}
@@ -1528,16 +1563,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 
-		}		
+		}
 		if ($fileStage == 9) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS DE REVISÃO DE TEXTO
 
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE REVISOR/TRADUTOR
 				<<<QUERY
-				SELECT g.user_group_id , g.user_id 
+				SELECT g.user_group_id , g.user_id
 				FROM ojs.user_user_groups g
 				WHERE g.user_group_id = 7 AND user_id = $userId
 				QUERY
-			);			
+			);
 
 			if($result->_numOfRows == 0){
 				$result = $userDao->retrieve(
@@ -1546,9 +1581,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					FROM ojs.genre_settings A
 					LEFT JOIN ojs.genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'							
+					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'
 					QUERY
-				);				
+				);
 			}else{
 				$result = $userDao->retrieve(
 					<<<QUERY
@@ -1556,7 +1591,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					FROM ojs.genre_settings A
 					LEFT JOIN ojs.genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TRADUT%'							
+					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TRADUT%'
 					QUERY
 				);
 			}
@@ -1566,10 +1601,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
-			
-			$templateMgr->setData('submissionFileGenres', $genreList);			
 
-		}		
+			$templateMgr->setData('submissionFileGenres', $genreList);
+
+		}
 		if ($fileStage == 10) { // UPLOAD DE PDF PARA PUBLICAÇÃO
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 		}
@@ -1577,11 +1612,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE DIAGRAMADOR
 				<<<QUERY
-				SELECT g.user_group_id 
+				SELECT g.user_group_id
 				FROM ojs.user_user_groups g
 				WHERE user_id = $userId
 				QUERY
-			);			
+			);
 
 			while (!$result->EOF) {
 				if($result->GetRowAssoc(0)['user_group_id'] == 24){ // ASSISTENTE EDITORIAL
@@ -1591,9 +1626,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%'							
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%'
 						QUERY
-					);	
+					);
 				break;
 				}elseif($result->GetRowAssoc(0)['user_group_id'] == 22){ // DIAGRAMADOR
 					$result_genre = $userDao->retrieve(
@@ -1602,7 +1637,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_DIAGRM%'							
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_DIAGRM%'
 						QUERY
 					);
 				break;
@@ -1612,20 +1647,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 			if(isset($result_genre)){
-				
+
 				while (!$result_genre->EOF) {
 					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-	
+
 					$result_genre->MoveNext();
 				}
-				
-				$templateMgr->setData('submissionFileGenres', $genreList);	
+
+				$templateMgr->setData('submissionFileGenres', $genreList);
 
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
 
-		
+
 
 		}
 
@@ -1645,20 +1680,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
-			
+
 			$templateMgr->setData('submissionFileGenres', $genreList);
 
 			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 
 
-		}		
-		if ($fileStage == 18) {  // UPLOADS NO BOX DISCUSSÃO 
+		}
+		if ($fileStage == 18) {  // UPLOADS NO BOX DISCUSSÃO
 
 			if($stageId == 5){
 
 				$autor = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
 					<<<QUERY
-					SELECT g.user_group_id , g.user_id 
+					SELECT g.user_group_id , g.user_id
 					FROM ojs.user_user_groups g
 					WHERE g.user_group_id = 14 AND user_id = $userId
 					QUERY
@@ -1679,7 +1714,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_AUTOR%'							
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_AUTOR%'
 						QUERY
 					);
 
@@ -1697,7 +1732,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'							
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'
 						QUERY
 					);
 
@@ -1707,22 +1742,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$result->MoveNext();
 					}
 
-					$templateMgr->setData('submissionFileGenres', $genreList);	
+					$templateMgr->setData('submissionFileGenres', $genreList);
 				}else{
 					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 				}
 
 
-			}elseif($stageId == 4){			
-	
-				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL	
+			}elseif($stageId == 4){
+
+				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
 					<<<QUERY
-					SELECT g.user_group_id , g.user_id 
+					SELECT g.user_group_id , g.user_id
 					FROM ojs.user_user_groups g
 					WHERE g.user_group_id = 14 AND user_id = $userId
 					QUERY
-				);			
-	
+				);
+
 				if($result->_numOfRows > 0){
 					$result = $userDao->retrieve(
 						<<<QUERY
@@ -1730,24 +1765,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_AUTOR%'							
+						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_AUTOR%'
 						QUERY
-					);	
+					);
 					while (!$result->EOF) {
 						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-		
+
 						$result->MoveNext();
 					}
-					
-					$templateMgr->setData('submissionFileGenres', $genreList);	
+
+					$templateMgr->setData('submissionFileGenres', $genreList);
 				}else{
 					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 				}
-				
+
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
-				
+
 		}
 
 	}
@@ -1767,14 +1802,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
 			$columns[] = Capsule::raw('\'ojs\' AS type');
 			$refColumns->setValue($args[1], $columns);
-	
+
 			$cspQuery = Capsule::table(Capsule::raw('csp.Pessoa p'));
 			$cspQuery->leftJoin('users as u', function ($join) {
 				$join->on('u.email', '=', 'p.email');
 			});
 			$cspQuery->whereNull('u.email');
 			$cspQuery->whereIn('p.permissao', [0,2,3]);
-	
+
 			$refSearchPhrase = $refObject->getProperty('searchPhrase');
 			$refSearchPhrase->setAccessible( true );
 			$words = $refSearchPhrase->getValue($args[1]);
@@ -1790,7 +1825,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 			}
-	
+
 			$locale = AppLocale::getLocale();
 			$args[0]->leftJoin('user_settings as ui1', function ($join) use ($locale) {
 				$join->on('ui1.user_id', '=', 'u.user_id')
@@ -1817,8 +1852,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result = $userDao->retrieve(
 					<<<QUERY
 					SELECT `COLUMN_NAME`
-					  FROM `INFORMATION_SCHEMA`.`COLUMNS` 
-					 WHERE `TABLE_SCHEMA`='ojs' 
+					  FROM `INFORMATION_SCHEMA`.`COLUMNS`
+					 WHERE `TABLE_SCHEMA`='ojs'
 					   AND `TABLE_NAME`='users';
 					QUERY
 				);
@@ -1839,7 +1874,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$args[0]->select($columns)
 					->groupBy('u.user_id', 'user_given', 'user_family');
 			}
-	
+
 			$subOjsQuery = Capsule::table(Capsule::raw(
 				<<<QUERY
 				(
@@ -1882,10 +1917,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 					ON s.submission_id = a.submission_id AND s.stage_id <= 3
 					WHERE a.user_group_id = ?
 					GROUP BY a.user_id) q2
-					ON q1.user_id = q2.user_id					
+					ON q1.user_id = q2.user_id
 					QUERY;
 		$args[1][] = $args[1][10];
-		
+
 
 	}
 
@@ -1969,11 +2004,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$smarty =& $params[1];
 		$output =& $params[2];
 		//$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
-		
+
 		if($sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
 		}
-		
+
 		if($sectionId == 4){
 			$output .= $smarty->fetch($this->getTemplateResource('Tema.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
@@ -1982,14 +2017,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
 		//$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
-		
+
 		if($sectionId == 6){
 			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
-		
-		
+
+
 		return false;
 	}
 
@@ -1998,16 +2033,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'conflitoInteresse';
 		//$userVars[] = 'conflitoInteresseQual';
 		//$userVars[] = 'FonteFinanciamento';
-		//$userVars[] = 'FonteFinanciamentoQual';		
+		//$userVars[] = 'FonteFinanciamentoQual';
 		$userVars[] = 'agradecimentos';
 		$userVars[] = 'codigoTematico';
 		$userVars[] = 'Tema';
 		$userVars[] = 'codigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
 		$userVars[] = 'doi';
-		
+
 		return false;
-	} 
+	}
 
  	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
@@ -2015,19 +2050,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
 		//$article->setData('conflitoInteresseQual', $form->getData('conflitoInteresseQual'));
 		//$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
-		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));		
+		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));
 		$article->setData('agradecimentos', $form->getData('agradecimentos'));
 		$article->setData('codigoTematico', $form->getData('codigoTematico'));
 		$article->setData('Tema', $form->getData('Tema'));
 		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
 		$article->setData('doi', $form->getData('doi'));
-		
+
 		return false;
-	} 
+	}
 
 	function metadataExecuteStep4($hookName, $params) {
 		$form =& $params[0];
-		$article = $form->submission;				
+		$article = $form->submission;
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = $userDao->retrieve(
 			<<<QUERY
@@ -2037,11 +2072,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			QUERY
 		);
 		$article->setData('CodigoArtigo', $result->GetRowAssoc(false)['code']);
-		
-		
+
+
 		return false;
 	}
-	
+
 
 	/**
 	 * Init article Campo1
@@ -2052,16 +2087,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$this->sectionId = $article->getData('sectionId');
 		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
 		//$form->setData('conflitoInteresseQual', $article->getData('conflitoInteresseQual'));
-		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));				
-		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));			
+		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));
+		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));
 		$form->setData('agradecimentos', $article->getData('agradecimentos'));
 		$form->setData('codigoTematico', $article->getData('codigoTematico'));
-		$form->setData('Tema', $article->getData('Tema'));	
+		$form->setData('Tema', $article->getData('Tema'));
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
 		$form->setData('doi', $article->getData('doi'));
-		
+
 		return false;
-	} 
+	}
 
 
 	function publicationEdit($hookName, $params) {
@@ -2093,13 +2128,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function addCheck($hookName, $params) {
 		$form =& $params[0];
 
-		if($this->sectionId == 4){		
-			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));			
-			$form->addCheck(new FormValidatorLength($form, 'Tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));			
+		if($this->sectionId == 4){
+			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
+			$form->addCheck(new FormValidatorLength($form, 'Tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
 		}
 
-		if($this->sectionId == 6){		
-			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));			
+		if($this->sectionId == 6){
+			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
 		}
 
 		$form->addCheck(new FormValidatorCustom($form, 'doi', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function($doi) {
@@ -2110,16 +2145,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$doi = 'http://'.reset($doi);
 				} else {
 					return false;
-				}				
+				}
 			}
 
 			$client = HttpClient::create();
 			$response = $client->request('GET', $doi);
-			$statusCode = $response->getStatusCode();			
+			$statusCode = $response->getStatusCode();
 			return in_array($statusCode,[303,200]);
 		}));
 
-		
+
 		return false;
 	}
 
@@ -2155,7 +2190,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if ($wordCount) {
 					$formato = explode('.', $_FILES['uploadedFile']['name']);
 					$formato = trim(strtolower(end($formato)));
-	
+
 					$readers = array('docx' => 'Word2007', 'odt' => 'ODText', 'rtf' => 'RTF', 'doc' => 'ODText');
 					$doc = \PhpOffice\PhpWord\IOFactory::load($_FILES['uploadedFile']['tmp_name'], $readers[$formato]);
 					$html = new PhpOffice\PhpWord\Writer\HTML($doc);
@@ -2177,7 +2212,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
 					);
 				}
-				break;		
+				break;
 			case 15: // Fluxograma
 			case 25: // Nova versão fluxograma
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*doc*/
@@ -2190,7 +2225,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Flowchart')
 					);
 				}
-				break;	
+				break;
 			case 16: // Gráfico
 			case 26: // Nova versão gráfico
 				$_FILES['uploadedFile']['type'];
@@ -2204,7 +2239,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Chart')
 					);
 				}
-				break;	
+				break;
 			case 17: // Mapa
 			case 27: // Nova versão mapa
 				$_FILES['uploadedFile']['type'];
@@ -2215,7 +2250,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Map')
 					);
 				}
-				break;		
+				break;
 				case '46': 	// PDF para avaliação
 				case '30': 	// Nova versão PDF
 					$request = \Application::get()->getRequest();
@@ -2266,7 +2301,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 									import('lib.pkp.classes.log.SubmissionLog');
 									SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
-									
+
 								}
 
 								$result->MoveNext();
@@ -2311,12 +2346,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 							}
 						}
 					}
-					break;															
+					break;
 					case '':
 						$args[0]->setData('genreId',47);
-						$args[1] = true;	
+						$args[1] = true;
 					break;
-				return true;										
+				return true;
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
@@ -2347,7 +2382,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function fileManager_downloadFile($hookName, $args)
 	{
 		list($filePath, $mediaType, $inline, $result, $fileName) = $args;
-		if (is_readable($filePath)) {			
+		if (is_readable($filePath)) {
 			if ($mediaType === null) {
 				// If the media type wasn't specified, try to detect.
 				$mediaType = PKPString::mime_content_type($filePath);
@@ -2365,7 +2400,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
 					FROM ojs.submission_settings
 					WHERE setting_name = 'CodigoArtigo' AND submission_id = ?
-					QUERY, 
+					QUERY,
 					[$matches['id']]
 				);
 				$a = $result->GetRowAssoc(false);
