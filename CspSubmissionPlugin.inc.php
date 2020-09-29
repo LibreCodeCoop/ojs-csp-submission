@@ -595,7 +595,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[0]->_data["recipients"] = [];
 
 			while (!$result->EOF) {
-
+				$args[0]->_data["from"]["email"] = "noreply@csp.fiocruz.br";
+				$args[0]->_data["from"] = "Cadernos de Saúde Pública";
 				$args[0]->_data["recipients"][]= ["name" => $result->GetRowAssoc(0)['setting_value'], "email" => $result->GetRowAssoc(0)['email']];
 
 				$result->MoveNext();
@@ -747,6 +748,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result->MoveNext();
 			}
 		}
+		$args[0]->_data["from"]["name"] = "Cadernos de Saúde Pública";
+		$args[0]->_data["from"]["email"] = "noreply@fiocruz.br";
+		$args[0]->_data["replyTo"][0]["name"] =  "Cadernos de Saúde Pública";
+		$args[0]->_data["replyTo"][0]["email"] = "noreply@fiocruz.br";
 	}
 
 	public function APIHandler_endpoints($hookName, $args) {
@@ -1685,6 +1690,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 
+
+		}
+
+		if ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
+			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 
 		}
 		if ($fileStage == 18) {  // UPLOADS NO BOX DISCUSSÃO
