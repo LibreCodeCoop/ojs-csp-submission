@@ -1078,9 +1078,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 
 			}elseif ($stageId == 4){
-//				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
+				$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
 
-//				return true;
+				return true;
 			}
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 

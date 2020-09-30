@@ -38,8 +38,11 @@
 		{/if}
 
 		{capture assign="sendEmailLabel"}{translate key="editor.submissionReview.sendEmail" authorName=$authorName}{/capture}
-		
-		{assign var="skipEmailSkip" value=true}
+		{if $skipEmail}
+			{assign var="skipEmailSkip" value=true}
+		{else}
+			{assign var="skipEmailSend" value=true}
+		{/if}
 		
 		{fbvFormSection title="common.sendEmail"}
 			<ul class="checkbox_and_radiobutton">
