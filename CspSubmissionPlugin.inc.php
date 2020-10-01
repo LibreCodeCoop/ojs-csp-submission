@@ -125,7 +125,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 3,
-				'title' => '> Com o editor assiciado'
+				'title' => '> Com o editor associado'
 			];
 			$stages[] = [
 				'param' => 'substage',
@@ -1565,9 +1565,46 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
 
 		}
-		if ($fileStage == 6) { // AVALIADOR FAZENDO UPLOAD DE PARECER
+		if ($fileStage == 6) {
 
-			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+			$result = $userDao->retrieve( // PEGA O PERFIL
+				<<<QUERY
+				SELECT g.user_group_id
+				FROM ojs.user_user_groups g
+				WHERE user_id = $userId
+				QUERY
+			);
+
+			while (!$result->EOF) {
+				if($result->GetRowAssoc(0)['user_group_id'] == 19){ // PERFIL REVISOR DE FIGURA
+					$result_genre = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TEXTO_FIG_ALT%'
+						QUERY
+					);
+				break;
+				}
+
+				$result->MoveNext();
+			}
+
+			if(isset($result_genre)){
+
+				while (!$result_genre->EOF) {
+					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
+
+					$result_genre->MoveNext();
+				}
+
+				$templateMgr->setData('submissionFileGenres', $genreList);
+
+			}else{
+				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+			}			
 
 		}
 		if ($fileStage == 9) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS DE REVISÃO DE TEXTO
@@ -1616,7 +1653,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if ($fileStage == 11) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS PRONTOS PARA LAYOUT
 
-			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE DIAGRAMADOR
+			$result = $userDao->retrieve( // CONSULTA O PERFIL
 				<<<QUERY
 				SELECT g.user_group_id
 				FROM ojs.user_user_groups g
@@ -1632,18 +1669,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%'
+						WHERE locale = '$locale' AND (entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%' OR entry_key LIKE 'EDITORACAO_FIG_P_FORMATAR%')
 						QUERY
 					);
 				break;
-				}elseif($result->GetRowAssoc(0)['user_group_id'] == 22){ // DIAGRAMADOR
+				}elseif($result->GetRowAssoc(0)['user_group_id'] == 21){ // EDITOR DE FIGURA
 					$result_genre = $userDao->retrieve(
 						<<<QUERY
 						SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_DIAGRM%'
+						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_FIG_FORMATA%'
 						QUERY
 					);
 				break;
@@ -1665,32 +1702,62 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
-
-
-
 		}
 
-		if ($fileStage == 15) { // AUTOR SUBMETENDO REVISÃO
+		if ($fileStage == 15) { // UPLOAD NOVA VERSÃO
 
-			$result = $userDao->retrieve(
+
+
+			$result = $userDao->retrieve( // BUSCAR PERFIL DO USUÁRIO
 				<<<QUERY
-				SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
-				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AUTOR%'
+				SELECT g.user_group_id
+				FROM ojs.user_user_groups g
+				WHERE user_id = $userId
 				QUERY
 			);
+
 			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+				if($result->GetRowAssoc(0)['user_group_id'] == 23){ // SECRETARIA
+					$result_genre = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA_NOVA_VERSAO%'
+						QUERY
+					);
+				break;
+				}elseif($result->GetRowAssoc(0)['user_group_id'] == 14){ // AUTOR
+					$result_genre = $userDao->retrieve(
+						<<<QUERY
+						SELECT A.genre_id, setting_value
+						FROM ojs.genre_settings A
+						LEFT JOIN ojs.genres B
+						ON B.genre_id = A.genre_id
+						WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AUTOR%'
+						QUERY
+					);
+				break;
+				}
 
 				$result->MoveNext();
 			}
 
-			$templateMgr->setData('submissionFileGenres', $genreList);
+			if(isset($result_genre)){
 
-			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
+				while (!$result_genre->EOF) {
+					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
 
+					$result_genre->MoveNext();
+				}
+
+				$templateMgr->setData('submissionFileGenres', $genreList);
+				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
+
+			}else{
+				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+			}
 
 		}
 
@@ -1776,7 +1843,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_AUTOR%'
+						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TEXTO_FIG_ALT%'
 						QUERY
 					);
 					while (!$result->EOF) {
