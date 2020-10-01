@@ -2239,6 +2239,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
 		$genreId = $args[0]->getData('genreId');
+		$args[0]->_data["fileStage"];
 		switch($genreId) {
 			case 1: // CORPO DO ARTIGO
 			case 13: // TABELA
@@ -2425,6 +2426,45 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}
 					}
 					break;
+					// Quando revisor/tradutor faz upload de arquivo no box de arquivo para edição de texto, editores assistentes são notificados
+					case '48': // DE rev-trad corpo PT
+					case '49': // DE rev-trad corpo  EN
+					case '50': // DE rev-trad corpo  ES
+
+						$request = \Application::get()->getRequest();
+						$submissionId = $request->getUserVar('submissionId');
+						$stageId = $request->getUserVar('stageId');
+						$locale = AppLocale::getLocale();
+
+						$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+						$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
+						foreach ($submissionFiles as $submissionFile) {
+							$fileName = $submissionFile->_data["name"][$locale];
+							if (preg_match("/De_rev-trad/i", $fileName)) {
+								return false;
+							}
+						}
+
+						import('lib.pkp.classes.mail.MailTemplate');
+
+						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+						// FIXME: #6692# Should this be getting users just for a specific user group?
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+
+						while ($user = $users->next()) {
+
+							$mail = new MailTemplate('COPYEDIT_RESPONSE');
+							$mail->addRecipient($user->getEmail(), $user->getFullName());
+							//$mail->setBody(str_replace('{$submissionTitle}',$submissionTitle,$mail->_data["body"]));
+
+							if (!$mail->send()) {
+								import('classes.notification.NotificationManager');
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+							}
+						}
+					break;
+
 					case '':
 						$args[0]->setData('genreId',47);
 						$args[1] = true;
