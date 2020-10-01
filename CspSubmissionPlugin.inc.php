@@ -569,100 +569,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $request->getUserVar('submissionId');
 
 		if($stageId == 3 && $decision == 1){  // AO ACEITAR SUBMISSÃO, OS EDITORES ASSISTENTES DEVEM SER NOTIFICADOS
+
+			$request = \Application::get()->getRequest();
+			$submissionId = $request->getUserVar('submissionId');
+			$stageId = $request->getUserVar('stageId');
 			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT 		a.user_id, u.email, b.setting_value
-				FROM 		( 	SELECT s.user_group_id, g.user_id
-								FROM ojs.user_user_groups g
-								LEFT JOIN ojs.user_group_settings s
-								ON s.user_group_id = g.user_group_id
-								LEFT JOIN ojs.stage_assignments a
-								ON g.user_id = a.user_id AND a.submission_id = $submissionId
-								WHERE s.setting_value = 'Assistente editorial'
-							)a
-				LEFT JOIN 	ojs.users u
-				ON 			u.user_id = a.user_id
-				LEFT JOIN	( 	SELECT user_id, setting_value
-								FROM ojs.user_settings
-								WHERE setting_name = 'givenName' AND locale = '$locale'
-							)b
-				ON b.user_id = a.user_id
-				QUERY
-			);
 
-			$args[0]->_data["recipients"] = [];
+			import('lib.pkp.classes.mail.MailTemplate');
 
-			while (!$result->EOF) {
-				$args[0]->_data["from"]["email"] = "noreply@csp.fiocruz.br";
-				$args[0]->_data["from"] = "Cadernos de Saúde Pública";
-				$args[0]->_data["recipients"][]= ["name" => $result->GetRowAssoc(0)['setting_value'], "email" => $result->GetRowAssoc(0)['email']];
-
-				$result->MoveNext();
+			$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+			$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+			unset($args[0]->_data["recipients"]);
+			while ($user = $users->next()) {
+				$args[0]->_data["recipients"][]= ["name" => $user->getFullName(), "email" => $user->getEmail()];
 			}
 
 		}
 
 
-/* 		if (!empty($args[0]->emailKey) && $args[0]->emailKey == "REVIEW_REQUEST_ONECLICK"){
-			$body = $args[0]->_data['body'];
-
-			preg_match("/href='(?P<url>.*)' class='submissionReview/",$body,$matches);
-			$body = str_replace('{$submissionReviewUrlAccept}', $matches['url']."&accept=yes", $body);
-			$body = str_replace('{$submissionReviewUrlReject}', $matches['url']."&accept=no", $body);
-			$args[0]->_data['body'] = $body;
-		}
-		if ($stageId == 3 && !empty($args[0]->emailKey) && $args[0]->emailKey == "NOTIFICATION"){
-			return true;
-		}if ($args[0]->emailKey == "EDITOR_DECISION_INITIAL_DECLINE"){
-			$request = \Application::get()->getRequest();;
-			$subject = $request->_requestVars["subject"];
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT a.email_key, a.body, a.subject
-
-				FROM
-
-				(
-					SELECT 	d.email_key, d.body, d.subject
-					FROM 	email_templates_default_data d
-					WHERE 	d.locale = '$locale'
-
-					UNION ALL
-
-					SELECT 	t.email_key, o.body, o.subject
-					FROM 	ojs.email_templates t
-
-					LEFT JOIN
-					(
-						SELECT 	a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT 	setting_value as body, email_id
-							FROM 	email_templates_settings
-							WHERE 	setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT 	setting_value as subject, email_id
-								FROM 	email_templates_settings
-								WHERE 	setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1
-				) a
-				WHERE 	a.email_key  = '$subject'
-
-				QUERY
-			);
-
-			$args[0]->setData('subject', $result->GetRowAssoc(false)['subject']);
-		} */
 
 		if($request->_router->_page == "reviewer"){ // AVALIADOR RECEBE E-MAIL DE AGRADECIMENTO APÓS SUBMETER AVALIAÇÃO
 			if($request->_requestVars["step"] == 1){
@@ -1071,7 +995,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}
 
 				}
-				$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
+				//$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage1And3.tpl'));
 
@@ -2431,38 +2355,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					case '49': // DE rev-trad corpo  EN
 					case '50': // DE rev-trad corpo  ES
 
-						$request = \Application::get()->getRequest();
-						$submissionId = $request->getUserVar('submissionId');
-						$stageId = $request->getUserVar('stageId');
-						$locale = AppLocale::getLocale();
-
-						$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-						$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
-						foreach ($submissionFiles as $submissionFile) {
-							$fileName = $submissionFile->_data["name"][$locale];
-							if (preg_match("/De_rev-trad/i", $fileName)) {
-								return false;
-							}
-						}
-
-						import('lib.pkp.classes.mail.MailTemplate');
-
-						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-						// FIXME: #6692# Should this be getting users just for a specific user group?
-						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-
-						while ($user = $users->next()) {
-
-							$mail = new MailTemplate('COPYEDIT_RESPONSE');
-							$mail->addRecipient($user->getEmail(), $user->getFullName());
-							//$mail->setBody(str_replace('{$submissionTitle}',$submissionTitle,$mail->_data["body"]));
-
-							if (!$mail->send()) {
-								import('classes.notification.NotificationManager');
-								$notificationMgr = new NotificationManager();
-								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-							}
-						}
+ 
 					break;
 
 					case '':
