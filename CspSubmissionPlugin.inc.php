@@ -2359,21 +2359,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$stageId = $request->getUserVar('stageId');
 						$locale = AppLocale::getLocale();
 
-						import('lib.pkp.classes.mail.MailTemplate');
+						import('lib.pkp.classes.file.SubmissionFileManager');
 
-						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-						while ($user = $users->next()) {
+						$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+						$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
+						foreach ($submissionFiles as $submissionFile) {
+							$genreIds[] = $submissionFile->_data["genreId"];
+						}
 
-							$mail = new MailTemplate('COPYEDIT_RESPONSE');
-							$mail->addRecipient($user->getEmail(), $user->getFullName());
+						$genreIdsRevTrad = array(48,49,50);
 
-							if (!$mail->send()) {
-								import('classes.notification.NotificationManager');
-								$notificationMgr = new NotificationManager();
-								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						if(empty(array_intersect($genreIds, $genreIdsRevTrad))){
+
+							import('lib.pkp.classes.mail.MailTemplate');
+
+							$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+							$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+							while ($user = $users->next()) {
+
+								$mail = new MailTemplate('COPYEDIT_RESPONSE');
+								$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+								if (!$mail->send()) {
+									import('classes.notification.NotificationManager');
+									$notificationMgr = new NotificationManager();
+									$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+								}
 							}
 						}
+
  
 					break;
 					// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
