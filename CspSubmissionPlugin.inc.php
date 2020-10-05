@@ -2357,7 +2357,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 
  
 					break;
+					// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
+					case '54':
+						$request = \Application::get()->getRequest();
+						$submissionId = $request->getUserVar('submissionId');
+						$stageId = $request->getUserVar('stageId');
+						$locale = AppLocale::getLocale();
 
+						import('lib.pkp.classes.mail.MailTemplate');
+
+						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+						while ($user = $users->next()) {
+
+							$mail = new MailTemplate('EDICAO_TEXTO_FIG_ALTERADA');
+							$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+							if (!$mail->send()) {
+								import('classes.notification.NotificationManager');
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+							}
+						}
+						break;
 					case '':
 						$args[0]->setData('genreId',47);
 						$args[1] = true;
