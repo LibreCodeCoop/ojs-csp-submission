@@ -2358,7 +2358,7 @@ class CspSubmissionPlugin extends GenericPlugin {
  
 					break;
 					// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
-					case '54':
+					case '54': // Figura alterada
 						$request = \Application::get()->getRequest();
 						$submissionId = $request->getUserVar('submissionId');
 						$stageId = $request->getUserVar('stageId');
@@ -2370,7 +2370,30 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
 						while ($user = $users->next()) {
 
-							$mail = new MailTemplate('EDICAO_TEXTO_FIG_ALTERADA');
+							$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
+							$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+							if (!$mail->send()) {
+								import('classes.notification.NotificationManager');
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+							}
+						}
+						break;
+					// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
+					case '64': // Figura formatada
+						$request = \Application::get()->getRequest();
+						$submissionId = $request->getUserVar('submissionId');
+						$stageId = $request->getUserVar('stageId');
+						$locale = AppLocale::getLocale();
+
+						import('lib.pkp.classes.mail.MailTemplate');
+
+						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+						while ($user = $users->next()) {
+
+							$mail = new MailTemplate('EDITORACAO_FIG_FORMATADA');
 							$mail->addRecipient($user->getEmail(), $user->getFullName());
 
 							if (!$mail->send()) {
