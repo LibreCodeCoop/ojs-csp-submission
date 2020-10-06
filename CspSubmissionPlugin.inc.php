@@ -2270,42 +2270,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 								$result->MoveNext();
 							}
 						}
-						if($genreId == 30){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
-							$locale = AppLocale::getLocale();
-
-							$submissionDAO = Application::getSubmissionDAO();
-							$submission = $submissionDAO->getById($submissionId);
-							$submissionTitle = $submission->_data["publications"][0]->_data["title"][$locale];
-							$contextId = $submission->_data["contextId"];
-
-							$userDao = DAORegistry::getDAO('UserDAO');
-							$result = $userDao->retrieve(
-								<<<QUERY
-								SELECT u.email, x.setting_value as name
-								FROM ojs.stage_assignments a
-								LEFT JOIN ojs.users u
-								ON a.user_id = u.user_id
-								LEFT JOIN (SELECT user_id, setting_value FROM ojs.user_settings WHERE setting_name = 'givenName' AND locale = '$locale') x
-								ON x.user_id = u.user_id
-								WHERE submission_id = $submissionId AND user_group_id = 5
-								QUERY
-							);
+						if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
+							$stageId = $request->getUserVar('stageId');
+							$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+							$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
 
 							import('lib.pkp.classes.mail.MailTemplate');
 
-							while (!$result->EOF) {
+							while ($user = $users->next()) {
 
 								$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
-								$mail->addRecipient($result->GetRowAssoc(0)['email'], $result->GetRowAssoc(0)['name']);
-								$mail->setBody(str_replace('{$submissionTitle}',$submissionTitle,$mail->_data["body"]));
+								$mail->addRecipient($user->getEmail(), $user->getFullName());
 
 								if (!$mail->send()) {
 									import('classes.notification.NotificationManager');
 									$notificationMgr = new NotificationManager();
 									$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 								}
-
-								$result->MoveNext();
 							}
 						}
 					}
