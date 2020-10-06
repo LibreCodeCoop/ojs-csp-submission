@@ -34,14 +34,18 @@
 {/if}
 
 {if $_label != ''}
-	<span class="label{if count($actions) gt 0} before_actions{/if}">
-		{if $column->hasFlag('maxLength')}
-			{assign var="maxLength" value=$column->getFlag('maxLength')}
-			{$_label|truncate:$maxLength}
-		{else}
-			{$_label}
-		{/if}
-	</span>
+ 	{if substr($_label, 0, 27) == '<span class="file_extension'}
+
+ 	{else}
+		<span class="label{if count($actions) gt 0} before_actions{/if}">
+			{if $column->hasFlag('maxLength')}
+				{assign var="maxLength" value=$column->getFlag('maxLength')}
+				{$_label|truncate:$maxLength}
+			{else}
+				{$_label}
+			{/if}
+		</span>
+	{/if}
 {/if}
 
 {if count($actions) gt 0}
