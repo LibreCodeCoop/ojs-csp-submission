@@ -2165,12 +2165,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$genreId = $args[0]->getData('genreId');
 		$args[0]->_data["fileStage"];
 		switch($genreId) {
-			case 1: // CORPO DO ARTIGO
-			case 13: // TABELA
-			case 14: // QUADRO
-			case 19: // NOVA VERSÃO CORPO DO ARTIGO
-			case 20: // NOVA VERSÃO TABELA
-			case 21: // NOVA VERSÃO QUADRO
+			case 1: // Corpo do artigo
+			case 13: // Tabela ou quadro
+			case 19: // Nova versão corpo
+			case 20: // Nova versão tabela ou quadro
 				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
 				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
@@ -2208,49 +2206,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				break;
-			case 10: // Fotografia
-			case 24: // Nova versão Fotografia
-				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff', 'image/svg+xml'])) {
+			case 10: // Figura
+			case 22: // Nova versão Figura
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg'])) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
-					);
-				}
-				break;
-			case 15: // Fluxograma
-			case 25: // Nova versão fluxograma
-				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*doc*/
-					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
-					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
-					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Flowchart')
-					);
-				}
-				break;
-			case 16: // Gráfico
-			case 26: // Nova versão gráfico
-				$_FILES['uploadedFile']['type'];
-				if (($_FILES['uploadedFile']['type'] <> 'application/vnd.ms-excel') /*xls*/
-					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') /*xlsx*/
-					and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.spreadsheet')/*ods*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
-					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Chart')
-					);
-				}
-				break;
-			case 17: // Mapa
-			case 27: // Nova versão mapa
-				$_FILES['uploadedFile']['type'];
-				if (($_FILES['uploadedFile']['type'] <> 'image/x-eps')/*eps*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/svg+xml')/*svg*/
-					and ($_FILES['uploadedFile']['type'] <> 'image/wmf')/*wmf*/) {
-					$args[0]->addError('genreId',
-						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Map')
 					);
 				}
 				break;
