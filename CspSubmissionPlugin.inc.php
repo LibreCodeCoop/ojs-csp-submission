@@ -114,100 +114,100 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 1,
-				'title' => '> Aguardando secretaria'
+				'title' => 'Aguardando secretaria'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 2,
-				'title' => '> Aguardando decisão'
+				'title' => 'Aguardando decisão'
 			];
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 3,
-				'title' => '> Com o editor associado'
+				'title' => 'Com o editor associado'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 4,
-				'title' => '> Aguardando decisão'
+				'title' => 'Aguardando decisão'
 			];
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 5,
-				'title' => '> Aguardando envio para avaliação de ilustração'
+				'title' => 'Envio para avaliação de ilustração'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 6,
-				'title' => '> Em avaliação de ilustração'
+				'title' => 'Em avaliação de ilustração'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 7,
-				'title' => '> Aguardando envio de Carta de aprovação'
+				'title' => 'Envio de Carta de aprovação'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 8,
-				'title' => '> Aguardando revisão/Tradução'
+				'title' => 'Em revisão/Tradução'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 9,
-				'title' => '> Revisão/Tradução prontas'
+				'title' => 'Revisão/Tradução prontas'
 			];
 /* 			$stages[] = [
 				'param' => 'substage',
 				'value' => 10,
-				'title' => '> Tradução de metadados'
+				'title' => 'Tradução de metadados'
 			]; */
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 11,
-				'title' => '> Aguardando padronizador'
+				'title' => 'Aguardando padronizador'
 			];
 /* 			$stages[] = [
 				'param' => 'substage',
 				'value' => 12,
-				'title' => '> Padronização Concluída'
+				'title' => 'Padronização Concluída'
 			]; */
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 13,
-				'title' => '> Aguardando formatação de Figura'
+				'title' => 'Formatação de Figura'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 14,
-				'title' => '> Aguardando produção de PDF padronizado'
+				'title' => 'Produção de PDF padronizado'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 15,
-				'title' => '> Prova de Prelo e declaração enviadas'
+				'title' => 'Prova de Prelo enviada'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 16,
-				'title' => '> Prova de prelo e declarações recebidas'
+				'title' => 'Prova de prelo recebida'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 17,
-				'title' => '> Aguardando diagramação'
+				'title' => 'Aguardando diagramação'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 18,
-				'title' => '> PDF diagramado'
+				'title' => 'PDF diagramado'
 			];
 			$stages[] = [
 				'param' => 'substage',
 				'value' => 19,
-				'title' => '> Aguardando publicação'
+				'title' => 'Aguardando publicação'
 			];
 			$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
 			$templateManager->assign('containerData', $containerData);
@@ -698,10 +698,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $request->getUserVar('submissionId');
 		//$itemId = $request->getUserVar('istemId');
 
-		if ($args[1] == 'submission/form/step1.tpl') {
-			//$args[4] = $templateMgr->fetch($this->getTemplateResource('step1.tpl'));
+		if ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
 
-			//return true;
+			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
