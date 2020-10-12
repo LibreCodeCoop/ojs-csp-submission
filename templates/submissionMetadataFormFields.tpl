@@ -9,6 +9,12 @@
  * submission metadata.
  *}
 
+<script type="text/javascript">
+	$(function() {
+		$(".localization_popover_container").removeClass("localization_popover_container_focus_forced");
+	});
+</script>
+
 {if $citationsEnabled && array_intersect(array(ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR, ROLE_ID_ASSISTANT, ROLE_ID_REVIEWER, ROLE_ID_AUTHOR), (array)$userRoles)}
 	{assign var=citationsEnabled value=true}
 {else}
@@ -61,12 +67,12 @@
 		{/if}
 		{if $keywordsEnabled}
 			{fbvFormSection label="common.keywords" required=$keywordsRequired}
-				{fbvElement type="keyword" id="keywords" multilingual=true current=$keywords disabled=$readOnly required=$keywordsRequired}
+				{fbvElement type="keyword" id="keywords" label="plugins.generic.CspSubmission.keywords.tip" multilingual=true current=$keywords disabled=$readOnly}
 			{/fbvFormSection}
 		{/if}
 		{if $agenciesEnabled}
 			{fbvFormSection label="submission.supportingAgencies" required=$agenciesRequired}
-				{fbvElement type="keyword" id="agencies" multilingual=true current=$agencies disabled=$readOnly required=$agenciesRequired}
+				{fbvElement type="keyword" id="agencies" label="plugins.generic.CspSubmission.supportingAgencies.tip" multilingual=true current=$agencies disabled=$readOnly required=$agenciesRequired}
 			{/fbvFormSection}
 		{/if}
 		{if $citationsEnabled}
