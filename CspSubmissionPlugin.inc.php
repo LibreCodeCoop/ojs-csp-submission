@@ -2186,26 +2186,114 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$sectionId = $publication->getData('sectionId');
 				$sectionDAO = DAORegistry::getDAO('SectionDAO');
 				$section = $sectionDAO->getById($sectionId);
-				$wordCount = $section->getData('wordCount');
 
-				if ($wordCount) {
-					$formato = explode('.', $_FILES['uploadedFile']['name']);
-					$formato = trim(strtolower(end($formato)));
+				$formato = explode('.', $_FILES['uploadedFile']['name']);
+				$formato = trim(strtolower(end($formato)));
 
-					$readers = array('docx' => 'Word2007', 'odt' => 'ODText', 'rtf' => 'RTF', 'doc' => 'ODText');
-					$doc = \PhpOffice\PhpWord\IOFactory::load($_FILES['uploadedFile']['tmp_name'], $readers[$formato]);
-					$html = new PhpOffice\PhpWord\Writer\HTML($doc);
-					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
-					if ($contagemPalavras > $wordCount) {
-						$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-							'sectoin' => $section->getTitle($publication->getData('locale')),
-							'max'     => $wordCount,
-							'count'   => $contagemPalavras
-						]);
-						$args[0]->addError('genreId', $phrase);
-					}
+				$readers = array('docx' => 'Word2007', 'odt' => 'ODText', 'rtf' => 'RTF', 'doc' => 'ODText');
+				$doc = \PhpOffice\PhpWord\IOFactory::load($_FILES['uploadedFile']['tmp_name'], $readers[$formato]);
+				$html = new PhpOffice\PhpWord\Writer\HTML($doc);
+				$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
+
+				switch($sectionId) {
+					case 1: // Artigo
+					case 4: // Debate
+					case 8: //  Questões Metodológicas
+					case 10: // Entrevista
+						if ($contagemPalavras > 6000) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 6000,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 2: // Editorial
+					case 9: // Comunicação breve
+						if ($contagemPalavras > 2000) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 2000,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 3: // Perspectivas
+						if ($contagemPalavras > 2200) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 2200,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 6: // Revisão
+					case 7: // Ensaio
+						if ($contagemPalavras > 8000) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 8000,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 5: // Espaço Temático
+						if ($contagemPalavras > 4000) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 4000,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 11: // Carta
+					case 15: // Comentários
+						if ($contagemPalavras > 1300) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 1300,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 12: // Resenhas
+						if ($contagemPalavras > 1300) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 1300,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 13: // Obtuário
+						if ($contagemPalavras > 1000) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 1000,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
+					case 14: // Errata
+						if ($contagemPalavras > 700) {
+							$phrase = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+								'sectoin' => $section->getTitle($publication->getData('locale')),
+								'max'     => 700,
+								'count'   => $contagemPalavras
+							]);
+							$args[0]->addError('genreId', $phrase);
+						}
+					break;
 				}
-				break;
+			break;
 			case 10: // Figura
 			case 22: // Nova versão Figura
 				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg'])) {
@@ -2213,175 +2301,175 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
 					);
 				}
-				break;
-				case '46': 	// PDF para avaliação
-				case '30': 	// Nova versão PDF
-					$request = \Application::get()->getRequest();
-					$submissionId = $request->getUserVar('submissionId');
-					$userDao = DAORegistry::getDAO('UserDAO');
+			break;
+			case '46': 	// PDF para avaliação
+			case '30': 	// Nova versão PDF
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
 
-					if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
-						$args[0]->addError('typeId',
-							__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
+				if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+					$args[0]->addError('typeId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
+					);
+				}else{
+					if($genreId == '46'){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA
+
+						$result = $userDao->retrieve(
+							<<<QUERY
+							SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							FROM ojs.user_user_groups g
+							LEFT JOIN ojs.user_group_settings s
+							ON s.user_group_id = g.user_group_id
+							LEFT JOIN ojs.stage_assignments a
+							ON g.user_id = a.user_id AND a.submission_id = $submissionId
+							WHERE s.setting_value = 'Editor da revista'
+							QUERY
 						);
-					}else{
-						if($genreId == '46'){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA
+						while (!$result->EOF) {
 
-							$result = $userDao->retrieve(
-								<<<QUERY
-								SELECT s.user_group_id , g.user_id, a.user_id as assigned
-								FROM ojs.user_user_groups g
-								LEFT JOIN ojs.user_group_settings s
-								ON s.user_group_id = g.user_group_id
-								LEFT JOIN ojs.stage_assignments a
-								ON g.user_id = a.user_id AND a.submission_id = $submissionId
-								WHERE s.setting_value = 'Editor da revista'
-								QUERY
-							);
-							while (!$result->EOF) {
+							if($result->GetRowAssoc(0)['assigned'] == NULL){
 
-								if($result->GetRowAssoc(0)['assigned'] == NULL){
+								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
+								$userId = $result->GetRowAssoc(0)['user_id'];
 
-									$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-									$userId = $result->GetRowAssoc(0)['user_id'];
+								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+								$stageAssignment = $stageAssignmentDao->newDataObject();
+								$stageAssignment->setSubmissionId($submissionId);
+								$stageAssignment->setUserGroupId($userGroupId);
+								$stageAssignment->setUserId($userId);
+								$stageAssignment->setRecommendOnly(0);
+								$stageAssignment->setCanChangeMetadata(1);
+								$stageAssignmentDao->insertObject($stageAssignment);
 
-									$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-									$stageAssignment = $stageAssignmentDao->newDataObject();
-									$stageAssignment->setSubmissionId($submissionId);
-									$stageAssignment->setUserGroupId($userGroupId);
-									$stageAssignment->setUserId($userId);
-									$stageAssignment->setRecommendOnly(0);
-									$stageAssignment->setCanChangeMetadata(1);
-									$stageAssignmentDao->insertObject($stageAssignment);
+								$submissionDAO = Application::getSubmissionDAO();
+								$submission = $submissionDAO->getById($submissionId);
 
-									$submissionDAO = Application::getSubmissionDAO();
-									$submission = $submissionDAO->getById($submissionId);
+								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+								$assignedUser = $userDao->getById($userId);
+								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+								$userGroup = $userGroupDao->getById($userGroupId);
 
-									$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-									$assignedUser = $userDao->getById($userId);
-									$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-									$userGroup = $userGroupDao->getById($userGroupId);
+								import('lib.pkp.classes.log.SubmissionLog');
+								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 
-									import('lib.pkp.classes.log.SubmissionLog');
-									SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
-
-								}
-
-								$result->MoveNext();
 							}
+
+							$result->MoveNext();
 						}
-						if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
-							$stageId = $request->getUserVar('stageId');
-							$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-							$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
+					}
+					if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
+						$stageId = $request->getUserVar('stageId');
+						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
 
-							import('lib.pkp.classes.mail.MailTemplate');
+						import('lib.pkp.classes.mail.MailTemplate');
 
-							while ($user = $users->next()) {
+						while ($user = $users->next()) {
 
-								$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
-								$mail->addRecipient($user->getEmail(), $user->getFullName());
+							$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
+							$mail->addRecipient($user->getEmail(), $user->getFullName());
 
-								if (!$mail->send()) {
-									import('classes.notification.NotificationManager');
-									$notificationMgr = new NotificationManager();
-									$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-								}
+							if (!$mail->send()) {
+								import('classes.notification.NotificationManager');
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 							}
 						}
 					}
-					break;
-					// Quando revisor/tradutor faz upload de arquivo no box de arquivo para edição de texto, editores assistentes são notificados
-					case '48': // DE rev-trad corpo PT
-					case '49': // DE rev-trad corpo  EN
-					case '50': // DE rev-trad corpo  ES
-						$request = \Application::get()->getRequest();
-						$submissionId = $request->getUserVar('submissionId');
-						$stageId = $request->getUserVar('stageId');
-						$locale = AppLocale::getLocale();
+				}
+			break;
+			// Quando revisor/tradutor faz upload de arquivo no box de arquivo para edição de texto, editores assistentes são notificados
+			case '48': // DE rev-trad corpo PT
+			case '49': // DE rev-trad corpo  EN
+			case '50': // DE rev-trad corpo  ES
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$stageId = $request->getUserVar('stageId');
+				$locale = AppLocale::getLocale();
 
-						import('lib.pkp.classes.file.SubmissionFileManager');
+				import('lib.pkp.classes.file.SubmissionFileManager');
 
-						$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-						$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
-						foreach ($submissionFiles as $submissionFile) {
-							$genreIds[] = $submissionFile->_data["genreId"];
+				$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+				$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
+				foreach ($submissionFiles as $submissionFile) {
+					$genreIds[] = $submissionFile->_data["genreId"];
+				}
+
+				$genreIdsRevTrad = array(48,49,50);
+
+				if(empty(array_intersect($genreIds, $genreIdsRevTrad))){
+
+					import('lib.pkp.classes.mail.MailTemplate');
+
+					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+					while ($user = $users->next()) {
+
+						$mail = new MailTemplate('COPYEDIT_RESPONSE');
+						$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 						}
+					}
+				}
 
-						$genreIdsRevTrad = array(48,49,50);
 
-						if(empty(array_intersect($genreIds, $genreIdsRevTrad))){
+			break;
+			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
+			case '54': // Figura alterada
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$stageId = $request->getUserVar('stageId');
+				$locale = AppLocale::getLocale();
 
-							import('lib.pkp.classes.mail.MailTemplate');
+				import('lib.pkp.classes.mail.MailTemplate');
 
-							$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-							$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-							while ($user = $users->next()) {
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+				while ($user = $users->next()) {
 
-								$mail = new MailTemplate('COPYEDIT_RESPONSE');
-								$mail->addRecipient($user->getEmail(), $user->getFullName());
+					$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
+					$mail->addRecipient($user->getEmail(), $user->getFullName());
 
-								if (!$mail->send()) {
-									import('classes.notification.NotificationManager');
-									$notificationMgr = new NotificationManager();
-									$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-								}
-							}
-						}
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+				}
+			break;
+			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
+			case '64': // Figura formatada
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$stageId = $request->getUserVar('stageId');
+				$locale = AppLocale::getLocale();
 
- 
-					break;
-					// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
-					case '54': // Figura alterada
-						$request = \Application::get()->getRequest();
-						$submissionId = $request->getUserVar('submissionId');
-						$stageId = $request->getUserVar('stageId');
-						$locale = AppLocale::getLocale();
+				import('lib.pkp.classes.mail.MailTemplate');
 
-						import('lib.pkp.classes.mail.MailTemplate');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+				while ($user = $users->next()) {
 
-						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-						while ($user = $users->next()) {
+					$mail = new MailTemplate('EDITORACAO_FIG_FORMATADA');
+					$mail->addRecipient($user->getEmail(), $user->getFullName());
 
-							$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
-							$mail->addRecipient($user->getEmail(), $user->getFullName());
-
-							if (!$mail->send()) {
-								import('classes.notification.NotificationManager');
-								$notificationMgr = new NotificationManager();
-								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-							}
-						}
-						break;
-					// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
-					case '64': // Figura formatada
-						$request = \Application::get()->getRequest();
-						$submissionId = $request->getUserVar('submissionId');
-						$stageId = $request->getUserVar('stageId');
-						$locale = AppLocale::getLocale();
-
-						import('lib.pkp.classes.mail.MailTemplate');
-
-						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-						while ($user = $users->next()) {
-
-							$mail = new MailTemplate('EDITORACAO_FIG_FORMATADA');
-							$mail->addRecipient($user->getEmail(), $user->getFullName());
-
-							if (!$mail->send()) {
-								import('classes.notification.NotificationManager');
-								$notificationMgr = new NotificationManager();
-								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-							}
-						}
-						break;
-					case '':
-						$args[0]->setData('genreId',47);
-						$args[1] = true;
-					break;
-				return true;
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+				}
+			break;
+			case '':
+				$args[0]->setData('genreId',47);
+				$args[1] = true;
+			break;
+		return true;
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
