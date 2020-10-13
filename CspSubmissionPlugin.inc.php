@@ -85,6 +85,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @return boolean
 	 */
 	public function templateManager_display($hookName, $args) {
+		$request = \Application::get()->getRequest();
+		$currentUser = $request->getUser();
+		$context = $request->getContext();
+		$hasAccess = $currentUser->hasRole(array(ROLE_ID_MANAGER, ROLE_ID_ASSISTANT, ROLE_ID_SITE_ADMIN), $context->getId());
+
 		if ($args[1] == "submission/form/index.tpl") {
 
 			$request =& Registry::get('request');
@@ -107,7 +112,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'priority' => STYLE_SEQUENCE_LAST,
 				)
 			);
-		} elseif ($args[1] == "dashboard/index.tpl") {
+		} elseif ($args[1] == "dashboard/index.tpl" && $hasAccess) {
 			$templateManager =& $args[0];
 			$containerData = $templateManager->get_template_vars('containerData');
 			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][0];
