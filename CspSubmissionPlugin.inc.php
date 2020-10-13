@@ -626,63 +626,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		}
 
-
-
-		if($request->_router->_page == "reviewer"){ // AVALIADOR RECEBE E-MAIL DE AGRADECIMENTO APÓS SUBMETER AVALIAÇÃO
+		if($request->_router->_page == "reviewer"){ 
 			if($request->_requestVars["step"] == 1){
 				return true;
 			}
-			if($request->_requestVars["step"] == 3){
+			if($request->_requestVars["step"] == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
 
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT a.email_key, a.body, a.subject
-
-					FROM
-
-					(
-						SELECT 	d.email_key, d.body, d.subject
-						FROM 	email_templates_default_data d
-						WHERE 	d.locale = '$locale'
-
-						UNION ALL
-
-						SELECT 	t.email_key, o.body, o.subject
-						FROM 	ojs.email_templates t
-
-						LEFT JOIN
-						(
-							SELECT 	a.body, b.subject, a.email_id
-							FROM
-							(
-								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings
-								WHERE 	setting_name = 'body' AND locale = '$locale'
-							)a
-							LEFT JOIN
-							(
-									SELECT 	setting_value as subject, email_id
-									FROM 	email_templates_settings
-									WHERE 	setting_name = 'subject' AND locale = '$locale'
-							)b
-							ON a.email_id = b.email_id
-						) o
-						ON o.email_id = t.email_id
-						WHERE t.enabled = 1
-					) a
-					WHERE 	a.email_key  = 'REVIEW_THANK'
-
-					QUERY
-				);
-				/// O EMAIL ESTÁ SENDO EVIADO DIVERSAR VEZES PARA O AVALIADO - RESOLVER !!!!
-				$args[0]->_data['body'] = $result->GetRowAssoc(false)['body'];
-				$args[0]->_data['subject'] = $result->GetRowAssoc(false)['subject'];
-				$args[0]->_data["from"]["name"] = "CSP";
-				$args[0]->_data["from"]["email"] = "noreply@lt.coop.br";
-				$args[0]->_data["recipients"][0]["name"] = $args[0]->params["senderName"];
-				$args[0]->_data["recipients"][0]["email"] = $args[0]->params["senderEmail"];
+				return true;
 			}
 
 		}
@@ -823,7 +773,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep3.tpl'));
 			return true;
-		}elseif ($args[1] == 'reviewer/review/reviewCompleted.tpl') {
+		}elseif ($args[1] == 'reviewer/review/reviewCompleted.tpl') { // Ao terminar avaliação, avaliador recebe email de agradecimento
+			$request = \Application::get()->getRequest();
+			$currentUser = $request->getUser();
+
+			import('lib.pkp.classes.mail.MailTemplate');
+			$mail = new MailTemplate('REVIEW_THANK');
+			$mail->addRecipient($currentUser->getEmail(), $currentUser->getFullName());
+
+			if (!$mail->send()) {
+				import('classes.notification.NotificationManager');
+				$notificationMgr = new NotificationManager();
+				$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+			}
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewCompleted.tpl'));
 
 			return true;
