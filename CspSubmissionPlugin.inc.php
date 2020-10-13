@@ -134,6 +134,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			];
 			$stages[] = [
 				'param' => 'substage',
+				'value' => 20,
+				'title' => 'Aguardando autor'
+			];
+			$stages[] = [
+				'param' => 'substage',
 				'value' => 4,
 				'title' => 'Aguardando decisão'
 			];
@@ -341,7 +346,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$lastdecisionIds = Capsule::table('edit_decisions');
 				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
 				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
-				$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
+				//$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
 				$lastdecisionIds->groupBy('edit_decisions.submission_id');
 
 				$editoresAssociados = Capsule::table('user_user_groups');
@@ -542,6 +547,36 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$qb->whereIn('s.submission_id',$queryDiagramadorDesignado);
 				$qb->where('s.stage_id', '=', 5);
+
+			break;
+			case 20: // Aguardando autor
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
+
+				$qb->where(function ($qb) {
+					$lastdecisionIds = Capsule::table('edit_decisions');
+					$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
+					$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
+					$lastdecisionIds->where('edit_decisions.decision','=',2); // Onde a última decisão não foi solicitar modificações
+					$lastdecisionIds->groupBy('edit_decisions.submission_id');
+
+					$qb->where('s.stage_id', '=', 3);
+					$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
+				});
+
+				$qb->orWhere(function ($qb) {
+
+					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
+					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
+
+					$qb->where('s.stage_id', '=', 3);
+					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado);
+
+				});
 
 			break;
 		}
