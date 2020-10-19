@@ -700,6 +700,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
+		} elseif ($args[1] == 'controllers/grid/grid.tpl'){
+			$userId = $_SESSION["userId"];
+			$submission = $request->getUserVar('submissionId');
+
+			// Check if the user is an author of this submission
+			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+			$authorUserGroupIds = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_AUTHOR);
+			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $userId);
+
+			$authorDashboard = false;
+			while ($stageAssignment = $stageAssignmentsFactory->next()) {
+				if (in_array($stageAssignment->getUserGroupId(), $authorUserGroupIds)) {
+					$authorDashboard = true;
+				}
+			}
+			if($authorDashboard){
+				$templateMgr->assign('autor', true);
+			}
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
+			return true;
+
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
 
