@@ -85,11 +85,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @return boolean
 	 */
 	public function templateManager_display($hookName, $args) {
-		$request = \Application::get()->getRequest();
-		$currentUser = $request->getUser();
-		$context = $request->getContext();
-		$hasAccess = $currentUser->hasRole(array(ROLE_ID_MANAGER, ROLE_ID_ASSISTANT, ROLE_ID_SITE_ADMIN), $context->getId());
-
 		if ($args[1] == "submission/form/index.tpl") {
 
 			$request =& Registry::get('request');
@@ -112,115 +107,124 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'priority' => STYLE_SEQUENCE_LAST,
 				)
 			);
-		} elseif ($args[1] == "dashboard/index.tpl" && $hasAccess) {
-			$templateManager =& $args[0];
-			$containerData = $templateManager->get_template_vars('containerData');
-			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][0];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 1,
-				'title' => 'Aguardando secretaria'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 2,
-				'title' => 'Aguardando decisão'
-			];
-			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 3,
-				'title' => 'Com o editor associado'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 20,
-				'title' => 'Aguardando autor'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 4,
-				'title' => 'Aguardando decisão'
-			];
-			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 5,
-				'title' => 'Envio para avaliação de ilustração'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 6,
-				'title' => 'Em avaliação de ilustração'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 7,
-				'title' => 'Envio de Carta de aprovação'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 8,
-				'title' => 'Em revisão/Tradução'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 9,
-				'title' => 'Revisão/Tradução prontas'
-			];
-/* 			$stages[] = [
-				'param' => 'substage',
-				'value' => 10,
-				'title' => 'Tradução de metadados'
-			]; */
-			$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 11,
-				'title' => 'Aguardando padronizador'
-			];
-/* 			$stages[] = [
-				'param' => 'substage',
-				'value' => 12,
-				'title' => 'Padronização Concluída'
-			]; */
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 13,
-				'title' => 'Formatação de Figura'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 14,
-				'title' => 'Produção de PDF padronizado'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 15,
-				'title' => 'Prova de Prelo enviada'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 16,
-				'title' => 'Prova de prelo recebida'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 17,
-				'title' => 'Aguardando diagramação'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 18,
-				'title' => 'PDF diagramado'
-			];
-			$stages[] = [
-				'param' => 'substage',
-				'value' => 19,
-				'title' => 'Aguardando publicação'
-			];
-			$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
-			$templateManager->assign('containerData', $containerData);
+		} elseif ($args[1] == "dashboard/index.tpl") {
+			$request = \Application::get()->getRequest();
+			$currentUser = $request->getUser();
+			$context = $request->getContext();
+			$hasAccess = $currentUser->hasRole(array(ROLE_ID_MANAGER, ROLE_ID_ASSISTANT, ROLE_ID_SITE_ADMIN), $context->getId());
+
+			if ($hasAccess) {
+
+				$templateManager =& $args[0];
+
+				$containerData = $templateManager->get_template_vars('containerData');
+				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][0];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 1,
+					'title' => 'Aguardando secretaria'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 2,
+					'title' => 'Aguardando decisão'
+				];
+				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 3,
+					'title' => 'Com o editor associado'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 20,
+					'title' => 'Aguardando autor'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 4,
+					'title' => 'Aguardando decisão'
+				];
+				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 5,
+					'title' => 'Envio para avaliação de ilustração'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 6,
+					'title' => 'Em avaliação de ilustração'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 7,
+					'title' => 'Envio de Carta de aprovação'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 8,
+					'title' => 'Em revisão/Tradução'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 9,
+					'title' => 'Revisão/Tradução prontas'
+				];
+	/* 			$stages[] = [
+					'param' => 'substage',
+					'value' => 10,
+					'title' => 'Tradução de metadados'
+				]; */
+				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 11,
+					'title' => 'Aguardando padronizador'
+				];
+	/* 			$stages[] = [
+					'param' => 'substage',
+					'value' => 12,
+					'title' => 'Padronização Concluída'
+				]; */
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 13,
+					'title' => 'Formatação de Figura'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 14,
+					'title' => 'Produção de PDF padronizado'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 15,
+					'title' => 'Prova de Prelo enviada'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 16,
+					'title' => 'Prova de prelo recebida'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 17,
+					'title' => 'Aguardando diagramação'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 18,
+					'title' => 'PDF diagramado'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 19,
+					'title' => 'Aguardando publicação'
+				];
+				$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
+				$templateManager->assign('containerData', $containerData);
+			}
 		}
 
 		return false;
@@ -696,7 +700,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
-
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
 
