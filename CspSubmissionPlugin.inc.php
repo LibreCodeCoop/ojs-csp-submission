@@ -700,6 +700,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
+		} elseif ($args[1] == 'user/identityForm.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('identityForm.tpl'));
+
+			return true;
 		} elseif ($args[1] == 'controllers/grid/grid.tpl'){
 			$userId = $_SESSION["userId"];
 			$submission = $request->getUserVar('submissionId');
