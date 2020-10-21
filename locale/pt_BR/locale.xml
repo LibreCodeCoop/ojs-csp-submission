@@ -62,5 +62,6 @@
   <message key="plugins.generic.CspSubmission.smallTitle">Título curto</message>
   <message key="plugins.generic.CspSubmission.keywords.tip">Mínimo 3 e máximo 5</message>
   <message key="plugins.generic.CspSubmission.supportingAgencies.tip">Caso possível, informe o código de financiamento</message>
+  <message key="plugins.generic.CspSubmission.AuthorContribution">Contribuição do autor no trabalho</message>
 
 </locale>

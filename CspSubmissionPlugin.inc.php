@@ -43,12 +43,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
 
 			// Hook for readUserVars in two forms -- consider the new field entry
-			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));
+			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));			
+			HookRegistry::register('authorform::readuservars', array($this, 'authorformReadUserVars'));
+			
 
-			// Hook for execute in two forms -- consider the new field in the article settings
+			// Hook for execute in forms -- consider the new field
 			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecuteStep3'));
 			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
-
+			HookRegistry::register('authorform::execute', array($this, 'authorformExecute'));
+				
 			// Hook for save in two forms -- add validation for the new field
 			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'addCheck'));
 
@@ -1970,34 +1973,36 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function authorform_initdata($hookName, $args)
 	{
+
 		$request = \Application::get()->getRequest();
 		$type = $request->getUserVar('type');
-		if ($type != 'csp') {
+		$form = $args[0];
+		if ($type == 'csp') {
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$userCsp = $userDao->retrieve(
+				<<<QUERY
+				SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
+						TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
+						email, orcid,
+						TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
+					FROM csp.Pessoa p
+					WHERE p.idPessoa = ?
+				QUERY,
+				[(int) $request->getUserVar('userId')]
+			)->GetRowAssoc(0);
+			$locale = AppLocale::getLocale();
+			$form->setData('givenName', [$locale => $userCsp['given_name']]);
+			$form->setData('familyName', [$locale => $userCsp['family_name']]);
+			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
+			$form->setData('email', $userCsp['email']);
+			$form->setData('orcid', $userCsp['orcid']);
+		}elseif($form->_author != null){
+			$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
+			$author = $form->_author;
+			$form->setData('authorContribution', $author->getData('authorContribution'));
+		}else{
 			return;
 		}
-
-		$form = $args[0];
-		$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
-
-		$userDao = DAORegistry::getDAO('UserDAO');
-		$userCsp = $userDao->retrieve(
-			<<<QUERY
-			SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
-					TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
-					email, orcid,
-					TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
-				FROM csp.Pessoa p
-				WHERE p.idPessoa = ?
-			QUERY,
-			[(int) $request->getUserVar('userId')]
-		)->GetRowAssoc(0);
-		$locale = AppLocale::getLocale();
-		$form->setData('givenName', [$locale => $userCsp['given_name']]);
-		$form->setData('familyName', [$locale => $userCsp['family_name']]);
-		$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
-		$form->setData('email', $userCsp['email']);
-		$form->setData('orcid', $userCsp['orcid']);
-
 		$args[0] = $form;
 	}
 
@@ -2078,6 +2083,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
+	function authorformReadUserVars($hookName, $params) {
+		$userVars =& $params[1];
+		$userVars[] = 'authorContribution';
+
+		return false;
+	}
+
  	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
@@ -2111,6 +2123,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
+	function authorformExecute($hookName, $params) {
+		$form =& $params[0];
+		$author = $form->_author;
+		$author->setData('authorContribution', $form->getData('authorContribution'));
+
+		return false;
+	}
 
 	/**
 	 * Init article Campo1
