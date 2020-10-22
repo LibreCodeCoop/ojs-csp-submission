@@ -74,8 +74,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 
 			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
+
+			HookRegistry::register('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
 		}
 		return $success;
+	}
+
+	/**
+	 * Hook to intercept the reviewer grid
+	 * @param $hookName string
+	 * @param $args array
+	 * @return void
+	 */
+	public function reviewergridhandler_initfeatures($hookName, $args)
+	{
+		$returner = &$args[3];
+		import('plugins.generic.cspSubmission.controllers.grid.feature.AddReviewerSagasFeature');
+		$returner[] = new AddReviewerSagasFeature();
 	}
 
 	/**
