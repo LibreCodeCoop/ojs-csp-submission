@@ -2094,19 +2094,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		$smarty =& $params[1];
 		$output =& $params[2];
-		//$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
 
 		if($sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
 		}
 
 		if($sectionId == 4){
-			$output .= $smarty->fetch($this->getTemplateResource('Tema.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
-		//$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
 
 		if($sectionId == 6){
@@ -2122,15 +2120,11 @@ class CspSubmissionPlugin extends GenericPlugin {
  	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'conflitoInteresse';
-		//$userVars[] = 'conflitoInteresseQual';
-		//$userVars[] = 'FonteFinanciamento';
-		//$userVars[] = 'FonteFinanciamentoQual';
 		$userVars[] = 'agradecimentos';
 		$userVars[] = 'codigoTematico';
-		$userVars[] = 'Tema';
+		$userVars[] = 'tema';
 		$userVars[] = 'codigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
-		//$userVars[] = 'doi';
 
 		return false;
 	}
@@ -2147,14 +2141,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$article = $form->submission;
 		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
-		//$article->setData('conflitoInteresseQual', $form->getData('conflitoInteresseQual'));
-		//$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
-		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));
 		$article->setData('agradecimentos', $form->getData('agradecimentos'));
 		$article->setData('codigoTematico', $form->getData('codigoTematico'));
-		$article->setData('Tema', $form->getData('Tema'));
+		$article->setData('tema', $form->getData('tema'));
 		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
-		//$article->setData('doi', $form->getData('doi'));
 
 		return false;
 	}
@@ -2192,15 +2182,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
-		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
-		//$form->setData('conflitoInteresseQual', $article->getData('conflitoInteresseQual'));
-		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));
-		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));
 		$form->setData('agradecimentos', $article->getData('agradecimentos'));
 		$form->setData('codigoTematico', $article->getData('codigoTematico'));
-		$form->setData('Tema', $article->getData('Tema'));
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
-		//$form->setData('doi', $article->getData('doi'));
+		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
+		$form->setData('tema', $article->getData('tema'));
 
 		return false;
 	}
@@ -2210,22 +2196,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 		$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 		$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
-
-		//$params[0]->setData('doi', $params[3]->_requestVars["doi"]);
-		//$params[1]->setData('doi', $params[3]->_requestVars["doi"]);
-		//$params[2]["doi"] = $params[3]->_requestVars["doi"];
-
 		$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
 		$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
 		$params[2]["codigoTematico"] = $params[3]->_requestVars["codigoTematico"];
-
 		$params[0]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
 		$params[1]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
 		$params[2]["codigoArtigoRelacionado"] = $params[3]->_requestVars["codigoArtigoRelacionado"];
-
 		$params[0]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
 		$params[1]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
 		$params[2]["conflitoInteresse"] = $params[3]->_requestVars["conflitoInteresse"];
+		$params[0]->setData('tema', $params[3]->_requestVars["tema"]);
+		$params[1]->setData('tema', $params[3]->_requestVars["tema"]);
+		$params[2]["tema"] = $params[3]->_requestVars["tema"];
 
 		return false;
 	}
@@ -2237,7 +2219,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if($this->sectionId == 4){
 			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
-			$form->addCheck(new FormValidatorLength($form, 'Tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
+			$form->addCheck(new FormValidatorLength($form, 'tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
 		}
 
 		if($this->sectionId == 6){
