@@ -125,108 +125,115 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 1,
-					'title' => 'Aguardando secretaria'
+					'title' => '--- Aguardando secretaria'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 2,
-					'title' => 'Aguardando decisão'
+					'title' => '--- Aguardando decisão'
 				];
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 3,
-					'title' => 'Com o editor associado'
+					'title' => '--- Com o editor associado'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 20,
-					'title' => 'Aguardando autor'
+					'title' => '--- Aguardando autor'
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 21,
+					'title' => '--- Aguardando secretaria'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 4,
-					'title' => 'Aguardando decisão'
+					'title' => '--- Aguardando decisão'
 				];
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 5,
-					'title' => 'Envio para avaliação de ilustração'
+					'title' => '--- Para avaliação de ilustração'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 6,
-					'title' => 'Em avaliação de ilustração'
+					'title' => '--- Em avaliação de ilustração'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 7,
-					'title' => 'Envio de Carta de aprovação'
+					'title' => '--- Envio de Carta de aprovação'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 8,
-					'title' => 'Em revisão/Tradução'
+					'title' => '--- Em revisão/Tradução'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 9,
-					'title' => 'Revisão/Tradução prontas'
+					'title' => '--- Revisão/Tradução prontas'
 				];
 	/* 			$stages[] = [
 					'param' => 'substage',
 					'value' => 10,
-					'title' => 'Tradução de metadados'
+					'title' => '--- Tradução de metadados'
 				]; */
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 11,
-					'title' => 'Aguardando padronizador'
+					'title' => '--- Aguardando padronizador'
 				];
 	/* 			$stages[] = [
 					'param' => 'substage',
 					'value' => 12,
-					'title' => 'Padronização Concluída'
+					'title' => '--- Padronização Concluída'
 				]; */
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 13,
-					'title' => 'Formatação de Figura'
+					'title' => '--- Formatação de Figura'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 14,
-					'title' => 'Produção de PDF padronizado'
+					'title' => '--- PDF padronizado'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 15,
-					'title' => 'Prova de Prelo enviada'
+					'title' => '--- Prova de Prelo enviada'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 16,
-					'title' => 'Prova de prelo recebida'
+					'title' => '--- Prova de prelo recebida'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 17,
-					'title' => 'Aguardando diagramação'
+					'title' => '--- Aguardando diagramação'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 18,
-					'title' => 'PDF diagramado'
+					'title' => '--- PDF diagramado'
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 19,
-					'title' => 'Aguardando publicação'
+					'title' => '--- Aguardando publicação'
 				];
 				$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
 				$templateManager->assign('containerData', $containerData);
+				$args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
+				return true;
 			}
 		}
 
@@ -316,6 +323,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
 
 				$qb->whereNotIn('s.submission_id',$queryEditorChefeDesignado); // Não designadas a editores chefe
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 2: // Aguardando decisão
@@ -328,18 +336,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
 					$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
 
-					$qb->where('s.stage_id', '=', 1); // No estágio submissão
 					$qb->whereIn('s.submission_id',$queryEditorChefeDesignado); // Designadas a editores chefe
 				});
 
-				$qb->orWhere(function ($qb) {
-					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
-					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
-
-					$qb->where('s.stage_id', '=', 3); // No estágio avaliação
-					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado); // Não designada a editor associado
-				});
+				$qb->where('s.stage_id', '=', 1); // No estágio pré-avaliação
+				$qb->where('s.status', '=', 1);
 
 
 			break;
@@ -350,20 +351,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
 
+				$editorAssociadoDesignado = Capsule::table('stage_assignments');
+				$editorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+				$editorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
+
 				$lastdecisionIds = Capsule::table('edit_decisions');
 				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
 				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
 				//$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
 				$lastdecisionIds->groupBy('edit_decisions.submission_id');
 
-				$editoresAssociados = Capsule::table('user_user_groups');
-				$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
-				$editoresAssociados->where('user_user_groups.user_group_id', '=', 3);
+				$editoresChefes = Capsule::table('user_user_groups');
+				$editoresChefes->select(Capsule::raw('user_user_groups.user_id'));
+				$editoresChefes->where('user_user_groups.user_group_id', '=', 3);
 
 				//Última decisão feita pelos editores chefes
-				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds); // Pega útima decisão excluindo nova rodada de avaliação
-				$qb->whereIn('ed.editor_id', $editoresAssociados); // Onde a última decisão foi dada por um editor chefe
+				$qb->whereIn('s.submission_id',$editorAssociadoDesignado); // Deseignada a editor associado
+				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds); // Pega útima decisão 
+				$qb->whereIn('ed.editor_id', $editoresChefes); // Onde a última decisão foi dada por um editor chefe
 				$qb->where('s.stage_id', '=', 3);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 4: // Aguardando decisão
@@ -399,6 +406,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado);
 
 				});
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 5: // Aguardando envio para avaliação de ilustração
@@ -417,6 +425,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereNotIn('s.submission_id',$queryRevisorFiguraNãoDesignado); // Não designadas a revisor de figura
 				$qb->whereNotIn('s.submission_id',$queryRevisorTradutorDesignado); // Não designadas a revisor / tradutor
 				$qb->where('s.stage_id', '=', 4);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 6: // Em avaliação de ilustração'
@@ -439,6 +448,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereIn('s.submission_id',$queryRevisorFiguraDesignado); // Designadas a revisor de figura
 				$qb->whereNotIn('s.submission_id',$queryUploadFiguraAlterada); // Sem upload de figura alterada
 				$qb->where('s.stage_id', '=', 4);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 7: // Aguardando envio de Carta de aprovação
@@ -455,6 +465,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereIn('s.submission_id',$queryUploadFiguraAlterada); // Com figura revisada no box de Arquivos para edição de texto
 				$qb->whereNotIn('s.submission_id',$queryCartaAprovacao); // Com carta de aprovação não enviada
 				$qb->where('s.stage_id', '=', 4);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 8: //Aguardando revisão/Tradução'
@@ -465,6 +476,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado); // Com Revisor/Tradutor designado
 				$qb->whereNotIn('s.submission_id',$uploadRevisorTradutor); // Sem arquivo de upload realizado por revisor/tradutor
 				$qb->where('s.stage_id', '=', 4);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 9: // Revisão/Tradução prontas
@@ -475,6 +487,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado); // Com Revisor/Tradutor designado
 				$qb->whereIn('s.submission_id',$uploadRevisorTradutor); // Com arquivo de upload realizado por revisor/tradutor
 				$qb->where('s.stage_id', '=', 4);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 11: // Aguardando padronizador
@@ -488,6 +501,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$qb->whereNotIn('s.submission_id',$queryPadronizadorDesignado);
 				$qb->where('s.stage_id', '=', 5);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 13: // Aguardando formatação de Figura
@@ -506,6 +520,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereIn('s.submission_id',$queryUploadFiguraParaFormatar); // Com arquivo Figura para formatar no box Arquivos prontos para Layout
 				$qb->whereNotIn('s.submission_id',$queryUploadFiguraFormatada); // Sem arquivo Figura formatada no box Arquivos prontos para Layout
 				$qb->where('s.stage_id', '=', 5);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 14: // Aguardando produção de PDF padronizado
@@ -516,6 +531,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereIn('s.submission_id',$queryUploadFiguraFormatada); // Com arquivo Figura formatada no box Arquivos prontos para Layout
 				$qb->whereNotIn('s.submission_id',$queryDiscussaoProvaPrelo); // Sem discussão de prova de prelo aberta
 				$qb->where('s.stage_id', '=', 5);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 15: // Prova de Prelo e declaração enviadas
@@ -527,6 +543,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$qb->whereNotIn('s.submission_id',$queryDiscussaoProvaPreloRespondida); // Sem discussão de prova de prelo respondida pelo autor
 				//$qb->whereNotIn('s.submission_id',$queryUploadAutor); // Sem arquivo enviado por autor no box Discussão da Editoração
 				$qb->where('s.stage_id', '=', 5);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 16: // Prova de Prelo e declaração recebidas
@@ -545,6 +562,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPreloRespondida); // Com discussão de prova de prelo respondida pelo autor
 				$qb->where('s.stage_id', '=', 5);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 17: // Aguardando diagramação
@@ -554,9 +572,41 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$qb->whereIn('s.submission_id',$queryDiagramadorDesignado);
 				$qb->where('s.stage_id', '=', 5);
+				$qb->where('s.status', '=', 1);
 
 			break;
 			case 20: // Aguardando autor
+				unset($qb->wheres[2]);
+				unset($qb->joins[0]->wheres[1]);
+				unset($qb->joins[1]);
+
+				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
+
+				$qb->where(function ($qb) {
+					$lastdecisionIds = Capsule::table('edit_decisions');
+					$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
+					$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
+					$lastdecisionIds->where('edit_decisions.decision','=',2); // Onde a última decisão foi solicitar modificações
+					$lastdecisionIds->groupBy('edit_decisions.submission_id');
+
+					$qb->where('s.stage_id', '=', 3);
+					$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
+				});
+
+				$qb->orWhere(function ($qb) {
+
+					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
+					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
+					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
+
+					$qb->where('s.stage_id', '=', 3);
+					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado);
+
+				});
+
+				$qb->where('s.status', '=', 1);
+			break;
+			case 20: // Aguardando secretaria
 				unset($qb->wheres[2]);
 				unset($qb->joins[0]->wheres[1]);
 				unset($qb->joins[1]);
@@ -585,6 +635,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				});
 
+				$qb->where('s.status', '=', 1);
 			break;
 		}
 		$params = $args[1];
