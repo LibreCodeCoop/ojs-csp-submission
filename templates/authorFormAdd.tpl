@@ -39,7 +39,7 @@
 	}
 
 	{fbvFormSection title="plugins.generic.CspSubmission.AuthorContribution"}
-		{fbvElement type="textarea" label="authorContribution" name="authorContribution" id="authorContribution" value=$authorContribution rich=true}
+		{fbvElement type="textarea" name="authorContribution" id="authorContribution" value=$authorContribution rich=true}
 	{/fbvFormSection}
 	{fbvFormArea id="submissionSpecific"}
 {* 		{fbvFormSection id="userGroupId" title="submission.submit.contributorRole" list=true required=true}
