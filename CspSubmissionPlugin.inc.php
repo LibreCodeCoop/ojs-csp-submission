@@ -2051,6 +2051,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
 			$author = $form->_author;
 			$form->setData('authorContribution', $author->getData('authorContribution'));
+			$form->setData('affiliation2', $author->getData('affiliation2'));
 		}else{
 			return;
 		}
@@ -2137,6 +2138,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function authorformReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'authorContribution';
+		$userVars[] = 'affiliation2';
 
 		return false;
 	}
@@ -2178,6 +2180,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$author = $form->_author;
 		$author->setData('authorContribution', $form->getData('authorContribution'));
+		$author->setData('affiliation2', $form->getData('affiliation2'));
 
 		return false;
 	}

@@ -142,6 +142,9 @@
 			{fbvElement type="text" label="user.affiliation" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE}
 		{/fbvFormSection}
 
+		{fbvFormSection for="affiliation2"}
+			{fbvElement type="text" label="user.affiliation" name="affiliation2" id="affiliation2" value=$affiliation2 inline=true size=$fbvStyles.size.LARGE}
+		{/fbvFormSection}
 		
 
 		{if !$disableMailingSection}
