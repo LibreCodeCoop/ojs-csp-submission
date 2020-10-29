@@ -1287,78 +1287,36 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "4") {
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$userId = $_SESSION["userId"];
-			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É AUTOR
-				<<<QUERY
-				SELECT g.user_group_id , g.user_id
-				FROM ojs.user_user_groups g
-				WHERE g.user_group_id = 14 AND user_id = $userId
-				QUERY
-			);
 
-			if($result->_numOfRows == 0){
+			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+			$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
+			$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
+			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
 
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO%'
-					QUERY
-				);
-			}else{
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO_APROVD%'
-					QUERY
-				);
+			while ($stageAssignment = $stageAssignmentsFactory->next()) {
+				if (in_array($stageAssignment->getUserGroupId(), $manager)) {
+					$isManager = true;
+				}
+				if (in_array($stageAssignment->getUserGroupId(), $assistent)) {
+					$isAssistent = true;
+				}
 			}
-			$i = 0;
-			while (!$result->EOF) {
-				$i++;
-				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
 
-				$result->MoveNext();
+			import('lib.pkp.classes.mail.MailTemplate');
+			if($isManager){
+				$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
+				$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
+				$templateBody['EDICAO_TEXTO_APROVD'] = $mail->_data["body"];
+			}elseif($isAssistent){
+				$mail1 = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
+				$templateSubject['EDICAO_TEXTO_FIG_APROVD'] = $mail1->_data["subject"];
+				$templateBody['EDICAO_TEXTO_FIG_APROVD'] = $mail1->_data["body"];
+				$mail2 = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
+				$templateSubject['EDICAO_TEXTO_PENDENC_TEC'] = $mail2->_data["subject"];
+				$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail2->_data["body"];
+			}else{
+				return;
 			}
 
 			$templateMgr = TemplateManager::getManager($request);
