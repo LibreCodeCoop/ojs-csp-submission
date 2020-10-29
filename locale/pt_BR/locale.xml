@@ -38,7 +38,7 @@
   <message key="plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid">Necessário informar o código do artigo.</message>
   <message key="plugins.generic.CspSubmission.codigoArtigoRelacionado.Description">Código do artigo ou do debate comentado.</message>
   <message key="plugins.generic.CspSubmission.Metadados.Notification">Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito.</message>
-  <message key="plugins.generic.CspSubmission.File.Title">Especifique o tipo de arquivo e a ordem que você quer que apareca no artigo</message>
+  <message key="plugins.generic.CspSubmission.File.Title">Especifique o tipo de arquivo e a ordem que você quer que apareça no artigo</message>
   <message key="plugins.generic.CspSubmission.File.Description">Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2</message>
   <message key="plugins.generic.CspSubmission.artworkFile.Title">Título</message>
   <message key="plugins.generic.CspSubmission.commentsToEditor.Description">Considerando que parte da demora na avaliação do artigo se deve à busca de consultores, agradecemos a indicação de ao menos dois nomes</message>
