@@ -129,6 +129,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				];
 				$stages[] = [
 					'param' => 'substage',
+					'value' => 22,
+					'title' => '--- Pendência técnica'
+				];
+				$stages[] = [
+					'param' => 'substage',
 					'value' => 2,
 					'title' => '--- Aguardando decisão'
 				];
@@ -153,12 +158,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'value' => 4,
 					'title' => '--- Aguardando decisão'
 				];
-				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 5,
-					'title' => '--- Para avaliação de ilustração'
+					'value' => 23,
+					'title' => '--- Consulta ao editor chefe'
 				];
+				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 6,
@@ -177,7 +182,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 9,
-					'title' => '--- Revisão/Tradução prontas'
+					'title' => '--- Tradução de metadados'
 				];
 	/* 			$stages[] = [
 					'param' => 'substage',
