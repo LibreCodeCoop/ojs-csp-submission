@@ -770,18 +770,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 			// Check if the user is an author of this submission
 			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$authorUserGroupIds = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_AUTHOR);
+			$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
+			$subeditor = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_SUB_EDITOR);
 			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $userId);
-
-			$authorDashboard = false;
+			$canComment = false;
 			while ($stageAssignment = $stageAssignmentsFactory->next()) {
-				if (in_array($stageAssignment->getUserGroupId(), $authorUserGroupIds)) {
-					$authorDashboard = true;
+				if (in_array($stageAssignment->getUserGroupId(), $manager)) {
+					$canComment = true;
 				}
+				if (in_array($stageAssignment->getUserGroupId(), $subeditor)) {
+					$canComment = true;
+				}				
 			}
-			if($authorDashboard){
-				$templateMgr->assign('autor', true);
-			}
+			$templateMgr->assign('canComment', $canComment);
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
 			return true;
 
