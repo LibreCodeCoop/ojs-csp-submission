@@ -727,48 +727,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 
 			}elseif($stageId == 3 OR $stageId == 1){
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key = 'EDITOR_ASSIGN'
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
 
-					$result->MoveNext();
-				}
+				$mail = new MailTemplate('EDITOR_ASSIGN');
+				$templateSubject['EDITOR_ASSIGN'] = $mail->_data["subject"];
+				$templateBody['EDITOR_ASSIGN'] = $mail->_data["body"];
 
 				$templateMgr = TemplateManager::getManager($request);
 				$templateMgr->assign(array(
 					'templates' => $templateSubject,
-					//'stageId' => $stageId,
-					//'submissionId' => $this->_submissionId,
-					//'itemId' => $this->_itemId,
 					'message' => json_encode($templateBody),
 					'comment' => reset($templateBody)
 				));
@@ -851,143 +817,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				return true;
 			}
-
-		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
-
-			$decision = $request->_requestVars["decision"];
-
-			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
-				/*
-
-				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
-				$templateMgr->assign('decision',3); // PASSA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
-
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-
-					SELECT a.email_key, a.body, a.subject
-
-					FROM
-
-					(
-						SELECT 	d.email_key, d.body, d.subject
-						FROM 	email_templates_default_data d
-						WHERE 	d.locale = '$locale'
-
-						UNION ALL
-
-						SELECT 	t.email_key, o.body, o.subject
-						FROM 	ojs.email_templates t
-
-						LEFT JOIN
-						(
-							SELECT 	a.body, b.subject, a.email_id
-							FROM
-							(
-								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings
-								WHERE 	setting_name = 'body' AND locale = '$locale'
-							)a
-							LEFT JOIN
-							(
-									SELECT 	setting_value as subject, email_id
-									FROM 	email_templates_settings
-									WHERE 	setting_name = 'subject' AND locale = '$locale'
-							)b
-							ON a.email_id = b.email_id
-						) o
-						ON o.email_id = t.email_id
-						WHERE t.enabled = 1
-					) a
-					WHERE 	a.email_key LIKE 'REQUEST_REVISIONS%'
-
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					'stageId' => $stageId,
-					'message' => json_encode($templateBody),
-					'default' => reset($templateBody)
-				));						 */
-
-			}elseif ($decision == 4 or $decision == 9){  // BOTÃO REJEITAR SUBMISSÃO
-				return;
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-
-					SELECT a.email_key, a.body, a.subject
-
-					FROM
-
-					(
-						SELECT 	d.email_key, d.body, d.subject
-						FROM 	email_templates_default_data d
-						WHERE 	d.locale = '$locale'
-
-						UNION ALL
-
-						SELECT 	t.email_key, o.body, o.subject
-						FROM 	ojs.email_templates t
-
-						LEFT JOIN
-						(
-							SELECT 	a.body, b.subject, a.email_id
-							FROM
-							(
-								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings
-								WHERE 	setting_name = 'body' AND locale = '$locale'
-							)a
-							LEFT JOIN
-							(
-									SELECT 	setting_value as subject, email_id
-									FROM 	email_templates_settings
-									WHERE 	setting_name = 'subject' AND locale = '$locale'
-							)b
-							ON a.email_id = b.email_id
-						) o
-						ON o.email_id = t.email_id
-						WHERE t.enabled = 1
-					) a
-					WHERE 	a.email_key LIKE 'EDITOR_DECISION_INITIAL_DECLINE%'
-
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					'stageId' => $stageId,
-					'message' => json_encode($templateBody),
-					'default' => reset($templateBody)
-				));
-			}
-
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
-
-			return true;
 
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "1") {
 			$locale = AppLocale::getLocale();
