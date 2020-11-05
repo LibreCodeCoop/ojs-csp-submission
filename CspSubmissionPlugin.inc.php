@@ -86,7 +86,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = $userDao->retrieve(
 			<<<QUERY
-			SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = '$status' and date_status < '$date'
+			SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = '$status' and date_status <= '$date'
 			QUERY
 		);
 		$count = $result->GetRowAssoc(false);
@@ -153,7 +153,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 'Com editor associado',
+					'value' => 'ava_com_editor_associado',
 					'title' => "--- Com o editor associado (" .$this->countStatus('ava_com_editor_associado',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
@@ -168,8 +168,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 21,
-					'title' => '--- Aguardando secretaria'
+					'value' => 'ava_aguardando_secretaria',
+					'title' => "--- Aguardando secretaria (" .$this->countStatus('ava_aguardando_secretaria',date('Y-m-d H:i:s')) .")"
 				];
 				$stages[] = [
 					'param' => 'substage',
@@ -184,59 +184,54 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 6,
-					'title' => '--- Em avaliação de ilustração'
+					'value' => 'ed_text_em_avaliacao_ilustracao',
+					'title' => "--- Em avaliação de ilustração (" .$this->countStatus('ed_text_em_avaliacao_ilustracao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 7,
-					'title' => '--- Envio de Carta de aprovação'
+					'value' => 'ed_text_envio_carta_aprovacao',
+					'title' => "--- Envio de Carta de aprovação (" .$this->countStatus('ed_text_envio_carta_aprovacao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 8,
-					'title' => '--- Em revisão/Tradução'
+					'value' => 'ed_text_para_revisao_traducao',
+					'title' => "--- Para revisão/Tradução (" .$this->countStatus('ed_text_para_revisao_traducao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 9,
-					'title' => '--- Tradução de metadados'
+					'value' => 'ed_text_em_revisao_traducao',
+					'title' => "--- Em revisão/Tradução (" .$this->countStatus('ed_text_em_revisao_traducao',date('Y-m-d H:i:s')).")"
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 'ed_texto_traducao_metadados',
+					'title' => "--- Tradução de metadados (" .$this->countStatus('ed_texto_traducao_metadados',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 11,
-					'title' => '--- Aguardando padronizador'
+					'value' => 'edit_aguardando_padronizador',
+					'title' => "--- Aguardando padronizador (" .$this->countStatus('edit_aguardando_padronizador',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 13,
-					'title' => '--- Formatação de Figura'
+					'value' => 'edit_em_formatacao_figura',
+					'title' => "--- Em formatação de Figura (" .$this->countStatus('edit_em_formatacao_figura',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 14,
-					'title' => '--- PDF padronizado'
+					'value' => 'edit_pdf_padronizado',
+					'title' => "--- PDF padronizado (" .$this->countStatus('edit_pdf_padronizado',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 15,
-					'title' => '--- Prova de Prelo enviada'
+					'value' => 'edit_em_prova_prelo',
+					'title' => "--- Em prova de prelo (" .$this->countStatus('edit_em_prova_prelo',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 16,
-					'title' => '--- Prova de prelo recebida'
-				];
-				$stages[] = [
-					'param' => 'substage',
-					'value' => 17,
-					'title' => '--- Aguardando diagramação'
-				];
-				$stages[] = [
-					'param' => 'substage',
-					'value' => 18,
-					'title' => '--- PDF diagramado'
+					'value' => 'edit_em_diagramacao',
+					'title' => "--- Em diagramação (" .$this->countStatus('edit_em_diagramacao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
@@ -267,7 +262,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$queryStatusCsp->select(Capsule::raw('DISTINCT status_csp.submission_id'));
 			$queryStatusCsp->where('status_csp.status', '=', $substage);
 			if($substage == 'ava_aguardando_autor_mais_60_dias'){
-				$queryStatusCsp->where('status_csp.date_status', '<', date('Y-m-d H:i:s', strtotime('-2 months')));
+				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
 			}
 
 
@@ -307,6 +302,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 				QUERY
 			);
 		}
+		if($request->getUserVar("userGroupId") == 7){ // Quando designa revisor/tradutor status é alterado para "Em revisão tradução"
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$submissionId = $request->getUserVar('submissionId');
+			$userDao->retrieve(
+				<<<QUERY
+				UPDATE status_csp SET status = 'ed_text_em_revisao_traducao', date_status = '$now' WHERE submission_id = $submissionId
+				QUERY
+			);
+		}
+		if($request->getUserVar("userGroupId") == 22){ // Quando designa diagramador status é alterado para "Em diagramação"
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$submissionId = $request->getUserVar('submissionId');
+			$userDao->retrieve(
+				<<<QUERY
+				UPDATE status_csp SET status = 'edit_em_diagramacao', date_status = '$now' WHERE submission_id = $submissionId
+				QUERY
+			);
+		}
 	}
 
 	function mail_send($hookName, $args){
@@ -316,22 +331,65 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$decision = $request->getUserVar('decision');
 		$submissionId = $request->getUserVar('submissionId');
 
-		if($stageId == 3 && $decision == 1){  // AO ACEITAR SUBMISSÃO, OS EDITORES ASSISTENTES DEVEM SER NOTIFICADOS
+		if($stageId == 3 && $decision == 1){  // Quando submissão é aceita
 
 			$request = \Application::get()->getRequest();
 			$submissionId = $request->getUserVar('submissionId');
 			$stageId = $request->getUserVar('stageId');
 			$locale = AppLocale::getLocale();
 
-			import('lib.pkp.classes.mail.MailTemplate');
+			import('lib.pkp.classes.file.SubmissionFileManager');
 
-			$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-			$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-			unset($args[0]->_data["recipients"]);
-			while ($user = $users->next()) {
-				$args[0]->_data["recipients"][]= ["name" => $user->getFullName(), "email" => $user->getEmail()];
+			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+			$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
+			foreach ($submissionFiles as $submissionFile) {
+				$genreIds[] = $submissionFile->_data["genreId"];
 			}
 
+			$userDao = DAORegistry::getDAO('UserDAO');
+
+			if (in_array(10, $genreIds)) { // Se houverem figuras, editores de figura são notificados e estatus é alterado para "Em avaliação de ilustração"
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT email
+					FROM ojs.users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = 19
+					QUERY
+				);
+				unset($args[0]->_data["recipients"]);
+				import('lib.pkp.classes.mail.MailTemplate');
+				$mail = new MailTemplate('COPYEDIT_REQUEST_PICTURE');
+				while (!$result->EOF) {
+
+					$args[0]->_data["recipients"][]= ["email" => $result->GetRowAssoc(0)['email']];
+
+					$result->MoveNext();
+				}
+				$args[0]->_data["subject"] = $mail->_data["subject"];
+				$args[0]->_data["body"] = $mail->_data["body"];
+
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ed_text_em_avaliacao_ilustracao', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);		
+				unset($args[0]->_data["recipients"]);
+				while ($user = $users->next()) {
+					$args[0]->_data["recipients"][]= ["name" => $user->getFullName(), "email" => $user->getEmail()];
+				}
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
 		}
 
 		if($stageId == 3 && $decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
@@ -391,6 +449,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$result->MoveNext();
 			}
+		}
+
+		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$userDao->retrieve(
+				<<<QUERY
+				UPDATE status_csp SET status = 'ed_text_para_revisao_traducao', date_status = '$now' WHERE submission_id = $submissionId
+				QUERY
+			);
+		}
+		if($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")){  // É enviado email de prova de prelo
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$userDao->retrieve(
+				<<<QUERY
+				UPDATE status_csp SET status = 'edit_em_prova_prelo', date_status = '$now' WHERE submission_id = $submissionId
+				QUERY
+			);
 		}
 		$args[0]->_data["from"]["name"] = "Cadernos de Saúde Pública";
 		$args[0]->_data["from"]["email"] = "noreply@fiocruz.br";
@@ -753,20 +830,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 							$result->MoveNext();
 						}
-
 				}
-				//$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage1And3.tpl'));
 
 				return true;
 
-			}elseif ($stageId == 4){
-				$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
+			}elseif ($stageId == 4){ // Quando submissão é enviada para editoração, o status é alterado para "Aguardando padronizador"
+				$templateMgr->assign('skipEmail',1); // Passa variável para não enviar email para o autor
+
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'edit_pdf_padronizado', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
 
 				return true;
 			}
+
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 
 			$decision = $request->_requestVars["decision"];
@@ -2152,6 +2237,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ed_texto_traducao_metadados', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
 
 			break;
 			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
@@ -2199,6 +2291,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'edit_pdf_padronizado', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			break;
+			// Quando uma figura é enviada para formatar
+			case '65': // Figura para formatar
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'edit_em_formatacao_figura', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
 			break;
 			case '':
 				$args[0]->setData('genreId',47);
@@ -2223,6 +2334,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if (!$args[0]->isValid()) {
 			return true;
+		}
+		if($args[0]->getData('reviewRoundId')){
+			if($args[0]->getData('fileStage')  == 2){ ///// Quando autor insere nova versão, o status é alterado
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ava_aguardando_secretaria', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
+			if($args[0]->getData('fileStage')  == 4){ ///// Quando secretaria insere nova versão de PDF, o status é alterado
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ava_com_editor_associado', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
 		}
 		return false;
 	}
