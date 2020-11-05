@@ -331,7 +331,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$decision = $request->getUserVar('decision');
 		$submissionId = $request->getUserVar('submissionId');
 
-		if($stageId == 3 && $decision == 1){  // Quando submissão é aceita
+		if(($stageId == 1 OR $stageId == 3) && $decision == 1){  // Quando submissão é aceita
 
 			$request = \Application::get()->getRequest();
 			$submissionId = $request->getUserVar('submissionId');
