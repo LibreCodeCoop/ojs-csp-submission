@@ -2311,6 +2311,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 					QUERY
 				);
 			break;
+			case '67': // Material suplementar
+				if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+					$args[0]->addError('typeId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
+					);
+				}
+			break;
 			case '':
 				$args[0]->setData('genreId',47);
 				$args[1] = true;
