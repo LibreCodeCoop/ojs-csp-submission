@@ -178,8 +178,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 23,
-					'title' => '--- Consulta ao editor chefe'
+					'value' => 'ava_consulta_editor_chefe',
+					'title' => "--- Consulta ao editor chefe (" .$this->countStatus('ava_consulta_editor_chefe',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
@@ -330,13 +330,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$stageId = $request->getUserVar('stageId');
 		$decision = $request->getUserVar('decision');
 		$submissionId = $request->getUserVar('submissionId');
+		$locale = AppLocale::getLocale();
+		$userDao = DAORegistry::getDAO('UserDAO');
 
-		if(($stageId == 1 OR $stageId == 3) && $decision == 1){  // Quando submissão é aceita
-
-			$request = \Application::get()->getRequest();
-			$submissionId = $request->getUserVar('submissionId');
-			$stageId = $request->getUserVar('stageId');
-			$locale = AppLocale::getLocale();
+		if($decision == 1 && ($stageId == 1 OR $stageId == 3)){  // Quando submissão é aceita
 
 			import('lib.pkp.classes.file.SubmissionFileManager');
 
@@ -345,8 +342,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			foreach ($submissionFiles as $submissionFile) {
 				$genreIds[] = $submissionFile->_data["genreId"];
 			}
-
-			$userDao = DAORegistry::getDAO('UserDAO');
 
 			if (in_array(10, $genreIds)) { // Se houverem figuras, editores de figura são notificados e estatus é alterado para "Em avaliação de ilustração"
 				$result = $userDao->retrieve(
@@ -379,10 +374,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);		
+
 				unset($args[0]->_data["recipients"]);
 				while ($user = $users->next()) {
 					$args[0]->_data["recipients"][]= ["name" => $user->getFullName(), "email" => $user->getEmail()];
 				}
+
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					<<<QUERY
@@ -392,26 +389,36 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 
-		if($stageId == 3 && $decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
+		if($stageId == 3){
 
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$now = date('Y-m-d H:i:s');
-			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'ava_aguardando_autor', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
-			);
+			$recipient = $userDao->getUserByEmail($args[0]->_data["recipients"][0]["email"]);
+			$context = $request->getContext();
+			$isManager = $recipient->hasRole(array(ROLE_ID_MANAGER), $context->getId());
+			if($isManager){ // Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe"
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ava_consulta_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
+			if($decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ava_aguardando_autor', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
 
-		}
-
-		if($stageId == 3 && $request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$now = date('Y-m-d H:i:s');
-			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'ava_aguardando_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
-			);
+			if($request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ava_aguardando_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
 		}
 
 		if($request->_router->_page == "reviewer"){ 
@@ -419,7 +426,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 			if($request->_requestVars["step"] == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
-
 				return true;
 			}
 
@@ -428,9 +434,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			unset($args[0]->_data["recipients"]);
 
-			$locale = AppLocale::getLocale();
-
-			$userDao = DAORegistry::getDAO('UserDAO');
 			$result = $userDao->retrieve(
 				<<<QUERY
 				SELECT u.email, x.setting_value as name
@@ -446,13 +449,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			while (!$result->EOF) {
 				$args[0]->_data["recipients"][] =  array("name" => $result->GetRowAssoc(0)['name'], "email" => $result->GetRowAssoc(0)['email']);
 				//$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-
 				$result->MoveNext();
 			}
 		}
 
 		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
-			$userDao = DAORegistry::getDAO('UserDAO');
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
 				<<<QUERY
@@ -461,7 +462,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			);
 		}
 		if($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")){  // É enviado email de prova de prelo
-			$userDao = DAORegistry::getDAO('UserDAO');
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
 				<<<QUERY
