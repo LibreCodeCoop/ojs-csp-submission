@@ -14,7 +14,7 @@
  *  anyhtml: True iff the link action text permits all HTML (i.e. escaping handled elsewhere).
  *}
 
-{if $action->getId() != "thankReviewer" && ($action->getTitle() == "Enviar mensagem" && $autor)}
+{if $action->getId() != "thankReviewer" && ($action->getTitle() == "Enviar mensagem" && !$canComment)}
 {else}
 	<a href="#" id="{$buttonId|escape}" title="{$action->getHoverTitle()|escape}" class="pkp_controllers_linkAction pkp_linkaction_{$action->getId()} pkp_linkaction_icon_{$action->getImage()}">{if $anyhtml}{$action->getTitle()}{else}{$action->getTitle()|strip_unsafe_html}{/if}</a>
 {/if}
