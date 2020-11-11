@@ -283,9 +283,118 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function setupGridHandler($hookName, $params) {
 		$component =& $params[0];
+		$request = \Application::get()->getRequest();
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
 			return true;
 		}
+		if ($component == 'grid.users.stageParticipant.stageParticipantGrid.SaveParticipantHandler') {
+			if($request->getUserVar('accept')){
+
+				$submissionId = $request->getUserVar('submissionId');
+				$userGroupId = $request->getUserVar('userGroupId');
+				$userId = $request->getUserVar('userId');
+
+				$stageId = $request->getUserVar('stageId');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 19);
+
+				if($users == null){ // Se não houverem revisores de figura designados
+					$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+					$stageAssignment = $stageAssignmentDao->newDataObject();
+					$stageAssignment->setSubmissionId($submissionId);
+					$stageAssignment->setUserGroupId($userGroupId);
+					$stageAssignment->setUserId($userId);
+					$stageAssignment->setRecommendOnly(1);
+					$stageAssignment->setCanChangeMetadata(1);
+					$stageAssignmentDao->insertObject($stageAssignment);
+
+					$submissionDAO = Application::getSubmissionDAO();
+					$submission = $submissionDAO->getById($submissionId);
+
+					$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+					$assignedUser = $userDao->getById($userId);
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$userGroup = $userGroupDao->getById($userGroupId);
+
+					import('lib.pkp.classes.log.SubmissionLog');
+					SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
+				}
+
+				$context = $request->getContext();
+				$request->redirect($context->getPath(), 'submissions');
+				return true;
+			}
+		}
+
+		if ($component == 'modals.editorDecision.EditorDecisionHandler') {
+			if($request->getUserVar('decision') == 1){
+				if($params[1] == "savePromoteInReview"){
+					$submissionId = $request->getUserVar('submissionId');
+					$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+
+					import('lib.pkp.classes.file.SubmissionFileManager');
+
+					$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+					$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
+					foreach ($submissionFiles as $submissionFile) {
+						$genreIds[] = $submissionFile->_data["genreId"];
+					}
+
+					if (in_array(10, $genreIds)) { // Se houverem figuras, editores de figura são notificados e estatus é alterado para "Em avaliação de ilustração"
+
+						$result = $userDao->retrieve(
+							<<<QUERY
+							SELECT email
+							FROM ojs.users u
+							LEFT JOIN user_user_groups g
+							ON u.user_id = g.user_id
+							WHERE  g.user_group_id = 19
+							QUERY
+						);
+
+						import('lib.pkp.classes.mail.MailTemplate');
+						while (!$result->EOF) {
+							$mail = new MailTemplate('COPYEDIT_REQUEST_PICTURE');
+							$mail->addRecipient($result->GetRowAssoc(0)['email']);
+							$mail->_data["body"] = "http://localhost/ojs/index.php/csp/$$$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=165&userGroupId=19&userIdSelected=15&stageId=4";
+							if (!$mail->send()) {
+								import('classes.notification.NotificationManager');
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+							}
+							$result->MoveNext();
+						}
+						$now = date('Y-m-d H:i:s');
+						$userDao->retrieve(
+							<<<QUERY
+							UPDATE status_csp SET status = 'ed_text_em_avaliacao_ilustracao', date_status = '$now' WHERE submission_id = $submissionId
+							QUERY
+						);
+					}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
+						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $request->getUserVar('stageId'), 24);
+						import('lib.pkp.classes.mail.MailTemplate');
+						$mail = new MailTemplate('EDITOR_DECISION_ACCEPT');
+						while ($user = $users->next()) {
+							$mail->addRecipient($user->getEmail(), $user->getFullName());
+						}
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+
+						$now = date('Y-m-d H:i:s');
+						$userDao->retrieve(
+							<<<QUERY
+							UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
+							QUERY
+						);
+					}
+				}
+			}
+		}
+
 		return false;
 	}
 
@@ -333,75 +442,32 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 
-		if($decision == 1 && ($stageId == 1 OR $stageId == 3)){  // Quando submissão é aceita
-
-			import('lib.pkp.classes.file.SubmissionFileManager');
-
-			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-			$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
-			foreach ($submissionFiles as $submissionFile) {
-				$genreIds[] = $submissionFile->_data["genreId"];
-			}
-
-			if (in_array(10, $genreIds)) { // Se houverem figuras, editores de figura são notificados e estatus é alterado para "Em avaliação de ilustração"
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT email
-					FROM ojs.users u
-					LEFT JOIN user_user_groups g
-					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = 19
-					QUERY
-				);
-				unset($args[0]->_data["recipients"]);
-				import('lib.pkp.classes.mail.MailTemplate');
-				$mail = new MailTemplate('COPYEDIT_REQUEST_PICTURE');
-				while (!$result->EOF) {
-
-					$args[0]->_data["recipients"][]= ["email" => $result->GetRowAssoc(0)['email']];
-
-					$result->MoveNext();
-				}
-				$args[0]->_data["subject"] = $mail->_data["subject"];
-				$args[0]->_data["body"] = $mail->_data["body"];
-
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ed_text_em_avaliacao_ilustracao', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
-				);
-			}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
-				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);		
-
-				unset($args[0]->_data["recipients"]);
-				while ($user = $users->next()) {
-					$args[0]->_data["recipients"][]= ["name" => $user->getFullName(), "email" => $user->getEmail()];
-				}
-
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
-				);
-			}
-		}
-
 		if($stageId == 3){
+
+			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada
+
+				unset($args[0]->_data["recipients"]);
+
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 23);
+
+				while ($user = $users->next()) {
+					$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
+				}
+			}
 
 			$recipient = $userDao->getUserByEmail($args[0]->_data["recipients"][0]["email"]);
 			$context = $request->getContext();
 			$isManager = $recipient->hasRole(array(ROLE_ID_MANAGER), $context->getId());
-			if($isManager){ // Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe"
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ava_consulta_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
-				);
-			}
+				if($isManager){ // Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe"
+					$now = date('Y-m-d H:i:s');
+					$userDao->retrieve(
+						<<<QUERY
+						UPDATE status_csp SET status = 'ava_consulta_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
+						QUERY
+					);
+				}
+
 			if($decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
@@ -429,28 +495,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 
-		}
-		if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // QUANDO AUTOR SUBMETE TEXTO REVISADO, EMAIL VAI PARA SECRETARIA
-
-			unset($args[0]->_data["recipients"]);
-
-			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT u.email, x.setting_value as name
-				FROM ojs.stage_assignments a
-				LEFT JOIN ojs.users u
-				ON a.user_id = u.user_id
-				LEFT JOIN (SELECT user_id, setting_value FROM ojs.user_settings WHERE setting_name = 'givenName' AND locale = '$locale') x
-				ON x.user_id = u.user_id
-				WHERE submission_id = $submissionId AND user_group_id = 23
-				QUERY
-			);
-
-			while (!$result->EOF) {
-				$args[0]->_data["recipients"][] =  array("name" => $result->GetRowAssoc(0)['name'], "email" => $result->GetRowAssoc(0)['email']);
-				//$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-				$result->MoveNext();
-			}
 		}
 
 		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
@@ -2172,7 +2216,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}
 		if($args[0]->getData('reviewRoundId')){
-			if($args[0]->getData('fileStage')  == 2){ ///// Quando autor insere nova versão, o status é alterado
+			if($args[0]->getData('fileStage')  == 15){ ///// Quando autor insere nova versão, o status é alterado
 				$submissionId = $request->getUserVar('submissionId');
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 				$now = date('Y-m-d H:i:s');
