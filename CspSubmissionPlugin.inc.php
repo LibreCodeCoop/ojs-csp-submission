@@ -552,32 +552,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/grid.tpl'){
-			$userId = $_SESSION["userId"];
-			$submission = $request->getUserVar('submissionId');
-
-			// Check if the user is an author of this submission
-			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
-			$subeditor = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_SUB_EDITOR);
-			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $userId);
-			$canComment = false;
-			while ($stageAssignment = $stageAssignmentsFactory->next()) {
-				if (in_array($stageAssignment->getUserGroupId(), $manager)) {
-					$canComment = true;
-				}
-				if (in_array($stageAssignment->getUserGroupId(), $subeditor)) {
-					$canComment = true;
-				}				
-			}
-			$templateMgr->assign('canComment', $canComment);
-
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
+			
 			return true;
-
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
-
 			return true;
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadConfirmationForm.tpl'));
