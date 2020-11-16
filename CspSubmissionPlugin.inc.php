@@ -1406,23 +1406,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 
 			}elseif($stageId == 4){
+				// Buscar componentes de arquivos específicos para o autor
+				$submissionId = $request->getUserVar('submissionId');
+				$userId = $request->getUserVar('userId');
+				$stageId = $request->getUserVar('stageId');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 14);
 
-				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
-					<<<QUERY
-					SELECT g.user_group_id , g.user_id
-					FROM ojs.user_user_groups g
-					WHERE g.user_group_id = 14 AND user_id = $userId
-					QUERY
-				);
-
-				if($result->_numOfRows > 0){
+				if($users){
 					$result = $userDao->retrieve(
 						<<<QUERY
 						SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TEXTO_FIG_ALT%'
+						WHERE locale = '$locale' AND entry_key LIKE 'PEND_TEC_%'
 						QUERY
 					);
 					while (!$result->EOF) {
@@ -1433,11 +1431,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					$templateMgr->setData('submissionFileGenres', $genreList);
 				}else{
-					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+					$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 				}
 
 			}else{
-				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+				$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 			}
 
 		}
@@ -2173,6 +2171,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case '':
 				$args[0]->setData('genreId',47);
 				$args[1] = true;
+			break;
+			case '68': // Fluxograma
+				$file = $_FILES['uploadedFile']['type'];
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/svg+xml','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Fluxograma')
+					);
+				}
+			break;
+			case '69': // Gráfico
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/svg+xml','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Gráfico')
+					);
+				}
+			break;
+			case '70': // Mapa
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/svg+xml','image/x-eps', 'image/wmf'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Mapa')
+					);
+				}
+			break;
+			case '71': // Fotografia
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Fotografia')
+					);
+				}
 			break;
 		return true;
 		}
