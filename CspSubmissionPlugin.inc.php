@@ -292,13 +292,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$submissionId = $request->getUserVar('submissionId');
 				$userGroupId = $request->getUserVar('userGroupId');
-				$userId = $request->getUserVar('userId');
+				$userId = $request->getUserVar('userIdSelected');
 
 				$stageId = $request->getUserVar('stageId');
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 19);
-
-				if($users == null){ // Se não houverem revisores de figura designados
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
+				while ($user = $users->next()) {
+					$userAssigned = $user;
+				}
+				if(!$userAssigned){
 					$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 					$stageAssignment = $stageAssignmentDao->newDataObject();
 					$stageAssignment->setSubmissionId($submissionId);
@@ -344,7 +346,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						$result = $userDao->retrieve(
 							<<<QUERY
-							SELECT email
+							SELECT u.email, u.user_id
 							FROM ojs.users u
 							LEFT JOIN user_user_groups g
 							ON u.user_id = g.user_id
@@ -356,7 +358,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						while (!$result->EOF) {
 							$mail = new MailTemplate('COPYEDIT_REQUEST_PICTURE');
 							$mail->addRecipient($result->GetRowAssoc(0)['email']);
-							$mail->_data["body"] = "http://localhost/ojs/index.php/csp/$$$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=165&userGroupId=19&userIdSelected=15&stageId=4";
+							$mail->_data["body"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=19&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
 							if (!$mail->send()) {
 								import('classes.notification.NotificationManager');
 								$notificationMgr = new NotificationManager();
@@ -2149,8 +2151,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 					QUERY
 				);
 			break;
-			// Quando uma figura é enviada para formatar
 			case '65': // Figura para formatar
+				// Quando é feito upload de figura para formatar, editores de figura recebem email de convite para formatar figura
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$site = $request->getSite();
+				$context = $request->getContext();
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT u.email, u.user_id
+					FROM ojs.users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = 21
+					QUERY
+				);
+
+				import('lib.pkp.classes.mail.MailTemplate');
+				while (!$result->EOF) {
+					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
+					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->_data["body"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=21&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+					$result->MoveNext();
+				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
