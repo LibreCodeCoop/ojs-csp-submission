@@ -96,7 +96,7 @@ class NotifyEditorInactivity extends ScheduledTask
         $mail->setReplyTo(null);
         $mail->setSubject($mail->getSubject());
         $mail->setBody($mail->getBody());
-        $mail->sendWithParams(['editorsWithSubmissions' => implode(PHP_EOL, $notifiedUsers)]);
+        $mail->sendWithParams(['editorsWithSubmissions' => implode('<br>', $notifiedUsers)]);
     }
 
     private function sendJournalReminders($journal)
@@ -149,13 +149,13 @@ class NotifyEditorInactivity extends ScheduledTask
                 $item['submission_id']
             );
 
-            if (!in_array($userId, array_keys($notifiedUsers), true)) {
+            if (!in_array($userId, array_keys($notifiedUsers))) {
                 $notifiedUsers[$userId] = strtr(
-                    ':fullName (:email): :submissions',
+                    ':fullName (:email): :submission',
                     [
                         ':fullName' => $user->getFullName(),
                         ':email' => $user->getEmail(),
-                        ':submissions' => $item['submission_id'],
+                        ':submission' => $item['submission_id'],
                     ]
                 );
 
