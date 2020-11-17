@@ -1076,7 +1076,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 2 && $submissionProgress == 0){
 
-/* 			$templateMgr->setData('revisionOnly',false);
+			/*
+ 			$templateMgr->setData('revisionOnly',false);
 			$templateMgr->setData('isReviewAttachment',true);
 			$templateMgr->setData('submissionFileOptions',[]);
  */
@@ -1735,7 +1736,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $article->getData('id');
 		$userDao->retrieve(
 			<<<QUERY
-			INSERT INTO status_csp VALUES ($submissionId,'pre_aguardando_secretaria','$now')
+			INSERT INTO status_csp (submission_id, status, date_status) VALUES ($submissionId,'pre_aguardando_secretaria','$now')
 			QUERY
 		);
 
