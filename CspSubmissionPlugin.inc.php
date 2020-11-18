@@ -330,7 +330,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($component == 'modals.editorDecision.EditorDecisionHandler') {
 			if($request->getUserVar('decision') == 1){
-				if($params[1] == "savePromoteInReview"){
+				if($params[1] == "savePromote" or $params[1] == "savePromoteInReview"){
 					$submissionId = $request->getUserVar('submissionId');
 					$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 
@@ -427,6 +427,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 			}
+		}
+		if ($component == 'api.file.ManageFileApiHandler') {
+			$locale = AppLocale::getLocale();
+			$submissionId = $request->getUserVar('submissionId');
+			$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
 		}
 
 		return false;
@@ -1052,7 +1057,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
 
-				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$genreName.".".$extensao;
+				$tplvars->_form->_submissionFile->_data["name"][$locale] = $genreName.".".$extensao;
 
 			}
 
