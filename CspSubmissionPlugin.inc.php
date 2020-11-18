@@ -343,14 +343,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 
 					if (in_array(10, $genreIds)) { // Se houverem figuras, editores de figura são notificados e estatus é alterado para "Em avaliação de ilustração"
-
+						$userGroupRevisorFigura = 19;
 						$result = $userDao->retrieve(
 							<<<QUERY
 							SELECT u.email, u.user_id
 							FROM ojs.users u
 							LEFT JOIN user_user_groups g
 							ON u.user_id = g.user_id
-							WHERE  g.user_group_id = 19
+							WHERE  g.user_group_id = $userGroupRevisorFigura
 							QUERY
 						);
 
@@ -358,7 +358,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						while (!$result->EOF) {
 							$mail = new MailTemplate('COPYEDIT_REQUEST_PICTURE');
 							$mail->addRecipient($result->GetRowAssoc(0)['email']);
-							$mail->_data["body"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=19&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+							$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupRevisorFigura&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=4&accept=1";
 							if (!$mail->send()) {
 								import('classes.notification.NotificationManager');
 								$notificationMgr = new NotificationManager();
@@ -392,6 +392,38 @@ class CspSubmissionPlugin extends GenericPlugin {
 							UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
 							QUERY
 						);
+					}
+				}
+			}
+			if($request->getUserVar('decision') == 7){
+				// Quando submissão é enviada para editoração, padronizadores recebem email com convite para assumir padronização
+				if($params[1] == "savePromote"){
+					$userGroupPadronizador = 20;
+					$request = \Application::get()->getRequest();
+					$submissionId = $request->getUserVar('submissionId');
+					$userDao = DAORegistry::getDAO('UserDAO');
+					$context = $request->getContext();
+					$result = $userDao->retrieve(
+						<<<QUERY
+						SELECT u.email, u.user_id
+						FROM ojs.users u
+						LEFT JOIN user_user_groups g
+						ON u.user_id = g.user_id
+						WHERE  g.user_group_id = $userGroupPadronizador
+						QUERY
+					);
+
+					import('lib.pkp.classes.mail.MailTemplate');
+					while (!$result->EOF) {
+						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
+						$mail->addRecipient($result->GetRowAssoc(0)['email']);
+						$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupPadronizador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+						$result->MoveNext();
 					}
 				}
 			}
@@ -2153,6 +2185,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			break;
 			case '65': // Figura para formatar
 				// Quando é feito upload de figura para formatar, editores de figura recebem email de convite para formatar figura
+				$userGroupEditorFigura = 21;
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$userDao = DAORegistry::getDAO('UserDAO');
@@ -2164,7 +2197,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					FROM ojs.users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = 21
+					WHERE  g.user_group_id = $userGroupEditorFigura
 					QUERY
 				);
 
@@ -2172,7 +2205,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->_data["body"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=21&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorFigura&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
