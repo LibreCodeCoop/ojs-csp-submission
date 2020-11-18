@@ -342,7 +342,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$genreIds[] = $submissionFile->_data["genreId"];
 					}
 
-					if (in_array(10, $genreIds)) { // Se houverem figuras, editores de figura são notificados e estatus é alterado para "Em avaliação de ilustração"
+					if (in_array(10, $genreIds)) { // Se houverem figuras, revisores de figura são convidados a avaliar figura e estatus é alterado para "Em avaliação de ilustração"
 						$userGroupRevisorFigura = 19;
 						$result = $userDao->retrieve(
 							<<<QUERY
@@ -805,7 +805,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
 			$decision = $request->_requestVars["decision"];
 			if ($stageId == 3 or $stageId == 1){
-				if($decision == 1){
+				if($decision == 1){ // Quando submissão é aceita, editores assistentes são designados
 
 						$request = \Application::get()->getRequest();
 						$submissionId = $request->getUserVar('submissionId');
