@@ -4,7 +4,7 @@ import('lib.pkp.classes.scheduledTask.ScheduledTask');
 import('lib.pkp.classes.mail.MailTemplate');
 import('plugins.generic.cspSubmission.NotifyScheduleTaskConstants');
 
-class NotifyEditorInactivity extends ScheduledTask
+class NotifyWaitingForAuthor extends ScheduledTask
 {
     /** @var JournalDAO */
     private $journalDao;
@@ -24,7 +24,7 @@ class NotifyEditorInactivity extends ScheduledTask
      */
     public function getName()
     {
-        return __('plugins.generic.cspSubmission.NotifyEditorInactivity');
+        return __('plugins.generic.cspSubmission.NotifyWaitingForAuthor');
     }
 
     /**
@@ -47,12 +47,12 @@ class NotifyEditorInactivity extends ScheduledTask
         return true;
     }
 
-    private function sendReminderToAssociateEditor($journal, string $mailKey, User $user, $submissionId)
+    private function sendReminderToAuthor($journal, User $user, $submissionId, $notification)
     {
         AppLocale::requireComponents(LOCALE_COMPONENT_PKP_USER, LOCALE_COMPONENT_APP_COMMON);
 
         $mail = new MailTemplate(
-            $mailKey,
+            NotifyScheduleTaskConstants::AVISO_AUTOR_EMAIL_KEY,
             $journal->getPrimaryLocale(),
             $journal, false
         );
@@ -63,17 +63,13 @@ class NotifyEditorInactivity extends ScheduledTask
         $mail->setBody($mail->getBody());
         $mail->sendWithParams(['submissionId' => $submissionId]);
 
-        $notification = NotifyScheduleTaskConstants::PRIMEIRO_AVISO_ASSOCIADO_EMAIL_KEY === $mailKey ?
-            NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO :
-            NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO;
-
         $this->userDao->retrieve(
             'INSERT INTO notification_status_csp 
                 (user_id, status, submission_id, notification, created_at) VALUES(?,?,?,?,?)
             ON DUPLICATE KEY UPDATE notification = ?, updated_at = ?',
             [
                 $user->getId(),
-                NotifyScheduleTaskConstants::STATUS_AVA_EDITOR_ASSOCIADO,
+                NotifyScheduleTaskConstants::STATUS_AVA_AGUARDANDO_AUTOR,
                 $submissionId,
                 $notification,
                 (new DateTimeImmutable())->format('Y-m-d H:i:s'),
@@ -83,32 +79,12 @@ class NotifyEditorInactivity extends ScheduledTask
         );
     }
 
-    private function sendReminderToJournalEditor($journal, $editors, $notifiedUsers)
-    {
-        AppLocale::requireComponents(LOCALE_COMPONENT_PKP_USER, LOCALE_COMPONENT_APP_COMMON);
-
-        $mail = new MailTemplate(
-            NotifyScheduleTaskConstants::AVISO_EDITOR_CHEFE_MAIL_KEY,
-            $journal->getPrimaryLocale(),
-            $journal,
-            false
-        );
-        foreach ($editors as $editor) {
-            $mail->addRecipient($editor['email']);
-        }
-
-        $mail->setReplyTo(null);
-        $mail->setSubject($mail->getSubject());
-        $mail->setBody($mail->getBody());
-        $mail->sendWithParams(['editorsWithSubmissions' => implode('<br>', $notifiedUsers)]);
-    }
-
     private function sendJournalReminders($journal)
     {
         $today = (new DateTimeImmutable())->modify('00:00');
 
-        $lastWeek = $today->modify('- 1 week')->modify('- 1 day');
-        $twoWeeksAgo = $today->modify('- 2 week')->modify('- 1 day');
+        $aMonthAgo = $today->modify('- 1 month')->modify('- 1 day');
+        $aMonthAndAWeekAgo = $aMonthAgo->modify('- 1 week');
 
         $result = $this->userDao->retrieve(
             'SELECT sc.submission_id, sc.date_status, sa.user_id, nsc.notification FROM status_csp AS sc 
@@ -123,14 +99,13 @@ class NotifyEditorInactivity extends ScheduledTask
                 AND sc.date_status <= ?
                 AND (nsc.notification IS NULL OR nsc.notification != ?)',
             [
-                NotifyScheduleTaskConstants::EDITOR_ASSOCIADO_USER_GROUP,
-                NotifyScheduleTaskConstants::STATUS_AVA_EDITOR_ASSOCIADO,
-                $lastWeek->format('Y-m-d H:i:s'),
+                NotifyScheduleTaskConstants::AUTOR_USER_GROUP,
+                NotifyScheduleTaskConstants::STATUS_AVA_AGUARDANDO_AUTOR,
+                $aMonthAgo->format('Y-m-d H:i:s'),
                 NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO,
             ]
         );
 
-        $notifiedUsers = [];
         foreach ($result as $item) {
             $userId = $item['user_id'];
 
@@ -139,61 +114,29 @@ class NotifyEditorInactivity extends ScheduledTask
                 continue;
             }
 
-            if ($item['date_status'] > $twoWeeksAgo->format('Y-m-d H:i:s') &&
-                NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO === $item['notification']
+            if ($item['date_status'] > $aMonthAndAWeekAgo->format('Y-m-d H:i:s')
+                && NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO === $item['notification']
             ) {
                 continue;
             }
 
-            if ($item['date_status'] > $twoWeeksAgo->format('Y-m-d H:i:s')) {
-                $this->sendReminderToAssociateEditor(
+            if ($item['date_status'] > $aMonthAndAWeekAgo->format('Y-m-d H:i:s')) {
+                $this->sendReminderToAuthor(
                     $journal,
-                    NotifyScheduleTaskConstants::PRIMEIRO_AVISO_ASSOCIADO_EMAIL_KEY,
                     $user,
-                    $item['submission_id']
+                    $item['submission_id'],
+                    NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO,
                 );
 
                 continue;
             }
 
-            $this->sendReminderToAssociateEditor(
+            $this->sendReminderToAuthor(
                 $journal,
-                NotifyScheduleTaskConstants::SEGUNDO_AVISO_ASSOCIADO_EMAIL_KEY,
                 $user,
-                $item['submission_id']
+                $item['submission_id'],
+                NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO,
             );
-
-            if (!in_array($userId, array_keys($notifiedUsers), false)) {
-                $notifiedUsers[$userId] = strtr(
-                    ':fullName (:email): :submission',
-                    [
-                        ':fullName' => $user->getFullName(),
-                        ':email' => $user->getEmail(),
-                        ':submission' => $item['submission_id'],
-                    ]
-                );
-
-                continue;
-            }
-
-            $notifiedUsers[$userId] .= ', '.$item['submission_id'];
         }
-
-        if (empty($notifiedUsers)) {
-            return;
-        }
-
-        $editors = $this->userDao->retrieve(
-            'SELECT u.user_id, u.email FROM users AS u 
-            INNER JOIN user_user_groups AS g
-            ON u.user_id = g.user_id 
-            AND g.user_group_id = ?
-            WHERE u.disabled = 0',
-            [
-                NotifyScheduleTaskConstants::EDITOR_CHEFE_USER_GROUP,
-            ]
-        );
-
-        $this->sendReminderToJournalEditor($journal, $editors, $notifiedUsers);
     }
 }
