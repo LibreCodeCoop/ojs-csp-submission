@@ -77,6 +77,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 
 			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
+
+			// Hook para adicionar o campo comentário no upload de arquivos
+			HookRegistry::register('submissionfilesmetadataform::readuservars', array($this, 'submissionFilesMetadataReadUserVars'));
+			HookRegistry::register('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
+			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'submissionFilesMetadataExecute'));
+
 		}
 		return $success;
 	}
@@ -1061,6 +1067,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			}
 
+			$currentUser = $request->getUser();
+			$context = $request->getContext();
+			$hasAccess = $currentUser->hasRole(array(ROLE_ID_MANAGER, ROLE_ID_ASSISTANT, ROLE_ID_SITE_ADMIN), $context->getId());
+
+			if($hasAccess){
+				$templateMgr->assign('display', true);
+			}
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionFileMetadataForm.tpl'));
+
+			return true;
+
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/readReview.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('readReview.tpl'));
 
@@ -1663,7 +1681,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		$args[0] = $form;
 	}
-
 	/**
 	 * @copydoc Plugin::getDisplayName()
 	 */
@@ -1739,6 +1756,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars =& $params[1];
 		$userVars[] = 'authorContribution';
 		$userVars[] = 'affiliation2';
+
+		return false;
+	}
+
+	function submissionFilesMetadataReadUserVars($hookName, $params) {
+		$userVars =& $params[1];
+		$userVars[] = 'comentario';
+
+		return false;
+	}
+
+	function submissionfiledaodelegateAdditionalFieldNames($hookName, $params) {
+		$additionalFieldNames =& $params[1];
+		$additionalFieldNames[] = 'comentario';
+
+		return false;
+	}
+
+	function submissionFilesMetadataExecute($hookName, $params) {
+		$form =& $params[0];
+		$submissionFile = $form->_submissionFile;
+		$submissionFile->setData('comentario', $form->getData('comentario'));
 
 		return false;
 	}
