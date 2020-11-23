@@ -4,7 +4,11 @@
 
 <scheduled_tasks>
 	<task class="plugins.generic.cspSubmission.NotifyEditorInactivity">
-		<descr>Notify editors who have been inactive for a while.</descr>
+		<descr>Notifies editors who have been inactive for a while.</descr>
+		<frequency hour="8"/>
+	</task>
+	<task class="plugins.generic.cspSubmission.NotifyWaitingForAuthor">
+		<descr>Notifies authors who have pending articles for one month.</descr>
 		<frequency hour="8"/>
 	</task>
 </scheduled_tasks>
