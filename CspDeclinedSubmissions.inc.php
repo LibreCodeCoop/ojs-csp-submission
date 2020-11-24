@@ -16,13 +16,13 @@ class CspDeclinedSubmissions
         $this->submissionDAO->retrieve(
             'INSERT INTO declined_submission_email
                 (submission_id, data, sended, created_at)
-				VALUES(?, ?, ?, ?)',
+                VALUES(?, ?, ?, ?)',
             [
-				$submissionId,
+                $submissionId,
                 $serializedData,
                 false,
-				(new DateTimeImmutable())->format('Y-m-d H:i:s'), 
-			],
+                (new DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ],
         );
     }
 }
