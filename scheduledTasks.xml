@@ -11,4 +11,8 @@
 		<descr>Notifies authors who have pending articles for one month.</descr>
 		<frequency hour="8"/>
 	</task>
+	<task class="plugins.generic.cspSubmission.SendDeniedSubmissionEmail">
+		<descr>Send denied submissions emails.</descr>
+		<frequency hour="3"/>
+	</task>
 </scheduled_tasks>

@@ -38,7 +38,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
             while ($journal = $journals->next()) {
                 $this->sendJournalReminders($journal);
             }
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->addExecutionLogEntry($exception->getMessage(), SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
 
             return false;
@@ -54,7 +54,8 @@ class NotifyWaitingForAuthor extends ScheduledTask
         $mail = new MailTemplate(
             NotifyScheduleTaskConstants::AVISO_AUTOR_EMAIL_KEY,
             $journal->getPrimaryLocale(),
-            $journal, false
+            $journal,
+            false
         );
 
         $mail->setReplyTo(null);

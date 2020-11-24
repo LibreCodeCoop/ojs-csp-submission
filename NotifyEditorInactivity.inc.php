@@ -38,7 +38,7 @@ class NotifyEditorInactivity extends ScheduledTask
             while ($journal = $journals->next()) {
                 $this->sendJournalReminders($journal);
             }
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->addExecutionLogEntry($exception->getMessage(), SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
 
             return false;
