@@ -877,7 +877,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					<<<QUERY
-					UPDATE status_csp SET status = 'edit_pdf_padronizado', date_status = '$now' WHERE submission_id = $submissionId
+					UPDATE status_csp SET status = 'edit_aguardando_padronizador', date_status = '$now' WHERE submission_id = $submissionId
 					QUERY
 				);
 
