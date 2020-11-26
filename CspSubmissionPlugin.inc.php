@@ -2196,6 +2196,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
+
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
 			break;
 			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
