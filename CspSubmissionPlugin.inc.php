@@ -601,6 +601,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 			
 			return true;
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
+			if($request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/submission/editor-submission-details-files-grid/fetch-grid" 
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/final/final-draft-files-grid/fetch-grid" 
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/review/editor-review-files-grid/fetch-grid"
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call$\$$/grid/files/production-ready/production-ready-files-grid/fetch-grid"){ //Busca comentários somente quando grid for de arquivos
+				$row = $templateMgr->getVariable('row');
+				if($row->value->_data["submissionFile"]->_data["comentario"]){
+					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
+				}
+			}
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
 			return true;
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){

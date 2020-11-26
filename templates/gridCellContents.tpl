@@ -39,7 +39,13 @@
 		{assign var="maxLength" value=$column->getFlag('maxLength')}
 		{$_label|truncate:$maxLength}
 	{else}
-		{$_label}
+		{if substr($cellId, -4) == "date"}
+			{if $comentario}
+				{$comentario}
+			{/if}
+		{else}
+			{$_label}
+		{/if}
 	{/if}
 </span>
 
