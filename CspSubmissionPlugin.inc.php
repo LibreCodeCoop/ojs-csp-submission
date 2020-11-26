@@ -329,7 +329,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 
 				$context = $request->getContext();
-				$request->redirect($context->getPath(), 'submissions');
+				$request->redirect($context->getPath(), 'workflow', null, array('submissionId' => $submissionId, 'stageId' => $stageId));
 				return true;
 			}
 		}
