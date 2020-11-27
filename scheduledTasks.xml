@@ -3,12 +3,16 @@
 <!DOCTYPE scheduled_tasks SYSTEM "../lib/pkp/dtd/scheduledTasks.dtd">
 
 <scheduled_tasks>
-	<task class="plugins.generic.cspSubmission.NotifyEditorInactivity">
-		<descr>Notifies editors who have been inactive for a while.</descr>
-		<frequency hour="8"/>
-	</task>
-	<task class="plugins.generic.cspSubmission.NotifyWaitingForAuthor">
-		<descr>Notifies authors who have pending articles for one month.</descr>
-		<frequency hour="8"/>
-	</task>
+    <task class="plugins.generic.cspSubmission.NotifyEditorInactivity">
+        <descr>Notifies editors who have been inactive for a while.</descr>
+        <frequency hour="8"/>
+    </task>
+    <task class="plugins.generic.cspSubmission.NotifyWaitingForAuthor">
+        <descr>Notifies authors who have pending articles for one month.</descr>
+        <frequency hour="8"/>
+    </task>
+    <task class="plugins.generic.cspSubmission.SendDeclinedSubmissionEmail">
+        <descr>Send declined submissions emails.</descr>
+        <frequency hour="3"/>
+    </task>
 </scheduled_tasks>
