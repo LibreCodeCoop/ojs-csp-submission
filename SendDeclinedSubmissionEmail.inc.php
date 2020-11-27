@@ -3,7 +3,7 @@
 import('lib.pkp.classes.scheduledTask.ScheduledTask');
 import('lib.pkp.classes.mail.SubmissionMailTemplate');
 
-class SendDeniedSubmissionEmail extends ScheduledTask
+class SendDeclinedSubmissionEmail extends ScheduledTask
 {
     /** @var SubmissionDAO */
     private $submissionDAO;
@@ -19,7 +19,7 @@ class SendDeniedSubmissionEmail extends ScheduledTask
      */
     public function getName()
     {
-        return __('plugins.generic.cspSubmission.SendDeniedSubmissionEmail');
+        return __('plugins.generic.cspSubmission.SendDeclinedSubmissionEmail');
     }
 
     /**
@@ -28,7 +28,7 @@ class SendDeniedSubmissionEmail extends ScheduledTask
     protected function executeActions()
     {
         try {
-            $this->sendDenials();
+            $this->sendDeclinedSubmissions();
         } catch (\Throwable $exception) {
             $this->addExecutionLogEntry($exception->getMessage(), SCHEDULED_TASK_MESSAGE_TYPE_ERROR);
 
@@ -48,13 +48,13 @@ class SendDeniedSubmissionEmail extends ScheduledTask
         $unserializedData = unserialize($data);
         $email->setAllData($unserializedData);
 
-		$authors = $submission->getAuthors(true);
-		foreach($authors as $author) {
-			$email->addRecipient($author->getEmail(), $author->getFullName());
-		}
+        $authors = $submission->getAuthors(true);
+        foreach ($authors as $author) {
+            $email->addRecipient($author->getEmail(), $author->getFullName());
+        }
 
-		DAORegistry::getDAO('SubmissionEmailLogDAO'); // Load constants
-		$email->setEventType(SUBMISSION_EMAIL_EDITOR_NOTIFY_AUTHOR);
+        DAORegistry::getDAO('SubmissionEmailLogDAO'); // Load constants
+        $email->setEventType(SUBMISSION_EMAIL_EDITOR_NOTIFY_AUTHOR);
 
         $email->setFrom("noreply@fiocruz.br", "Cadernos de Saúde Pública");
         $email->setReplyTo("noreply@fiocruz.br", "Cadernos de Saúde Pública");
@@ -64,7 +64,7 @@ class SendDeniedSubmissionEmail extends ScheduledTask
         $email->send();
     }
 
-    private function sendDenials()
+    private function sendDeclinedSubmissions()
     {
         $result = $this->submissionDAO->retrieve(
             'SELECT 
@@ -90,7 +90,6 @@ class SendDeniedSubmissionEmail extends ScheduledTask
                 'UPDATE declined_submission_email SET sended = ?, updated_at = ? WHERE id = ?',
                 [true, (new DateTimeImmutable())->format('Y-m-d H:i:s'), $item['id']]
             );
-    
         }
     }
 }
