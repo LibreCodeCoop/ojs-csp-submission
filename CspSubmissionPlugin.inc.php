@@ -19,6 +19,8 @@ use Symfony\Component\HttpClient\HttpClient;
 import('lib.pkp.classes.plugins.GenericPlugin');
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
+import('plugins.generic.cspSubmission.CspDeclinedSubmissions');
+
 class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * @copydoc Plugin::register()
@@ -488,6 +490,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userDao = DAORegistry::getDAO('UserDAO');
 
 		if($stageId == 3){
+
+			if($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
+				(new CspDeclinedSubmissions())->saveDeclinedSubmission($submissionId, $args[0]);
+
+				return true;
+			}
 
 			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada
 
@@ -1082,7 +1090,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 2 && $submissionProgress == 0){
 
-/* 			$templateMgr->setData('revisionOnly',false);
+			/*
+ 			$templateMgr->setData('revisionOnly',false);
 			$templateMgr->setData('isReviewAttachment',true);
 			$templateMgr->setData('submissionFileOptions',[]);
  */
@@ -1760,7 +1769,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $article->getData('id');
 		$userDao->retrieve(
 			<<<QUERY
-			INSERT INTO status_csp VALUES ($submissionId,'pre_aguardando_secretaria','$now')
+			INSERT INTO status_csp (submission_id, status, date_status) VALUES ($submissionId,'pre_aguardando_secretaria','$now')
 			QUERY
 		);
 
