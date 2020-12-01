@@ -272,16 +272,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($substage == 'ava_aguardando_autor_mais_60_dias'){
 				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
 			}
-
-
 			$qb->whereIn('s.submission_id',$queryStatusCsp);
 			$qb->where('s.status', '=', 1);
-
-			//$params = $args[1];
-
 		}
-
-
 	}
 
 	/**
@@ -441,7 +434,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionId = $request->getUserVar('submissionId');
 			$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
 		}
-
 		return false;
 	}
 
@@ -590,7 +582,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');
 		$submissionId = $request->getUserVar('submissionId');
-		//$itemId = $request->getUserVar('istemId');
 
 		if ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
@@ -850,7 +841,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "1") {
 
-			import('lib.pkp.classes.mail.MailTemplate');
 			$mail = new MailTemplate('PRE_AVALIACAO');
 			$templateSubject['PRE_AVALIACAO'] = $mail->_data["subject"];
 			$templateBody['PRE_AVALIACAO'] = $mail->_data["body"];
@@ -885,7 +875,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
-			import('lib.pkp.classes.mail.MailTemplate');
 			if($isManager){
 				$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
 				$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
@@ -916,7 +905,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "5") {
 
-			import('lib.pkp.classes.mail.MailTemplate');
 			$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
 			$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
 			$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
@@ -1010,10 +998,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$columns->value["assigns"]->_title = "author.users.contributor.assign";
 
 		}
-
-
-
-
 		return false;
 	}
 
@@ -1033,13 +1017,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$templateMgr =& $args[0];
 
 		if ($fileStage == 2 && $submissionProgress == 0){
-
-			/*
- 			$templateMgr->setData('revisionOnly',false);
-			$templateMgr->setData('isReviewAttachment',true);
-			$templateMgr->setData('submissionFileOptions',[]);
- */
-			//$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 
 			$result = $userDao->retrieve(
 				<<<QUERY
@@ -1244,8 +1221,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 15) { // UPLOAD NOVA VERSÃO
 
-
-
 			$result = $userDao->retrieve( // BUSCAR PERFIL DO USUÁRIO
 				<<<QUERY
 				SELECT g.user_group_id
@@ -1363,7 +1338,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 				}
 
-
 			}elseif($stageId == 4){
 				// Buscar componentes de arquivos específicos para o autor
 				$submissionId = $request->getUserVar('submissionId');
@@ -1466,9 +1440,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result = $userDao->retrieve(
 					<<<QUERY
 					SELECT `COLUMN_NAME`
-					  FROM `INFORMATION_SCHEMA`.`COLUMNS`
-					 WHERE `TABLE_SCHEMA`='ojs'
-					   AND `TABLE_NAME`='users';
+					FROM `INFORMATION_SCHEMA`.`COLUMNS`
+					WHERE `TABLE_SCHEMA`='ojs'
+					AND `TABLE_NAME`='users';
 					QUERY
 				);
 				while (!$result->EOF) {
@@ -1642,7 +1616,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
- 	function metadataReadUserVars($hookName, $params) {
+	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'conflitoInteresse';
 		$userVars[] = 'agradecimentos';
@@ -1684,7 +1658,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
- 	function metadataExecuteStep3($hookName, $params) {
+	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
@@ -1733,7 +1707,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * Init article Campo1
 	 */
- 	function metadataInitData($hookName, $params) {
+	function metadataInitData($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
@@ -1745,7 +1719,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		return false;
 	}
-
 
 	function publicationEdit($hookName, $params) {
 		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
@@ -1798,11 +1771,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return in_array($statusCode,[303,200]);
 		}));
 
-
 		return false;
 	}
-
-
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
