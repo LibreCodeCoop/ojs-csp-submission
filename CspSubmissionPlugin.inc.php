@@ -592,7 +592,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $request->getUserVar('submissionId');
 		//$itemId = $request->getUserVar('istemId');
 
-		if ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
+		if ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
+
+			return true;
+		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
 
 			return true;
