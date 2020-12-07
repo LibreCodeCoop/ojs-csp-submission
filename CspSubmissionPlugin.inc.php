@@ -582,9 +582,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');
 		$submissionId = $request->getUserVar('submissionId');
+		import('lib.pkp.classes.mail.MailTemplate');
 
 		if ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
+
+			return true;
+		}elseif($args[1] == 'controllers/grid/queries/readQuery.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('readQuery.tpl'));
 
 			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
@@ -839,81 +844,70 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "1") {
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
 
-			$mail = new MailTemplate('PRE_AVALIACAO');
-			$templateSubject['PRE_AVALIACAO'] = $mail->_data["subject"];
-			$templateBody['PRE_AVALIACAO'] = $mail->_data["body"];
+			/// Se o usuário for o autor, o destinatário será a secretaria, caso contrário, o destinatário será o autor
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$publication = $submission->getCurrentPublication();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$author = $authorDao->getById($publication->getData('primaryContactId'));
+			$author = $userDao->getUserByEmail($author->getData('email'));
 
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $submissionId,
-				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
-			));
+			if ($author->getData('id') == $_SESSION["userId"]) {
 
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+				$mail = new MailTemplate('MSG_AUTOR_SECRETARIA');
+				$templateSubject['MSG_AUTOR_SECRETARIA'] = $mail->_data["subject"];
+				$templateBody['MSG_AUTOR_SECRETARIA'] = $mail->_data["body"];
 
-			return true;
+				$templateMgr->assign('author', true);
+				$templateMgr->assign('to', 14); // BUSCAR ID DA SECRETARIA
+				$templateMgr->assign('toName', 'Secretaria');
+				$templateMgr->assign('from', $_SESSION["userId"]);
 
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "4") {
-
-			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
-			$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
-			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
-
-			while ($stageAssignment = $stageAssignmentsFactory->next()) {
-				if (in_array($stageAssignment->getUserGroupId(), $manager)) {
-					$isManager = true;
-				}
-				if (in_array($stageAssignment->getUserGroupId(), $assistent)) {
-					$isAssistent = true;
-				}
-			}
-
-			if($isManager){
-				$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
-				$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
-				$templateBody['EDICAO_TEXTO_APROVD'] = $mail->_data["body"];
-			}elseif($isAssistent){
-				$mail1 = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
-				$templateSubject['EDICAO_TEXTO_FIG_APROVD'] = $mail1->_data["subject"];
-				$templateBody['EDICAO_TEXTO_FIG_APROVD'] = $mail1->_data["body"];
-				$mail2 = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
-				$templateSubject['EDICAO_TEXTO_PENDENC_TEC'] = $mail2->_data["subject"];
-				$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail2->_data["body"];
 			}else{
-				return;
+				if($stageId == "1"){ // Se o estágio for Pré-avaliação, template específico é exibido
+					$mail = new MailTemplate('PRE_AVALIACAO');
+					$templateSubject['PRE_AVALIACAO'] = $mail->_data["subject"];
+					$templateBody['PRE_AVALIACAO'] = $mail->_data["body"];
+				}
+				if($stageId == "4"){ // Se o estágio for Edição de texto, templates específicos são exibidos para cada perfil
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+					$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
+					$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
+					$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
+
+					while ($stageAssignment = $stageAssignmentsFactory->next()) {
+						if (in_array($stageAssignment->getUserGroupId(), $manager)) {
+							$isManager = true;
+						}
+						if (in_array($stageAssignment->getUserGroupId(), $assistent)) {
+							$isAssistent = true;
+						}
+					}
+					if($isManager){
+						$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
+						$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
+						$templateBody['EDICAO_TEXTO_APROVD'] = $mail->_data["body"];
+					}elseif($isAssistent){
+						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
+						$templateSubject['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["subject"];
+						$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["body"];
+					}
+				}
+
+				if($stageId == "5"){// Se o estágio for Editoração, template específico é exibido
+					$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
+					$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
+					$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
+				}
 			}
 
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
-				'itemId' => $this->_itemId,
-				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
-			));
-
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
-
-			return true;
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "5") {
-
-			$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
-			$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
-			$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
-
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
 				'message' => json_encode($templateBody),
 				'comment' => reset($templateBody)
 			));
