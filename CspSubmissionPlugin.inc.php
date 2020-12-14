@@ -272,16 +272,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($substage == 'ava_aguardando_autor_mais_60_dias'){
 				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
 			}
-
-
 			$qb->whereIn('s.submission_id',$queryStatusCsp);
 			$qb->where('s.status', '=', 1);
-
-			//$params = $args[1];
-
 		}
-
-
 	}
 
 	/**
@@ -441,7 +434,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionId = $request->getUserVar('submissionId');
 			$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
 		}
-
 		return false;
 	}
 
@@ -590,7 +582,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');
 		$submissionId = $request->getUserVar('submissionId');
-		//$itemId = $request->getUserVar('istemId');
+		import('lib.pkp.classes.mail.MailTemplate');
 
 		if ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
@@ -598,6 +590,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
+
+			return true;
+		}elseif($args[1] == 'controllers/grid/queries/readQuery.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('readQuery.tpl'));
 
 			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
@@ -715,6 +711,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
+
+			if($stageId == 3 OR $stageId == 1){
+
+				$mail = new MailTemplate('EDITOR_ASSIGN');
+				$templateSubject['EDITOR_ASSIGN'] = $mail->_data["subject"];
+				$templateBody = ['EDITOR_ASSIGN' => $mail->_data["body"]];
+
+			}
+			if($stageId == 4){
+
+				$mail = new MailTemplate('COPYEDIT_REQUEST');
+				$templateSubject['COPYEDIT_REQUEST'] = $mail->_data["subject"];
+				$templateBody['COPYEDIT_REQUEST'] = $mail->_data["body"];
+			}
+
 			if($stageId == 5){
 				$locale = AppLocale::getLocale();
 				$userDao = DAORegistry::getDAO('UserDAO');
@@ -751,89 +762,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					$result->MoveNext();
 				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					//'stageId' => $stageId,
-					//'submissionId' => $this->_submissionId,
-					//'itemId' => $this->_itemId,
-					'message' => json_encode($templateBody),
-					'comment' => reset($templateBody)
-				));
-
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
-
-				return true;
-			}elseif($stageId == 4){
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'COPYEDIT%'
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					//'stageId' => $stageId,
-					//'submissionId' => $this->_submissionId,
-					//'itemId' => $this->_itemId,
-					'message' => json_encode($templateBody),
-					'comment' => reset($templateBody)
-				));
-
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
-
-				return true;
-
-			}elseif($stageId == 3 OR $stageId == 1){
-
-				$mail = new MailTemplate('EDITOR_ASSIGN');
-				$templateSubject['EDITOR_ASSIGN'] = $mail->_data["subject"];
-				$templateBody['EDITOR_ASSIGN'] = $mail->_data["body"];
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					'message' => json_encode($templateBody),
-					'comment' => reset($templateBody)
-				));
-
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
-
-				return true;
-
 			}
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $templateSubject,
+				'message' => json_encode($templateBody),
+				'comment' => reset($templateBody)
+			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
+			return true;
 
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
 			$decision = $request->_requestVars["decision"];
@@ -908,84 +848,75 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "1") {
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
 
-			import('lib.pkp.classes.mail.MailTemplate');
-			$mail = new MailTemplate('PRE_AVALIACAO');
-			$templateSubject['PRE_AVALIACAO'] = $mail->_data["subject"];
-			$templateBody['PRE_AVALIACAO'] = $mail->_data["body"];
+			/// Se o usuário for o autor, o destinatário será a secretaria, caso contrário, o destinatário será o autor
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$publication = $submission->getCurrentPublication();
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$author = $authorDao->getById($publication->getData('primaryContactId'));
+			$author = $userDao->getUserByEmail($author->getData('email'));
 
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $submissionId,
-				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
-			));
+			if ($author->getData('id') == $_SESSION["userId"]) {
 
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+				$mail = new MailTemplate('MSG_AUTOR_SECRETARIA');
+				$templateSubject['MSG_AUTOR_SECRETARIA'] = $mail->_data["subject"];
+				$templateBody['MSG_AUTOR_SECRETARIA'] = $mail->_data["body"];
 
-			return true;
+				$templateMgr->assign('author', true);
+				$templateMgr->assign('to', 14); // BUSCAR ID DA SECRETARIA
+				$templateMgr->assign('toName', 'Secretaria');
+				$templateMgr->assign('from', $_SESSION["userId"]);
 
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "4") {
-
-			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
-			$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
-			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
-
-			while ($stageAssignment = $stageAssignmentsFactory->next()) {
-				if (in_array($stageAssignment->getUserGroupId(), $manager)) {
-					$isManager = true;
-				}
-				if (in_array($stageAssignment->getUserGroupId(), $assistent)) {
-					$isAssistent = true;
-				}
-			}
-
-			import('lib.pkp.classes.mail.MailTemplate');
-			if($isManager){
-				$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
-				$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
-				$templateBody['EDICAO_TEXTO_APROVD'] = $mail->_data["body"];
-			}elseif($isAssistent){
-				$mail1 = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
-				$templateSubject['EDICAO_TEXTO_FIG_APROVD'] = $mail1->_data["subject"];
-				$templateBody['EDICAO_TEXTO_FIG_APROVD'] = $mail1->_data["body"];
-				$mail2 = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
-				$templateSubject['EDICAO_TEXTO_PENDENC_TEC'] = $mail2->_data["subject"];
-				$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail2->_data["body"];
 			}else{
-				return;
+				if($stageId == "1"){ // Se o estágio for Pré-avaliação, template específico é exibido
+					$mail = new MailTemplate('PRE_AVALIACAO');
+					$templateSubject['PRE_AVALIACAO'] = $mail->_data["subject"];
+					$templateBody['PRE_AVALIACAO'] = $mail->_data["body"];
+				}
+				if($stageId == "4"){ // Se o estágio for Edição de texto, templates específicos são exibidos para cada perfil
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+					$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
+					$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
+					$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
+
+					$isManager = false;
+					$isAssistent = false;
+					while ($stageAssignment = $stageAssignmentsFactory->next()) {
+						if ($isManager || $isAssistent){
+							break;
+						}
+						if (in_array($stageAssignment->getUserGroupId(), $manager)) {
+							$isManager = true;
+						}
+						if (in_array($stageAssignment->getUserGroupId(), $assistent)) {
+							$isAssistent = true;
+						}
+					}
+					if($isManager){
+						$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
+						$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
+						$templateBody['EDICAO_TEXTO_APROVD'] = $mail->_data["body"];
+					}elseif($isAssistent){
+						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
+						$templateSubject['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["subject"];
+						$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["body"];
+					}
+				}
+
+				if($stageId == "5"){// Se o estágio for Editoração, template específico é exibido
+					$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
+					$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
+					$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
+				}
 			}
 
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
-				'itemId' => $this->_itemId,
-				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
-			));
-
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
-
-			return true;
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "5") {
-
-			import('lib.pkp.classes.mail.MailTemplate');
-			$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
-			$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
-			$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
-
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
 				'message' => json_encode($templateBody),
 				'comment' => reset($templateBody)
 			));
@@ -1070,10 +1001,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$columns->value["assigns"]->_title = "author.users.contributor.assign";
 
 		}
-
-
-
-
 		return false;
 	}
 
@@ -1093,13 +1020,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$templateMgr =& $args[0];
 
 		if ($fileStage == 2 && $submissionProgress == 0){
-
-			/*
- 			$templateMgr->setData('revisionOnly',false);
-			$templateMgr->setData('isReviewAttachment',true);
-			$templateMgr->setData('submissionFileOptions',[]);
- */
-			//$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 
 			$result = $userDao->retrieve(
 				<<<QUERY
@@ -1304,8 +1224,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 15) { // UPLOAD NOVA VERSÃO
 
-
-
 			$result = $userDao->retrieve( // BUSCAR PERFIL DO USUÁRIO
 				<<<QUERY
 				SELECT g.user_group_id
@@ -1423,7 +1341,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 				}
 
-
 			}elseif($stageId == 4){
 				// Buscar componentes de arquivos específicos para o autor
 				$submissionId = $request->getUserVar('submissionId');
@@ -1526,9 +1443,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result = $userDao->retrieve(
 					<<<QUERY
 					SELECT `COLUMN_NAME`
-					  FROM `INFORMATION_SCHEMA`.`COLUMNS`
-					 WHERE `TABLE_SCHEMA`='ojs'
-					   AND `TABLE_NAME`='users';
+					FROM `INFORMATION_SCHEMA`.`COLUMNS`
+					WHERE `TABLE_SCHEMA`='ojs'
+					AND `TABLE_NAME`='users';
 					QUERY
 				);
 				while (!$result->EOF) {
@@ -1702,7 +1619,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
- 	function metadataReadUserVars($hookName, $params) {
+	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'conflitoInteresse';
 		$userVars[] = 'agradecimentos';
@@ -1744,7 +1661,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
- 	function metadataExecuteStep3($hookName, $params) {
+	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
@@ -1793,7 +1710,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * Init article Campo1
 	 */
- 	function metadataInitData($hookName, $params) {
+	function metadataInitData($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
@@ -1805,7 +1722,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		return false;
 	}
-
 
 	function publicationEdit($hookName, $params) {
 		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
@@ -1858,11 +1774,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return in_array($statusCode,[303,200]);
 		}));
 
-
 		return false;
 	}
-
-
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
