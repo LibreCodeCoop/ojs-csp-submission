@@ -51,19 +51,26 @@
 
 		{include file="controllers/notification/inPlaceNotification.tpl" notificationId="queryFormNotification"}
 
-		{if $queryParticipantsListData}
-			{fbvFormSection}
-				{assign var="uuid" value=""|uniqid|escape}
-				<div id="queryParticipants-{$uuid}">
-					<list-panel
-						v-bind="components.queryParticipants"
-						@set="set"
-					/>
-				</div>
-				<script type="text/javascript">
-					pkp.registry.init('queryParticipants-{$uuid}', 'Container', {$queryParticipantsListData|json_encode});
-				</script>
+		{if $author}
+			{fbvFormSection title="editor.submission.stageParticipants" for="participants"}{$toName}
+				{fbvElement type="hidden" id="participants" name="users[]" value=$to}
+				{fbvElement type="hidden" id="participants" name="users[]" value=$from}
 			{/fbvFormSection}
+		{else}
+			{if $queryParticipantsListData}
+				{fbvFormSection}
+					{assign var="uuid" value=""|uniqid|escape}
+					<div id="queryParticipants-{$uuid}">
+						<list-panel
+							v-bind="components.queryParticipants"
+							@set="set"
+						/>
+					</div>
+					<script type="text/javascript">
+						pkp.registry.init('queryParticipants-{$uuid}', 'Container', {$queryParticipantsListData|json_encode});
+					</script>
+				{/fbvFormSection}
+			{/if}
 		{/if}
 
 		{fbvFormArea id="queryContentsArea"}
