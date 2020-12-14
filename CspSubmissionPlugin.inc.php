@@ -712,7 +712,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$mail = new MailTemplate('EDITOR_ASSIGN');
 				$templateSubject['EDITOR_ASSIGN'] = $mail->_data["subject"];
-				$templateBody['EDITOR_ASSIGN'] = $mail->_data["body"];
+				$templateBody = ['EDITOR_ASSIGN' => $mail->_data["body"]];
 
 			}
 			if($stageId == 4){
