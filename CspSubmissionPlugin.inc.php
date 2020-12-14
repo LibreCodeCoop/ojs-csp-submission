@@ -2183,6 +2183,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 				}
 			break;
+			case '73':// Quando diagramador faz upload de PDF diagramado editores assistentes são notificados
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$stageId = $request->getUserVar('stageId');
+
+					import('lib.pkp.classes.mail.MailTemplate');
+
+					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+					while ($user = $users->next()) {
+
+						$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
+						$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+					}
+			break;
 		return true;
 		}
 
