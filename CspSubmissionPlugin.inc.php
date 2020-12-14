@@ -879,7 +879,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
 					$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
 
+					$isManager = false;
+					$isAssistent = false;
 					while ($stageAssignment = $stageAssignmentsFactory->next()) {
+						if ($isManager || $isAssistent){
+							break;
+						}
 						if (in_array($stageAssignment->getUserGroupId(), $manager)) {
 							$isManager = true;
 						}
