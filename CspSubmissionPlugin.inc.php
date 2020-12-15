@@ -1166,8 +1166,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileGenres', $genreList);
 
 		}
-		if ($fileStage == 10) { // UPLOAD DE PDF PARA PUBLICAÇÃO
-			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+		if ($fileStage == 10) { // Upload de PDF para publicação
+			$result = $userDao->retrieve(
+				<<<QUERY
+				SELECT A.genre_id, setting_value
+				FROM ojs.genre_settings A
+				LEFT JOIN ojs.genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_DIAGRM_PDF_PUBL%'
+				QUERY
+			);
+
+			while (!$result->EOF) {
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+
+				$result->MoveNext();
+			}
+
+			$templateMgr->setData('submissionFileGenres', $genreList);
 		}
 		if ($fileStage == 11) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS PRONTOS PARA LAYOUT
 
@@ -2079,6 +2095,39 @@ class CspSubmissionPlugin extends GenericPlugin {
 					UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
 					QUERY
 				);
+			break;
+			case '57': // PDF para publicação PT
+			case '58': // PDF para publicação EN
+			case '59': // PDF para publicação ES
+				// Quando é feito upload PDF para publicação, editores de XML recebem email de convite para produzir XML
+				$userGroupEditorXML = 25;
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$site = $request->getSite();
+				$context = $request->getContext();
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT u.email, u.user_id
+					FROM ojs.users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = $userGroupEditorXML
+					QUERY
+				);
+
+				import('lib.pkp.classes.mail.MailTemplate');
+				while (!$result->EOF) {
+					$mail = new MailTemplate('PRODUCAO_XML');
+					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+					$result->MoveNext();
+				}
 			break;
 			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
