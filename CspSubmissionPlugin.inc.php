@@ -2120,7 +2120,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('PRODUCAO_XML');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$mail->params["acceptLink"] = $request->_router->_indexUrl .  "/" .
+					$request->_router->_contextPaths[0] .
+					"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=" . 
+					$result->GetRowAssoc(0)['user_id'] . 
+					"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
