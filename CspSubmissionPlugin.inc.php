@@ -2120,11 +2120,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('PRODUCAO_XML');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl .  "/" .
-					$request->_router->_contextPaths[0] .
-					"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=" . 
-					$result->GetRowAssoc(0)['user_id'] . 
-					"&stageId=5&accept=1";
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2132,7 +2128,38 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 					$result->MoveNext();
 				}
-			break;
+			break;        
+			case '60': // Template PT
+			case '61': // Template ES
+			case '62': // Template EN
+				// Quando é feito upload de template, diagramadores recebem email de convite para produzir PDF
+				$userGroupDiagramador = 12;
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					<<<QUERY
+					SELECT u.email, u.user_id
+					FROM ojs.users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = $userGroupDiagramador
+					QUERY
+				);
+
+				import('lib.pkp.classes.mail.MailTemplate');
+				while (!$result->EOF) {
+					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
+					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupDiagramador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+					$result->MoveNext();
+				}
+			break;        
 			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
 				$request = \Application::get()->getRequest();
