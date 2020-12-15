@@ -1185,49 +1185,42 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$templateMgr->setData('submissionFileGenres', $genreList);
 		}
-		if ($fileStage == 11) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS PRONTOS PARA LAYOUT
+		if ($fileStage == 11) { // Upload de arquivo em box "Arquivos prontos para layout"
 
-			$result = $userDao->retrieve( // CONSULTA O PERFIL
-				<<<QUERY
-				SELECT g.user_group_id
-				FROM ojs.user_user_groups g
-				WHERE user_id = $userId
-				QUERY
-			);
+			$userGroupAssignmentDao = DAORegistry::getDAO('UserGroupAssignmentDAO'); /* @var $userGroupAssignmentDao UserGroupAssignmentDAO */
+			$userGroupAssignments = $userGroupAssignmentDao->getByUserId($request->getUser()->getId());
 
-			while (!$result->EOF) {
-				if($result->GetRowAssoc(0)['user_group_id'] == 24){ // ASSISTENTE EDITORIAL
-					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
-						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND (entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%' OR entry_key LIKE 'EDITORACAO_FIG_P_FORMATAR%')
-						QUERY
-					);
-				break;
-				}elseif($result->GetRowAssoc(0)['user_group_id'] == 21){ // EDITOR DE FIGURA
-					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
-						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_FIG_FORMATA%'
-						QUERY
-					);
-				break;
-				}
+			while ($assignment = $userGroupAssignments->next()) {
+				$userGroupIds[] = $assignment->getUserGroupId();
+			}
 
-				$result->MoveNext();
+			if(!empty(array_intersect($userGroupIds, ['24']))){ // Assistente editorial
+				$result_genre = $userDao->retrieve(
+					<<<QUERY
+					SELECT A.genre_id, setting_value
+					FROM ojs.genre_settings A
+					LEFT JOIN ojs.genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = '$locale' AND (entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%' OR entry_key = 'EDITORACAO_FIG_P_FORMATAR')
+					QUERY
+				);
+			}
+			if(!empty(array_intersect($userGroupIds, ['21','12']))){ // Editor de figura ou diagramador
+				$result_genre = $userDao->retrieve(
+					<<<QUERY
+					SELECT A.genre_id, setting_value
+					FROM ojs.genre_settings A
+					LEFT JOIN ojs.genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = '$locale' AND entry_key = 'EDITORACAO_FIG_FORMATAD' OR entry_key = 'EDITORACAO_PDF_DIAGRAMADO'
+					QUERY
+				);
 			}
 
 			if(isset($result_genre)){
 
 				while (!$result_genre->EOF) {
 					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-
 					$result_genre->MoveNext();
 				}
 
@@ -2269,6 +2262,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Fotografia')
 					);
 				}
+			break;
+			case '73':// Quando diagramador faz upload de PDF diagramado editores assistentes são notificados
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$stageId = $request->getUserVar('stageId');
+
+					import('lib.pkp.classes.mail.MailTemplate');
+
+					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+					while ($user = $users->next()) {
+
+						$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
+						$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+					}
 			break;
 		return true;
 		}
