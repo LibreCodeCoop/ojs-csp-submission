@@ -85,8 +85,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
 			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'submissionFilesMetadataExecute'));
 
-			// Deletes from the status table when the submission is deleted
+			// Updates status table when the submission is deleted
 			HookRegistry::register('Submission::delete', array($this, 'submissionDelete'));
+			// Updates status table when the submission is published
+			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
 
 		}
 		return $success;
@@ -2426,9 +2428,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionDelete($hookName, $args){
 		$submissionId = $args[0]->getData('id');
 		$userDao = DAORegistry::getDAO('UserDAO');
+		$now = date('Y-m-d H:i:s');
 		$userDao->retrieve(
 			<<<QUERY
-			DELETE FROM status_csp WHERE submission_id = $submissionId
+			UPDATE status_csp SET status = 'deletada', date_status = '$now' WHERE submission_id = $submissionId
+			QUERY
+		);
+	}
+
+	public function publicationPublish($hookName, $args){
+		$submissionId = $args[0]->getData('id');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$now = date('Y-m-d H:i:s');
+		$userDao->retrieve(
+			<<<QUERY
+			UPDATE status_csp SET status = 'publicada', date_status = '$now' WHERE submission_id = $submissionId
 			QUERY
 		);
 	}
