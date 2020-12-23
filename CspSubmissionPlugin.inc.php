@@ -85,6 +85,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
 			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'submissionFilesMetadataExecute'));
 
+			// Deletes from the status table when the submission is deleted
+			HookRegistry::register('Submission::delete', array($this, 'submissionDelete'));
+
 		}
 		return $success;
 	}
@@ -459,6 +462,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$result->MoveNext();
 					}
 				}
+			}
+			if($request->getUserVar('decision') == 9){
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'rejeitada', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
 			}
 		}
 		if ($component == 'api.file.ManageFileApiHandler') {
@@ -2408,5 +2421,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		HookRegistry::call('FileManager::downloadFileFinished', array(&$returner));
 		return true;
+	}
+
+	public function submissionDelete($hookName, $args){
+		$submissionId = $args[0]->getData('id');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$userDao->retrieve(
+			<<<QUERY
+			DELETE FROM status_csp WHERE submission_id = $submissionId
+			QUERY
+		);
 	}
 }
