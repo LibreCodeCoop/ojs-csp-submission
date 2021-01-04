@@ -348,7 +348,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$genreIds[] = $submissionFile->_data["genreId"];
 					}
 
-					if (in_array(10, $genreIds)) { // Se houverem figuras, revisores de figura são convidados a avaliar figura e estatus é alterado para "Em avaliação de ilustração"
+					if (in_array(10, $genreIds)) { // Se houverem figuras, revisores de figura são designados e conversa é iniciada com autor
 
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
@@ -371,6 +371,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
 								$userId = $result->GetRowAssoc(0)['user_id'];
+								$users[] = $userId;
 
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
@@ -391,17 +392,66 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 								import('lib.pkp.classes.log.SubmissionLog');
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
-
-								$mail = new MailTemplate('COPYEDIT_REQUEST_PICTURE');
-								$mail->addRecipient($assignedUser->getData('email'));
-
-								if (!$mail->send()) {
-									import('classes.notification.NotificationManager');
-									$notificationMgr = new NotificationManager();
-									$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-								}
 							}
 							$result->MoveNext();
+						}
+
+						$submissionDAO = Application::getSubmissionDAO();
+						$submission = $submissionDAO->getById($submissionId);
+						$publication = $submission->getCurrentPublication();
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$authorDao = DAORegistry::getDAO('AuthorDAO');
+						$author = $authorDao->getById($publication->getData('primaryContactId'));
+						$author = $userDao->getUserByEmail($author->getData('email'));
+						$users[] = $author->getData('id');
+
+						import('lib.pkp.controllers.grid.queries.form.QueryForm');
+
+						$assocType = 1048585;
+						$getAssocId = 206;
+						$stageId = 4;
+
+						$queryForm = new QueryForm(
+							$request,
+							$assocType,
+							$getAssocId,
+							$stageId
+						);
+						$queryForm->initData();
+
+						$request->_requestVars["queryId"] = 690;
+						$request->_requestVars["users"] = $users;
+
+						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
+						$request->_requestVars["subject"] = $mail->getData('subject');
+						$request->_requestVars["comment"] = $mail->getData('body');
+
+						$queryForm = new QueryForm(
+							$request,
+							$assocType,
+							$getAssocId,
+							$stageId,
+							$queryForm->_query->_data["id"]
+						);
+						$queryForm->readInputData();
+
+						if ($queryForm->validate()) {
+							$queryForm->execute();
+
+								// Update submission notifications
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->updateNotification(
+									$request,
+									array(
+										NOTIFICATION_TYPE_ASSIGN_COPYEDITOR,
+										NOTIFICATION_TYPE_AWAITING_COPYEDITS,
+										NOTIFICATION_TYPE_ASSIGN_PRODUCTIONUSER,
+										NOTIFICATION_TYPE_AWAITING_REPRESENTATIONS,
+									),
+									null,
+									ASSOC_TYPE_SUBMISSION,
+									$getAssocId
+								);
 						}
 
 						$now = date('Y-m-d H:i:s');
