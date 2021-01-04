@@ -1842,9 +1842,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case 13: // Tabela ou quadro
 			case 19: // Nova versão corpo
 			case 20: // Nova versão tabela ou quadro
-				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
-				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
-				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
+				if (!in_array($_FILES['uploadedFile']['type'],
+				['application/msword', 'application/wps-office.doc', /*Doc*/
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
+				'application/vnd.oasis.opendocument.text'] /*odt*/
+				)) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody')
 					);
