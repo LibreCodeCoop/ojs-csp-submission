@@ -408,7 +408,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						import('lib.pkp.controllers.grid.queries.form.QueryForm');
 
 						$assocType = 1048585;
-						$getAssocId = 206;
+						$getAssocId = $submissionId;
 						$stageId = 4;
 
 						$queryForm = new QueryForm(
@@ -419,7 +419,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						);
 						$queryForm->initData();
 
-						$request->_requestVars["queryId"] = 690;
+						//$request->_requestVars["queryId"] = 690;
 						$request->_requestVars["users"] = $users;
 
 						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
