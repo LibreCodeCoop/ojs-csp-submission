@@ -1411,12 +1411,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}elseif($stageId == 4){
 				// Buscar componentes de arquivos específicos para o autor
 				$submissionId = $request->getUserVar('submissionId');
-				$userId = $request->getUserVar('userId');
-				$stageId = $request->getUserVar('stageId');
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 14);
 
-				if($users){
+				while ($user = $users->next()) {
+					if($user->getData('id') == $_SESSION["userId"]){
+						$isAuthor = true;
+					}
+				}
+
+				if(isset($isAuthor)){
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
