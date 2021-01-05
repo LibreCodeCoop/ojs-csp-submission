@@ -97,11 +97,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function countStatus($status, $date){
 
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$result = $userDao->retrieve(
-			<<<QUERY
-			SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = '$status' and date_status <= '$date'
-			QUERY
-		);
+		$result = $userDao->retrieve('SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = ? and date_status <= ?', array((string) $status,(string) $date));
 		$count = $result->GetRowAssoc(false);
 		return $count["contador"];
 
@@ -352,15 +348,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
-							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
 							FROM ojs.user_user_groups g
 							LEFT JOIN ojs.user_group_settings s
 							ON s.user_group_id = g.user_group_id
 							LEFT JOIN ojs.stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = $submissionId
-							WHERE s.setting_value = 'Revisor de figura'
-							QUERY
+							ON g.user_id = a.user_id AND a.submission_id = ?
+							WHERE s.setting_value = ?',array((int) $submissionId, (string) 'Revisor de figura')
 						);
 
 						import('lib.pkp.classes.mail.MailTemplate');
@@ -456,9 +450,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						$now = date('Y-m-d H:i:s');
 						$userDao->retrieve(
-							<<<QUERY
-							UPDATE status_csp SET status = 'ed_text_em_avaliacao_ilustracao', date_status = '$now' WHERE submission_id = $submissionId
-							QUERY
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',array((string)'ed_text_em_avaliacao_ilustracao', (string)$now, (int)$submissionId)
 						);
 					}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
 						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
@@ -476,9 +468,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						$now = date('Y-m-d H:i:s');
 						$userDao->retrieve(
-							<<<QUERY
-							UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
-							QUERY
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',array((string)'ed_text_envio_carta_aprovacao', (string)$now, (int)$submissionId)
 						);
 					}
 				}
@@ -492,13 +482,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$userDao = DAORegistry::getDAO('UserDAO');
 					$context = $request->getContext();
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT u.email, u.user_id
+						'SELECT u.email, u.user_id
 						FROM ojs.users u
 						LEFT JOIN user_user_groups g
 						ON u.user_id = g.user_id
-						WHERE  g.user_group_id = $userGroupPadronizador
-						QUERY
+						WHERE  g.user_group_id = ?',
+						array((int)$userGroupPadronizador)
 					);
 
 					import('lib.pkp.classes.mail.MailTemplate');
@@ -542,9 +531,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$now = date('Y-m-d H:i:s');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'ava_com_editor_associado', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
 			);
 		}
 		if($request->getUserVar("userGroupId") == 7){ // Quando designa revisor/tradutor status é alterado para "Em revisão tradução"
@@ -552,9 +540,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$now = date('Y-m-d H:i:s');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'ed_text_em_revisao_traducao', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ed_text_em_revisao_traducao', (string)$now, (int)$submissionId)
 			);
 		}
 		if($request->getUserVar("userGroupId") == 22){ // Quando designa diagramador status é alterado para "Em diagramação"
@@ -562,9 +549,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$now = date('Y-m-d H:i:s');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'edit_em_diagramacao', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'edit_em_diagramacao', (string)$now, (int)$submissionId)
 			);
 		}
 	}
@@ -613,18 +599,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ava_aguardando_autor', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_autor', (string)$now, (int)$submissionId)
 				);
 			}
 
 			if($request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ava_aguardando_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_editor_chefe', (string)$now, (int)$submissionId)
 				);
 			}
 		}
@@ -642,17 +626,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'ed_text_para_revisao_traducao', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ed_text_para_revisao_traducao', (string)$now, (int)$submissionId)
 			);
 		}
 		if($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")){  // É enviado email de prova de prelo
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
-				<<<QUERY
-				UPDATE status_csp SET status = 'edit_em_prova_prelo', date_status = '$now' WHERE submission_id = $submissionId
-				QUERY
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'edit_em_prova_prelo', (string)$now, (int)$submissionId)
 			);
 		}
 		$args[0]->_data["from"]["name"] = "Cadernos de Saúde Pública";
@@ -882,15 +864,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
-							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
 							FROM ojs.user_user_groups g
 							LEFT JOIN ojs.user_group_settings s
 							ON s.user_group_id = g.user_group_id
 							LEFT JOIN ojs.stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = $submissionId
-							WHERE s.setting_value = 'Assistente editorial'
-							QUERY
+							ON g.user_id = a.user_id AND a.submission_id = ?
+							WHERE s.setting_value = ?',
+							array((int)$submissionId, (string)'Assistente editorial')
 						);
 						while (!$result->EOF) {
 
@@ -935,9 +916,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'edit_aguardando_padronizador', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_aguardando_padronizador', (string)$now, (int)$submissionId)
 				);
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
@@ -1041,11 +1021,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT setting_value
+					'SELECT setting_value
 					FROM ojs.genre_settings
-					WHERE genre_id = $genreId AND locale = '$locale'
-					QUERY
+					WHERE genre_id = ? AND locale = ?',
+					array((int)$genreId, (string)$locale)
 				);
 				$genreName = $result->GetRowAssoc(false)['setting_value'];
 				$genreName = str_replace(" ","_",$genreName);
@@ -1119,13 +1098,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 2 && $submissionProgress == 0){
 
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
+				'SELECT A.genre_id, setting_value
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key = 'SUBMISSAO_PDF'
-				QUERY
+				WHERE locale = ? AND entry_key = ?',
+				array((string)$locale, (string)'SUBMISSAO_PDF')
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1140,13 +1118,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
 
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
+				'SELECT A.genre_id, setting_value
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA%'
-				QUERY
+				WHERE locale = ? AND entry_key LIKE ?',
+				array((string)$locale, (string)'AVAL_SECRETARIA%')
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1162,13 +1139,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
 
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
+				'SELECT A.genre_id, setting_value
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AVALIADOR%'
-				QUERY
+				WHERE locale = ? AND entry_key LIKE ?',
+				array((string)$locale, (string)'AVAL_AVALIADOR%')
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1183,23 +1159,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 6) {
 
 			$result = $userDao->retrieve( // PEGA O PERFIL
-				<<<QUERY
-				SELECT g.user_group_id
+				'SELECT g.user_group_id
 				FROM ojs.user_user_groups g
-				WHERE user_id = $userId
-				QUERY
+				WHERE user_id = ?',
+				array((int)$userId)
 			);
 
 			while (!$result->EOF) {
 				if($result->GetRowAssoc(0)['user_group_id'] == 19){ // PERFIL REVISOR DE FIGURA
 					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
+						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TEXTO_FIG_ALT%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'EDICAO_TEXTO_FIG_ALT%')
 					);
 				break;
 				}
@@ -1225,32 +1199,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 9) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS DE REVISÃO DE TEXTO
 
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE REVISOR/TRADUTOR
-				<<<QUERY
-				SELECT g.user_group_id , g.user_id
+				'SELECT g.user_group_id , g.user_id
 				FROM ojs.user_user_groups g
-				WHERE g.user_group_id = 7 AND user_id = $userId
-				QUERY
+				WHERE g.user_group_id = ? AND user_id = ?',
+				array((int)7,(int)$userId)
 			);
 
 			if($result->_numOfRows == 0){
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT A.genre_id, setting_value
+					'SELECT A.genre_id, setting_value
 					FROM ojs.genre_settings A
 					LEFT JOIN ojs.genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'
-					QUERY
+					WHERE locale = ? AND entry_key LIKE ?',
+					array((string)$locale,(string)'EDICAO_ASSIST_ED%')
 				);
 			}else{
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT A.genre_id, setting_value
+					'SELECT A.genre_id, setting_value
 					FROM ojs.genre_settings A
 					LEFT JOIN ojs.genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TRADUT%'
-					QUERY
+					WHERE locale = ? AND entry_key LIKE ?',
+					array((string)$locale, (string)'EDICAO_TRADUT%')
 				);
 			}
 
@@ -1265,13 +1236,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if ($fileStage == 10) { // Upload de PDF para publicação
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
+				'SELECT A.genre_id, setting_value
 				FROM ojs.genre_settings A
 				LEFT JOIN ojs.genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_DIAGRM_PDF_PUBL%'
-				QUERY
+				WHERE locale = ? AND entry_key LIKE ?',
+				array((string)$locale, (string)'EDITORACAO_DIAGRM_PDF_PUBL%')
 			);
 
 			while (!$result->EOF) {
@@ -1293,24 +1263,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			if(!empty(array_intersect($userGroupIds, ['24']))){ // Assistente editorial
 				$result_genre = $userDao->retrieve(
-					<<<QUERY
-					SELECT A.genre_id, setting_value
+					'SELECT A.genre_id, setting_value
 					FROM ojs.genre_settings A
 					LEFT JOIN ojs.genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND (entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%' OR entry_key = 'EDITORACAO_FIG_P_FORMATAR')
-					QUERY
+					WHERE locale = ? AND (entry_key LIKE ? OR entry_key = ?)',
+					array((string)$locale, (string)'EDITORACAO_ASSIS_ED_TEMPLT%', (string)'EDITORACAO_FIG_P_FORMATAR')
 				);
 			}
 			if(!empty(array_intersect($userGroupIds, ['21','12']))){ // Editor de figura ou diagramador
 				$result_genre = $userDao->retrieve(
-					<<<QUERY
-					SELECT A.genre_id, setting_value
+					'SELECT A.genre_id, setting_value
 					FROM ojs.genre_settings A
 					LEFT JOIN ojs.genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key = 'EDITORACAO_FIG_FORMATAD' OR entry_key = 'EDITORACAO_PDF_DIAGRAMADO'
-					QUERY
+					WHERE locale = ? AND entry_key = ? OR entry_key = ?',
+					array((string)$locale, (string)'EDITORACAO_FIG_FORMATAD', (string)'EDITORACAO_PDF_DIAGRAMADO')
 				);
 			}
 
@@ -1331,34 +1299,31 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 15) { // UPLOAD NOVA VERSÃO
 
 			$result = $userDao->retrieve( // BUSCAR PERFIL DO USUÁRIO
-				<<<QUERY
-				SELECT g.user_group_id
+				'SELECT g.user_group_id
 				FROM ojs.user_user_groups g
-				WHERE user_id = $userId
-				QUERY
+				WHERE user_id = ?',
+				array((int)$userId)
 			);
 
 			while (!$result->EOF) {
 				if($result->GetRowAssoc(0)['user_group_id'] == 23){ // SECRETARIA
 					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
+						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA_NOVA_VERSAO%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
 					);
 				break;
 				}elseif($result->GetRowAssoc(0)['user_group_id'] == 14){ // AUTOR
 					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
+						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AUTOR%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'AVAL_AUTOR%')
 					);
 				break;
 				}
@@ -1392,30 +1357,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($stageId == 5){
 
 				$autor = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
-					<<<QUERY
-					SELECT g.user_group_id , g.user_id
+					'SELECT g.user_group_id , g.user_id
 					FROM ojs.user_user_groups g
-					WHERE g.user_group_id = 14 AND user_id = $userId
-					QUERY
+					WHERE g.user_group_id = ? AND user_id = ?',
+					array((int)14, (int)$userId)
 				);
 
 				$editor_assistente = $userDao->retrieve( // VERIFICA SE O PERFIL É DE ASSISTENTE EDITORIAL PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
-					<<<QUERY
-					SELECT g.user_group_id , g.user_id
+					'SELECT g.user_group_id , g.user_id
 					FROM ojs.user_user_groups g
-					WHERE g.user_group_id = 24 AND user_id = $userId
-					QUERY
+					WHERE g.user_group_id = ? AND user_id = ?',
+					array((int)24, (int)$userId)
 				);
 
 				if($autor->_numOfRows > 0){
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
+						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_AUTOR%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'EDITORACAO_AUTOR%')
 					);
 
 					while (!$result->EOF) {
@@ -1427,13 +1389,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$templateMgr->setData('submissionFileGenres', $genreList);
 				}elseif($editor_assistente->_numOfRows > 0) {
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
+						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale,(string)'EDITORACAO_ASSIST_ED%')
 					);
 
 					while (!$result->EOF) {
@@ -1457,13 +1418,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				if($users){
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
+						'SELECT A.genre_id, setting_value
 						FROM ojs.genre_settings A
 						LEFT JOIN ojs.genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'PEND_TEC_%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale,(string)'PEND_TEC_%')
 					);
 					while (!$result->EOF) {
 						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1547,12 +1507,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				// retrieve all columns of table users
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT `COLUMN_NAME`
-					FROM `INFORMATION_SCHEMA`.`COLUMNS`
-					WHERE `TABLE_SCHEMA`='ojs'
-					AND `TABLE_NAME`='users';
-					QUERY
+					'SELECT COLUMN_NAME
+					FROM INFORMATION_SCHEMA.COLUMNS
+					WHERE TABLE_SCHEMA = ?
+					AND TABLE_NAME = ?',
+					array((string)'ojs', (string)'users')
 				);
 				while (!$result->EOF) {
 					$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
@@ -1795,9 +1754,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$now = date('Y-m-d H:i:s');
 		$submissionId = $article->getData('id');
 		$userDao->retrieve(
-			<<<QUERY
-			INSERT INTO status_csp (submission_id, status, date_status) VALUES ($submissionId,'pre_aguardando_secretaria','$now')
-			QUERY
+			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
+			array((int)$submissionId, (string)'pre_aguardando_secretaria',$now)
 		);
 
 
@@ -2041,15 +1999,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 					if($genreId == '46'){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA
 
 						$result = $userDao->retrieve(
-							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
 							FROM ojs.user_user_groups g
 							LEFT JOIN ojs.user_group_settings s
 							ON s.user_group_id = g.user_group_id
 							LEFT JOIN ojs.stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = $submissionId
-							WHERE s.setting_value = 'Editor da revista'
-							QUERY
+							ON g.user_id = a.user_id AND a.submission_id = ?
+							WHERE s.setting_value = ?',
+							array((int)$submissionId,(string)'Editor da revista')
 						);
 						while (!$result->EOF) {
 
@@ -2084,9 +2041,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}
 						$now = date('Y-m-d H:i:s');
 						$userDao->retrieve(
-							<<<QUERY
-							UPDATE status_csp SET status = 'pre_aguardando_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
-							QUERY
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							array((string)'pre_aguardando_editor_chefe',(string)$now,(int)$submissionId)
 						);
 					}
 					if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
@@ -2151,9 +2107,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ed_texto_traducao_metadados', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ed_texto_traducao_metadados', (string)$now, (int)$submissionId)
 				);
 
 			break;
@@ -2183,9 +2138,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ed_text_envio_carta_aprovacao', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ed_text_envio_carta_aprovacao', (string)$now, (int)$submissionId)
 				);
 			break;
 			case '57': // PDF para publicação PT
@@ -2199,13 +2153,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$site = $request->getSite();
 				$context = $request->getContext();
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT u.email, u.user_id
+					'SELECT u.email, u.user_id
 					FROM ojs.users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = $userGroupEditorXML
-					QUERY
+					WHERE  g.user_group_id = ?',
+					array((int)$userGroupEditorXML)
 				);
 
 				import('lib.pkp.classes.mail.MailTemplate');
@@ -2230,13 +2183,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$submissionId = $request->getUserVar('submissionId');
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT u.email, u.user_id
+					'SELECT u.email, u.user_id
 					FROM ojs.users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = $userGroupDiagramador
-					QUERY
+					WHERE  g.user_group_id = ?',
+					array((int)$userGroupDiagramador)
 				);
 
 				import('lib.pkp.classes.mail.MailTemplate');
@@ -2277,9 +2229,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'edit_pdf_padronizado', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_pdf_padronizado', (string)$now, (int)$submissionId)
 				);
 			break;
 			case '65': // Figura para formatar
@@ -2291,13 +2242,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$site = $request->getSite();
 				$context = $request->getContext();
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT u.email, u.user_id
+					'SELECT u.email, u.user_id
 					FROM ojs.users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = $userGroupEditorFigura
-					QUERY
+					WHERE  g.user_group_id = ?',
+					array((int)$userGroupEditorFigura)
 				);
 
 				import('lib.pkp.classes.mail.MailTemplate');
@@ -2317,9 +2267,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$submissionId = $request->getUserVar('submissionId');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'edit_em_formatacao_figura', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_em_formatacao_figura', (string)$now, (int)$submissionId)
 				);
 			break;
 			case '67': // Material suplementar
@@ -2409,9 +2358,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ava_aguardando_secretaria', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_secretaria', (string)$now, (int)$submissionId)
 				);
 			}
 			if($args[0]->getData('fileStage')  == 4){ ///// Quando secretaria insere nova versão de PDF, o status é alterado
@@ -2419,9 +2367,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'ava_com_editor_associado', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
 				);
 			}
 		}
