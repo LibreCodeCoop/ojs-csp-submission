@@ -1853,6 +1853,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case 1: // Corpo do artigo
 			case 13: // Tabela ou quadro
 			case 19: // Nova versão corpo
+			case 18: // Legendas
 			case 20: // Nova versão tabela ou quadro
 				if (!in_array($_FILES['uploadedFile']['type'],
 				['application/msword', 'application/wps-office.doc', /*Doc*/
