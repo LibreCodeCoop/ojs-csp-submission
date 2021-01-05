@@ -58,13 +58,13 @@
 		{assign var="skipDiscussionSend" value=true}
 	{/if}
 	{fbvFormSection}
-		<ul class="checkbox_and_radiobutton">
+		<ul class="checkbox_and_radiobutton" style="display:none">
 			{fbvElement type="radio" id="skipDiscussion-send" name="skipDiscussion" value="0" checked=$skipDiscussionSend label="editor.submissionReview.recordRecommendation.createDiscussion"}
 			{fbvElement type="radio" id="skipDiscussion-skip" name="skipDiscussion" value="1" checked=$skipDiscussionSkip label="editor.submissionReview.recordRecommendation.skipDiscussion"}
 		</ul>
 	{/fbvFormSection}
 
-	<div id="sendReviews-emailContent" style="margin-bottom: 30px;">
+	<div id="sendReviews-emailContent" style="margin-bottom: 30px; display:none">
 		{fbvFormSection for="personalMessage"}
 			{fbvElement type="textarea" name="personalMessage" id="personalMessage" value=$personalMessage rich=true variables=$allowedVariables variablesType=$allowedVariablesType}
 		{/fbvFormSection}
