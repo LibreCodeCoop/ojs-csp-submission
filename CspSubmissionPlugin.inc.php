@@ -1350,7 +1350,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 
-				if($isAuthor){
+				if(isset($isAuthor)){
 					$result = $userDao->retrieve(
 						<<<QUERY
 						SELECT A.genre_id, setting_value
