@@ -1,21 +1,20 @@
 
- <script>
-	$(function() {ldelim}
-		// Attach the form handler.
-		$( ".file_extension" ).each(function( index, element ) {
-			var className = $(this).attr('class');
-			var index = className.indexOf( "pdf" );
-			var text = $( this ).text();
-			var substring = text.substring(0, text.indexOf("-"));
-			if(index == -1){
+<script>
+    $(function() {ldelim}
+        // Attach the form handler.
+        $( ".file_extension" ).each(function( index, element ) {
+            var className = $(this).attr('class');
+            var index = className.indexOf( "pdf" );
+            var text = $( this ).text();
+            var substring = text.substring(0, text.indexOf("-"));
+                if(index == -1){
+                    $('#select-'+substring).removeAttr('checked')
+                }
+                $(this).parent().css('display', 'none');
+            });
 
-				$('#select-'+substring).removeAttr('checked')
+    {rdelim});
 
-			}
-			$(this).parent().css('display', 'none');
-		});
-
-	{rdelim});
 
 </script>
 {if $id}
@@ -24,5 +23,5 @@
 	{assign var=cellId value=""}
 {/if}
 <span {if $cellId}id="{$cellId|escape}" {/if}class="gridCellContainer">
-	{include file="../plugins/generic/cspSubmission/templates/gridCellContents.tpl"}
+	{include file="controllers/grid/gridCellContents.tpl"}
 </span>
