@@ -1056,6 +1056,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'skipEmail' => true,
+				'skipDiscussionSkip' => true,
 				'recommendationOptions' =>	array(
 												'' => 'common.chooseOne',
 												SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => 'editor.submission.decision.requestRevisions',
