@@ -11,7 +11,6 @@
 					if(index == -1){
 						$('#select-'+substring).removeAttr('checked')
 					}
-					$(this).parent().css('display', 'none');
 				}
 				if($("#promote input[name=decision]").val() && $("#promote input[name=decision]").val() == 7){ // Ao enviar para editoração
 					var index = className.indexOf( "jpeg" );
@@ -21,8 +20,9 @@
 					if(index != -1){
 						$('#select-'+substring).prop('checked', true);
 					}
-					$(this).parent().css('display', 'none');
+
 				}
+				$(this).parent().css('display', 'none');
 			});
     {rdelim});
 </script>
