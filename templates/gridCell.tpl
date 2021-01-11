@@ -11,7 +11,6 @@
 					if(index == -1){
 						$('#select-'+substring).removeAttr('checked')
 					}
-					$(this).parent().css('display', 'none');
 				}
 				if($("#promote input[name=decision]").val() && $("#promote input[name=decision]").val() == 7){ // Ao enviar para editoração
 					const figuras = ["jpeg", "png", "tiff", "bmp"];
@@ -23,8 +22,9 @@
 					if (figuras.some(v => className.includes(v))) {
 						$('#select-'+substring).prop('checked', true);
 					}
-					$(this).parent().css('display', 'none');
+
 				}
+				$(this).parent().css('display', 'none');
 			});
     {rdelim});
 </script>
