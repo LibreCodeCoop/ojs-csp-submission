@@ -935,7 +935,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$authorDao = DAORegistry::getDAO('AuthorDAO');
 			$author = $authorDao->getById($publication->getData('primaryContactId'));
 			$author = $userDao->getUserByEmail($author->getData('email'));
-			$locale = AppLocale::getLocale();
 
 			if ($author->getData('id') == $_SESSION["userId"]) {
 
@@ -992,31 +991,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
-			$comment = str_replace(
-			    [
-				'{$authorName}',
-				'{$submissionTitle}',
-				'{$submissionIdCSP}',
-				'{$contextName}'
-			    ],
-			    [
-				$authorName,
-				$submissionTitle,
-				$submissionIdCSP,
-				$contextName
-			    ],
-			    $templateBody;
-			
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
 				'message' => json_encode($templateBody),
-				'comment' => reset($comment),
-				'authorName' => $authorName,
-				'submissionTitle' => $submissionTitle,
-				'submissionIdCSP' => $submissionIdCSP
-			));			
-			
+				'comment' => reset($templateBody)
+			));
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
 			return true;
