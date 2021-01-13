@@ -349,10 +349,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
 							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM ojs.user_user_groups g
-							LEFT JOIN ojs.user_group_settings s
+							FROM user_user_groups g
+							LEFT JOIN user_group_settings s
 							ON s.user_group_id = g.user_group_id
-							LEFT JOIN ojs.stage_assignments a
+							LEFT JOIN stage_assignments a
 							ON g.user_id = a.user_id AND a.submission_id = ?
 							WHERE s.setting_value = ?',array((int) $submissionId, (string) 'Revisor de figura')
 						);
@@ -483,7 +483,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$context = $request->getContext();
 					$result = $userDao->retrieve(
 						'SELECT u.email, u.user_id
-						FROM ojs.users u
+						FROM users u
 						LEFT JOIN user_user_groups g
 						ON u.user_id = g.user_id
 						WHERE  g.user_group_id = ?',
@@ -818,13 +818,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM
 						(
 							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
+							FROM email_templates_settings
 							WHERE setting_name = 'body' AND locale = '$locale'
 						)a
 						LEFT JOIN
 						(
 								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
+								FROM email_templates_settings
 								WHERE setting_name = 'subject' AND locale = '$locale'
 						)b
 						ON a.email_id = b.email_id
@@ -865,10 +865,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
 							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM ojs.user_user_groups g
-							LEFT JOIN ojs.user_group_settings s
+							FROM user_user_groups g
+							LEFT JOIN user_group_settings s
 							ON s.user_group_id = g.user_group_id
-							LEFT JOIN ojs.stage_assignments a
+							LEFT JOIN stage_assignments a
 							ON g.user_id = a.user_id AND a.submission_id = ?
 							WHERE s.setting_value = ?',
 							array((int)$submissionId, (string)'Assistente editorial')
@@ -1041,7 +1041,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
 					'SELECT setting_value
-					FROM ojs.genre_settings
+					FROM genre_settings
 					WHERE genre_id = ? AND locale = ?',
 					array((int)$genreId, (string)$locale)
 				);
@@ -1119,8 +1119,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
 				WHERE locale = ? AND entry_key = ?',
 				array((string)$locale, (string)'SUBMISSAO_PDF')
@@ -1139,8 +1139,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'AVAL_SECRETARIA%')
@@ -1160,8 +1160,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'AVAL_AVALIADOR%')
@@ -1180,7 +1180,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve( // PEGA O PERFIL
 				'SELECT g.user_group_id
-				FROM ojs.user_user_groups g
+				FROM user_user_groups g
 				WHERE user_id = ?',
 				array((int)$userId)
 			);
@@ -1189,8 +1189,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if($result->GetRowAssoc(0)['user_group_id'] == 19){ // PERFIL REVISOR DE FIGURA
 					$result_genre = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'EDICAO_TEXTO_FIG_ALT%')
@@ -1220,7 +1220,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE REVISOR/TRADUTOR
 				'SELECT g.user_group_id , g.user_id
-				FROM ojs.user_user_groups g
+				FROM user_user_groups g
 				WHERE g.user_group_id = ? AND user_id = ?',
 				array((int)7,(int)$userId)
 			);
@@ -1228,8 +1228,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($result->_numOfRows == 0){
 				$result = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
+					FROM genre_settings A
+					LEFT JOIN genres B
 					ON B.genre_id = A.genre_id
 					WHERE locale = ? AND entry_key LIKE ?',
 					array((string)$locale,(string)'EDICAO_ASSIST_ED%')
@@ -1237,8 +1237,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}else{
 				$result = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
+					FROM genre_settings A
+					LEFT JOIN genres B
 					ON B.genre_id = A.genre_id
 					WHERE locale = ? AND entry_key LIKE ?',
 					array((string)$locale, (string)'EDICAO_TRADUT%')
@@ -1257,8 +1257,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 10) { // Upload de PDF para publicação
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'EDITORACAO_DIAGRM_PDF_PUBL%')
@@ -1284,8 +1284,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if(!empty(array_intersect($userGroupIds, ['24']))){ // Assistente editorial
 				$result_genre = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
+					FROM genre_settings A
+					LEFT JOIN genres B
 					ON B.genre_id = A.genre_id
 					WHERE locale = ? AND (entry_key LIKE ? OR entry_key = ?)',
 					array((string)$locale, (string)'EDITORACAO_ASSIS_ED_TEMPLT%', (string)'EDITORACAO_FIG_P_FORMATAR')
@@ -1294,8 +1294,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if(!empty(array_intersect($userGroupIds, ['21','12']))){ // Editor de figura ou diagramador
 				$result_genre = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
+					FROM genre_settings A
+					LEFT JOIN genres B
 					ON B.genre_id = A.genre_id
 					WHERE locale = ? AND entry_key = ? OR entry_key = ?',
 					array((string)$locale, (string)'EDITORACAO_FIG_FORMATAD', (string)'EDITORACAO_PDF_DIAGRAMADO')
@@ -1320,7 +1320,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$result = $userDao->retrieve( // BUSCAR PERFIL DO USUÁRIO
 				'SELECT g.user_group_id
-				FROM ojs.user_user_groups g
+				FROM user_user_groups g
 				WHERE user_id = ?',
 				array((int)$userId)
 			);
@@ -1329,8 +1329,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if($result->GetRowAssoc(0)['user_group_id'] == 23){ // SECRETARIA
 					$result_genre = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
@@ -1339,8 +1339,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}elseif($result->GetRowAssoc(0)['user_group_id'] == 14){ // AUTOR
 					$result_genre = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'AVAL_AUTOR%')
@@ -1378,14 +1378,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$autor = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
 					'SELECT g.user_group_id , g.user_id
-					FROM ojs.user_user_groups g
+					FROM user_user_groups g
 					WHERE g.user_group_id = ? AND user_id = ?',
 					array((int)14, (int)$userId)
 				);
 
 				$editor_assistente = $userDao->retrieve( // VERIFICA SE O PERFIL É DE ASSISTENTE EDITORIAL PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
 					'SELECT g.user_group_id , g.user_id
-					FROM ojs.user_user_groups g
+					FROM user_user_groups g
 					WHERE g.user_group_id = ? AND user_id = ?',
 					array((int)24, (int)$userId)
 				);
@@ -1393,8 +1393,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if($autor->_numOfRows > 0){
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'EDITORACAO_AUTOR%')
@@ -1410,8 +1410,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}elseif($editor_assistente->_numOfRows > 0) {
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale,(string)'EDITORACAO_ASSIST_ED%')
@@ -1443,8 +1443,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if(isset($isAuthor)){
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale,(string)'PEND_TEC_%')
@@ -1592,8 +1592,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0] = <<<QUERY
 					SELECT q1.*, COALESCE(q2.assigns,0) AS assigns FROM ({$args[0]}) q1
 					LEFT JOIN (SELECT COUNT(*) AS assigns, user_id
-					FROM ojs.stage_assignments a
-					JOIN ojs.submissions s
+					FROM stage_assignments a
+					JOIN submissions s
 					ON s.submission_id = a.submission_id AND s.stage_id <= 3
 					WHERE a.user_group_id = ?
 					GROUP BY a.user_id) q2
@@ -2025,10 +2025,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						$result = $userDao->retrieve(
 							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM ojs.user_user_groups g
-							LEFT JOIN ojs.user_group_settings s
+							FROM user_user_groups g
+							LEFT JOIN user_group_settings s
 							ON s.user_group_id = g.user_group_id
-							LEFT JOIN ojs.stage_assignments a
+							LEFT JOIN stage_assignments a
 							ON g.user_id = a.user_id AND a.submission_id = ?
 							WHERE s.setting_value = ?',
 							array((int)$submissionId,(string)'Editor da revista')
@@ -2179,7 +2179,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$context = $request->getContext();
 				$result = $userDao->retrieve(
 					'SELECT u.email, u.user_id
-					FROM ojs.users u
+					FROM users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
 					WHERE  g.user_group_id = ?',
@@ -2209,7 +2209,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
 					'SELECT u.email, u.user_id
-					FROM ojs.users u
+					FROM users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
 					WHERE  g.user_group_id = ?',
@@ -2268,7 +2268,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$context = $request->getContext();
 				$result = $userDao->retrieve(
 					'SELECT u.email, u.user_id
-					FROM ojs.users u
+					FROM users u
 					LEFT JOIN user_user_groups g
 					ON u.user_id = g.user_id
 					WHERE  g.user_group_id = ?',
@@ -2425,7 +2425,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result = $submissionDao->retrieve(
 					<<<QUERY
 					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
-					FROM ojs.submission_settings
+					FROM submission_settings
 					WHERE setting_name = 'CodigoArtigo' AND submission_id = ?
 					QUERY,
 					[$matches['id']]
