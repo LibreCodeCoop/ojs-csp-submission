@@ -992,19 +992,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
-			$authorName = $author->getLocalizedFamilyName();
-			$comment = str_replace('{$authorName}',$authorName,$templateBody);
-
-			$submissionTitle = $publication->getLocalizedTitle();
-			$comment = str_replace('{$submissionTitle}',$submissionTitle,$comment);
-
-			$submissionIdCSP = 999;
-			$comment = str_replace('{$submissionIdCSP}',$submissionIdCSP,$comment);
-
-			$context = $request->getContext();
-			$contextName = $context->getLocalizedName();
-			$comment = str_replace('{$contextName}',$contextName,$comment);
-
+			$comment = str_replace(
+			    [
+				'{$authorName}',
+				'{$submissionTitle}',
+				'{$submissionIdCSP}',
+				'{$contextName}'
+			    ],
+			    [
+				$authorName,
+				$submissionTitle,
+				$submissionIdCSP,
+				$contextName
+			    ],
+			    $templateBody;
+			
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
@@ -1013,8 +1015,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'authorName' => $authorName,
 				'submissionTitle' => $submissionTitle,
 				'submissionIdCSP' => $submissionIdCSP
-			));
-
+			));			
+			
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
 			return true;
