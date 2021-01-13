@@ -1022,8 +1022,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'authorName' => $authorName,
 				'submissionTitle' => $submissionTitle,
 				'submissionIdCSP' => $submissionIdCSP
-			));
-
+			));			
+			
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
 			return true;
