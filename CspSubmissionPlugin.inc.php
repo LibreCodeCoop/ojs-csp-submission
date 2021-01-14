@@ -991,6 +991,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
+			$authorName = $author->getLocalizedGivenName();
+			$submissionTitle = $publication->getLocalizedTitle();
+			$submissionIdCSP = 999;
+			$context = $request->getContext();
+			$contextName = $context->getLocalizedName();
+
+			$comment = str_replace(
+				[
+					'{$authorName}',
+					'{$submissionTitle}',
+					'{$submissionIdCSP}',
+					'{$contextName}'
+				],
+				[
+					$authorName,
+					$submissionTitle,
+					$submissionIdCSP,
+					$contextName
+				],
+				$templateBody
+			);
+
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
