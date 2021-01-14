@@ -1017,7 +1017,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
 				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
+				'comment' => reset($comment)
 			));
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
