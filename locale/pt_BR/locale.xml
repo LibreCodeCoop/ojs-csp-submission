@@ -66,4 +66,7 @@
   <message key="plugins.generic.CspSubmission.supportingAgencies.tip">Caso possível, informe o código de financiamento</message>
   <message key="plugins.generic.CspSubmission.AuthorContribution">Contribuição do autor no trabalho</message>
 
+  <message key="editor.submission.consultKfinder">Consultar Kfinder</message>
+  <message key="grid.action.consultKfinder">Consultar Kfinder</message>
+  <message key="editor.submission.addReviewerSagas">Adicionar avaliador</message>
 </locale>

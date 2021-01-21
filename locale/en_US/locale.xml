@@ -11,7 +11,7 @@
   * Localization strings.
   -->
  
-<locale name="pt_BR" full_name="Português (Brasil)">
+<locale name="en_US" full_name="Inglês (USA)">
 	<message key="plugins.generic.CspSubmission.displayName">cspSubmission</message>
 	<message key="plugins.generic.CspSubmission.description">O plugin cspSubmission inclui campos extras aos metadados do artigo possibilitando associar campos a sessões.</message>
 	<message key="plugins.generic.CspSubmission.Campo1">Campo1</message>
@@ -50,4 +50,7 @@
   <message key="plugins.generic.CspSubmission.authorNotFoundCreate">Autor não encontrado, cadastrar</message>
   <message key="plugins.generic.CspSubmission.informAName">Informe um nome</message>
   <message key="plugins.generic.CspSubmission.smallTitle">Small title</message>
+  <message key="editor.submission.consultKfinder">Consult Kfinder</message>
+  <message key="grid.action.consultKfinder">Consult Kfinder</message>
+  <message key="editor.submission.addReviewerSagas">Add reviewer</message>
 </locale>

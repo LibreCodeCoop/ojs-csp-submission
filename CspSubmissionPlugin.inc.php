@@ -763,9 +763,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
+			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
+			$templateMgr->tpl_vars['reviewerActions']->value[] = 
+				new LinkAction(
+					'consultKfinder',
+					new OpenWindowAction(
+						'http://www.kfinder.com/member-search/login.cgi?medweb=1&data=qhjnK2a9jJgT28s2GQY8YGwvX8XUOvW8W6pvj85npuq8hq&searchstring='.
+						$submission->getTitle(AppLocale::getLocale()).
+						'&dbproduct=MEDLINE&searchlogic=fuzzy&getcount=200&relevance=50&segments=4&getchunk=20&concept_mapping=on&wordvars=on&relevance_sort=on'
+					),
+					__('editor.submission.consultKfinder')
+				);
+
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorName'] = 'reviewerId';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorType'] = 'checkbox';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
-			return true;
+			return false;
 		}elseif ($args[1] == 'reviewer/review/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
 
