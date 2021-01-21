@@ -26,6 +26,8 @@
 				}
 				$(this).parent().css('display', 'none');
 			});
+
+			$('.pkp_linkaction_thankReviewer').css('display', 'none');// Remove o link para agradecer ao avaliador
     {rdelim});
 </script>
 {if $id}
