@@ -38,13 +38,17 @@
 		countryRequired=true
 	}
 
+	{fbvFormSection title="plugins.generic.CspSubmission.AuthorContribution"}
+		{fbvElement type="textarea" name="authorContribution" id="authorContribution" value=$authorContribution rich=true}
+	{/fbvFormSection}
 	{fbvFormArea id="submissionSpecific"}
-		{fbvFormSection id="userGroupId" title="submission.submit.contributorRole" list=true required=true}
+{* 		{fbvFormSection id="userGroupId" title="submission.submit.contributorRole" list=true required=true}
 			{iterate from=authorUserGroups item=userGroup}
 				{if $userGroupId == $userGroup->getId()}{assign var="checked" value=true}{else}{assign var="checked" value=false}{/if}
 				{fbvElement type="radio" id="userGroup"|concat:$userGroup->getId() name="userGroupId" value=$userGroup->getId() checked=$checked label=$userGroup->getLocalizedName() translate=false}
 			{/iterate}
-		{/fbvFormSection}
+		{/fbvFormSection} *}
+		<input type="hidden" name="userGroupId" value="14" class="field radio">
 		{fbvFormSection list="true"}
 			{fbvElement type="checkbox" label="submission.submit.selectPrincipalContact" id="primaryContact" checked=$primaryContact}
 			{fbvElement type="checkbox" label="submission.submit.includeInBrowse" id="includeInBrowse" checked=$includeInBrowse}

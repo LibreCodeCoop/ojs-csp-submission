@@ -34,38 +34,9 @@
 	<input type="hidden" name="submissionId" value="{$submissionId|escape}" />
 	<input type="hidden" name="stageId" value="{$stageId|escape}" />
 	<input type="hidden" name="reviewRoundId" value="{$reviewRoundId|escape}" />
-
-	{* Set the decision or allow the decision to be selected *}
-	{if $decision != $smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS && $decision != $smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT}
 		<input type="hidden" name="decision" value="{$decision|escape}" />
-	{else}
-		{if $decision == $smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS}
-			{assign var="checkedRevisions" value="1"}
-		{elseif $decision == $smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT}
-			{assign var="checkedResubmit" value="1"}
-		{/if}
-		{fbvFormSection}
-			<ul class="checkbox_and_radiobutton" style="display:none">
-				{fbvElement type="radio" id="decisionRevisions" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS checked=$checkedRevisions label="editor.review.NotifyAuthorRevisions"}
-				{fbvElement type="radio" id="decisionResubmit" name="decision" value=$smarty.const.SUBMISSION_EDITOR_DECISION_RESUBMIT checked=$checkedResubmit label="editor.review.NotifyAuthorResubmit"}
-			</ul>
-		{/fbvFormSection}
-	{/if}
-
-	<div style="display:none">
-	{capture assign="sendEmailLabel"}{translate key="editor.submissionReview.sendEmail" authorName=$authorName}{/capture}
-	{if $skipEmail}
-		{assign var="skipEmailSkip" value=true}
-	{else}
-		{assign var="skipEmailSend" value=true}
-	{/if}
-	{fbvFormSection title="common.sendEmail"}
-		<ul class="checkbox_and_radiobutton">
-			{fbvElement type="radio" id="skipEmail-send" name="skipEmail" value="0" checked=$skipEmailSend label=$sendEmailLabel translate=false}
-			{fbvElement type="radio" id="skipEmail-skip" name="skipEmail" value="1" checked=$skipEmailSkip label="editor.submissionReview.skipEmail"}
-		</ul>
-	{/fbvFormSection}
-	</div>
+		<input type="hidden" name="skipEmail" value="0" />
+	
 	<div id="sendReviews-emailContent">
 		{* Message to author textarea *}
 		{fbvFormSection for="personalMessage"}

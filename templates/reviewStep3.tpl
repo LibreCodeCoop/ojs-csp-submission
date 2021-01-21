@@ -33,7 +33,7 @@
 		{/fbvFormSection}
 	{/if}
 
-	{fbvFormSection label="submission.review" description="reviewer.submission.reviewDescription"}
+	{fbvFormSection}
 		{if $reviewForm}
 			{include file="reviewer/review/reviewFormResponse.tpl"}
 		{else}
@@ -46,7 +46,7 @@
 		{/if}
 	{/fbvFormSection}
 
-	{fbvFormSection label="common.upload" description="reviewer.submission.uploadDescription"}
+	{fbvFormSection title="reviewer.submission.reviewerFilesDescription"}
 		{capture assign="reviewAttachmentsGridUrl"}{url router=$smarty.const.ROUTE_COMPONENT component="grid.files.attachment.ReviewerReviewAttachmentsGridHandler" op="fetchGrid" assocType=$smarty.const.ASSOC_TYPE_REVIEW_ASSIGNMENT assocId=$submission->getReviewId() submissionId=$submission->getId() stageId=$submission->getStageId() reviewIsClosed=$reviewIsClosed escape=false}{/capture}
 		{load_url_in_div id="reviewAttachmentsGridContainer" url=$reviewAttachmentsGridUrl}
 	{/fbvFormSection}

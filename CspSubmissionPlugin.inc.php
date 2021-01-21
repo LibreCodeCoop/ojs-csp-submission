@@ -19,6 +19,8 @@ use Symfony\Component\HttpClient\HttpClient;
 import('lib.pkp.classes.plugins.GenericPlugin');
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
+import('plugins.generic.cspSubmission.CspDeclinedSubmissions');
+
 class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * @copydoc Plugin::register()
@@ -43,12 +45,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
 
 			// Hook for readUserVars in two forms -- consider the new field entry
-			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));
+			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));			
+			HookRegistry::register('authorform::readuservars', array($this, 'authorformReadUserVars'));
+			
 
-			// Hook for execute in two forms -- consider the new field in the article settings
+			// Hook for execute in forms -- consider the new field
 			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecuteStep3'));
 			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
-
+			HookRegistry::register('authorform::execute', array($this, 'authorformExecute'));
+				
 			// Hook for save in two forms -- add validation for the new field
 			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'addCheck'));
 
@@ -76,8 +81,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
 
 			HookRegistry::register('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
+
+			// Hook para adicionar o campo comentário no upload de arquivos
+			HookRegistry::register('submissionfilesmetadataform::readuservars', array($this, 'submissionFilesMetadataReadUserVars'));
+			HookRegistry::register('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
+			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'submissionFilesMetadataExecute'));
+
+			// Updates status table when the submission is deleted
+			HookRegistry::register('Submission::delete', array($this, 'submissionDelete'));
+			// Updates status table when the submission is published
+			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
 		}
 		return $success;
+	}
+
+	public function countStatus($status, $date){
+
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$result = $userDao->retrieve('SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = ? and date_status <= ?', array((string) $status,(string) $date));
+		$count = $result->GetRowAssoc(false);
+		return $count["contador"];
+
 	}
 
 	/**
@@ -136,109 +160,111 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][0];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 1,
-					'title' => 'Aguardando secretaria'
+					'value' => 'pre_aguardando_secretaria',
+					'title' => "--- Aguardando secretaria (" .$this->countStatus('pre_aguardando_secretaria',date('Y-m-d H:i:s')) .")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 2,
-					'title' => 'Aguardando decisão'
+					'value' => 'pre_pendencia_tecnica',
+					'title' => "--- Pendência técnica (" .$this->countStatus('pre_pendencia_tecnica',date('Y-m-d H:i:s')).")"
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 'pre_aguardando_editor_chefe',
+					'title' => "--- Aguardando editor chefe (" .$this->countStatus('pre_aguardando_editor_chefe',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 3,
-					'title' => 'Com o editor associado'
+					'value' => 'ava_com_editor_associado',
+					'title' => "--- Com o editor associado (" .$this->countStatus('ava_com_editor_associado',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 20,
-					'title' => 'Aguardando autor'
+					'value' => 'ava_aguardando_autor',
+					'title' => "--- Aguardando autor (" .$this->countStatus('ava_aguardando_autor',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 4,
-					'title' => 'Aguardando decisão'
+					'value' => 'ava_aguardando_autor_mais_60_dias',
+					'title' => "--- Há mais de 60 dias com o autor (" .$this->countStatus('ava_aguardando_autor',date('Y-m-d H:i:s', strtotime('-2 months'))).")"
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 'ava_aguardando_secretaria',
+					'title' => "--- Aguardando secretaria (" .$this->countStatus('ava_aguardando_secretaria',date('Y-m-d H:i:s')) .")"
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 'ava_aguardando_editor_chefe',
+					'title' => "--- Aguardando editor chefe (" .$this->countStatus('ava_aguardando_editor_chefe',date('Y-m-d H:i:s')).")"
+				];
+				$stages[] = [
+					'param' => 'substage',
+					'value' => 'ava_consulta_editor_chefe',
+					'title' => "--- Consulta ao editor chefe (" .$this->countStatus('ava_consulta_editor_chefe',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 5,
-					'title' => 'Envio para avaliação de ilustração'
+					'value' => 'ed_text_em_avaliacao_ilustracao',
+					'title' => "--- Em avaliação de ilustração (" .$this->countStatus('ed_text_em_avaliacao_ilustracao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 6,
-					'title' => 'Em avaliação de ilustração'
+					'value' => 'ed_text_envio_carta_aprovacao',
+					'title' => "--- Envio de Carta de aprovação (" .$this->countStatus('ed_text_envio_carta_aprovacao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 7,
-					'title' => 'Envio de Carta de aprovação'
+					'value' => 'ed_text_para_revisao_traducao',
+					'title' => "--- Para revisão/Tradução (" .$this->countStatus('ed_text_para_revisao_traducao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 8,
-					'title' => 'Em revisão/Tradução'
+					'value' => 'ed_text_em_revisao_traducao',
+					'title' => "--- Em revisão/Tradução (" .$this->countStatus('ed_text_em_revisao_traducao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 9,
-					'title' => 'Revisão/Tradução prontas'
+					'value' => 'ed_texto_traducao_metadados',
+					'title' => "--- Tradução de metadados (" .$this->countStatus('ed_texto_traducao_metadados',date('Y-m-d H:i:s')).")"
 				];
-	/* 			$stages[] = [
-					'param' => 'substage',
-					'value' => 10,
-					'title' => 'Tradução de metadados'
-				]; */
 				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 11,
-					'title' => 'Aguardando padronizador'
-				];
-	/* 			$stages[] = [
-					'param' => 'substage',
-					'value' => 12,
-					'title' => 'Padronização Concluída'
-				]; */
-				$stages[] = [
-					'param' => 'substage',
-					'value' => 13,
-					'title' => 'Formatação de Figura'
+					'value' => 'edit_aguardando_padronizador',
+					'title' => "--- Aguardando padronizador (" .$this->countStatus('edit_aguardando_padronizador',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 14,
-					'title' => 'Produção de PDF padronizado'
+					'value' => 'edit_em_formatacao_figura',
+					'title' => "--- Em formatação de Figura (" .$this->countStatus('edit_em_formatacao_figura',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 15,
-					'title' => 'Prova de Prelo enviada'
+					'value' => 'edit_pdf_padronizado',
+					'title' => "--- PDF padronizado (" .$this->countStatus('edit_pdf_padronizado',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 16,
-					'title' => 'Prova de prelo recebida'
+					'value' => 'edit_em_prova_prelo',
+					'title' => "--- Em prova de prelo (" .$this->countStatus('edit_em_prova_prelo',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
-					'value' => 17,
-					'title' => 'Aguardando diagramação'
-				];
-				$stages[] = [
-					'param' => 'substage',
-					'value' => 18,
-					'title' => 'PDF diagramado'
+					'value' => 'edit_em_diagramacao',
+					'title' => "--- Em diagramação (" .$this->countStatus('edit_em_diagramacao',date('Y-m-d H:i:s')).")"
 				];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 19,
-					'title' => 'Aguardando publicação'
+					'title' => '--- Aguardando publicação'
 				];
 				$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
 				$templateManager->assign('containerData', $containerData);
+				$args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
+				return true;
 			}
 		}
 
@@ -246,360 +272,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submission_getMany_queryObject($hookName, $args) {
-		$request = \Application::get()->getRequest();
-		$locale = AppLocale::getLocale();
 		/**
 		 * @var SubmissionQueryBuilder
 		 */
 		$qb = $args[0];
 		$request = \Application::get()->getRequest();
 		$substage = $request->getUserVar('substage');
+
 		if ($substage) {
 			$substage = $substage[0];
+			$queryStatusCsp = Capsule::table('status_csp');
+			$queryStatusCsp->select(Capsule::raw('DISTINCT status_csp.submission_id'));
+			$queryStatusCsp->where('status_csp.status', '=', $substage);
+			if($substage == 'ava_aguardando_autor_mais_60_dias'){
+				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
+			}
+			$qb->whereIn('s.submission_id',$queryStatusCsp);
+			$qb->where('s.status', '=', 1);
 		}
-
-		$uploadRevisorTradutor = Capsule::table('submission_files');
-		$uploadRevisorTradutor->select(Capsule::raw('submission_files.submission_id'));
-		$uploadRevisorTradutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
-		$uploadRevisorTradutor->where('user_user_groups.user_group_id', '=', 7); // Arquivo de upload realizado por revisor / tradutor
-
-		$queryDiagramadorDesignado = Capsule::table('stage_assignments');
-		$queryDiagramadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-		$queryDiagramadorDesignado->where('stage_assignments.user_group_id', '=', 22);  // Designadas a diagramadores
-
-		$queryEditorFiguraDesignado = Capsule::table('stage_assignments');
-		$queryEditorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-		$queryEditorFiguraDesignado->where('stage_assignments.user_group_id', '=', 21);  // Designadas a editores de figura
-
-		$queryUploadFiguraAlterada = Capsule::table('submission_files');
-		$queryUploadFiguraAlterada->select(Capsule::raw('submission_files.submission_id'));
-		$queryUploadFiguraAlterada->leftJoin('submission_file_settings','submission_file_settings.file_id','=','submission_files.file_id');
-		$queryUploadFiguraAlterada->where('submission_files.file_stage', '=', 6); // Box Arquivos para edição de texto
-		$queryUploadFiguraAlterada->where('submission_file_settings.setting_value', 'LIKE', '%Figura_alterada%');
-		$queryUploadFiguraAlterada->where('submission_file_settings.locale', '=', $locale);
-
-		$queryDiscussaoProvaPrelo = Capsule::table('queries');
-		$queryDiscussaoProvaPrelo->select(Capsule::raw('queries.assoc_id'));
-		$queryDiscussaoProvaPrelo->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-		$queryDiscussaoProvaPrelo->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-		$queryDiscussaoProvaPrelo->where('notes.title', 'LIKE', '%prelo%'); // Com discussão de prova de prelo
-
-/* 				$queryUploadAutor = Capsule::table('submission_files');
-		$queryUploadAutor->select(Capsule::raw('submission_files.submission_id'));
-		$queryUploadAutor->leftJoin('user_user_groups','user_user_groups.user_id','=','submission_files.uploader_user_id');
-		$queryUploadAutor->where('user_user_groups.user_group_id', '=', 14); // Autor
-		$queryUploadAutor->where('submission_files.file_stage', '=', 18); // Box Discussão da Editoração */
-
-		$queryDiscussaoProvaPreloRespondida = Capsule::table('queries');
-		$queryDiscussaoProvaPreloRespondida->select(Capsule::raw('queries.assoc_id'));
-		$queryDiscussaoProvaPreloRespondida->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-		$queryDiscussaoProvaPreloRespondida->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-		$queryDiscussaoProvaPreloRespondida->leftJoin('user_user_groups','user_user_groups.user_id','=','notes.user_id');
-		$queryDiscussaoProvaPreloRespondida->where('user_user_groups.user_group_id', '=', 14); // Autor
-		$queryDiscussaoProvaPreloRespondida->where('queries.stage_id', '=', 5); // Estágio editoração
-		$queryDiscussaoProvaPreloRespondida->whereNull('notes.title'); // Com discussão de prova de prelo respondida
-
-		$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
-		$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-		$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
-
-		$queryUploadFiguraParaFormatar = Capsule::table('submission_files');
-		$queryUploadFiguraParaFormatar->select(Capsule::raw('submission_files.submission_id'));
-		$queryUploadFiguraParaFormatar->leftJoin('submission_file_settings','submission_file_settings.file_id','=','submission_files.file_id');
-		$queryUploadFiguraParaFormatar->where('submission_files.file_stage', '=', 11); // Box Arquivos prontos para o Leiaute
-		$queryUploadFiguraParaFormatar->where('submission_file_settings.setting_value', 'LIKE', '%Figura_para_formatar%');
-		$queryUploadFiguraParaFormatar->where('submission_file_settings.locale', '=', $locale); // Arquivo Figura para formatar no box Arquivos prontos para o Leiaute
-
-		$queryUploadFiguraFormatada = Capsule::table('submission_files');
-		$queryUploadFiguraFormatada->select(Capsule::raw('submission_files.submission_id'));
-		$queryUploadFiguraFormatada->leftJoin('submission_file_settings','submission_file_settings.file_id','=','submission_files.file_id');
-		$queryUploadFiguraFormatada->where('submission_files.file_stage', '=', 11); // Box Arquivos prontos para o Leiaute
-		$queryUploadFiguraFormatada->where('submission_file_settings.setting_value', 'LIKE', '%Figura_formatada%');
-		$queryUploadFiguraFormatada->where('submission_file_settings.locale', '=', $locale); // Arquivo Figura formatada no box Arquivos prontos para o Leiaute
-
-		switch ($substage) {
-			case 1: // Aguardando secretaria
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryEditorChefeDesignado = Capsule::table('stage_assignments');
-				$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
-
-				$qb->whereNotIn('s.submission_id',$queryEditorChefeDesignado); // Não designadas a editores chefe
-
-			break;
-			case 2: // Aguardando decisão
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->where(function ($qb) {
-					$queryEditorChefeDesignado = Capsule::table('stage_assignments');
-					$queryEditorChefeDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-					$queryEditorChefeDesignado->where('stage_assignments.user_group_id', '=', 3);
-
-					$qb->where('s.stage_id', '=', 1); // No estágio submissão
-					$qb->whereIn('s.submission_id',$queryEditorChefeDesignado); // Designadas a editores chefe
-				});
-
-				$qb->orWhere(function ($qb) {
-					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
-					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
-
-					$qb->where('s.stage_id', '=', 3); // No estágio avaliação
-					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado); // Não designada a editor associado
-				});
-
-
-			break;
-			case 3: // Com o editor associado
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
-
-				$lastdecisionIds = Capsule::table('edit_decisions');
-				$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
-				$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
-				//$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
-				$lastdecisionIds->groupBy('edit_decisions.submission_id');
-
-				$editoresAssociados = Capsule::table('user_user_groups');
-				$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
-				$editoresAssociados->where('user_user_groups.user_group_id', '=', 3);
-
-				//Última decisão feita pelos editores chefes
-				$qb->whereIn('ed.edit_decision_id',$lastdecisionIds); // Pega útima decisão excluindo nova rodada de avaliação
-				$qb->whereIn('ed.editor_id', $editoresAssociados); // Onde a última decisão foi dada por um editor chefe
-				$qb->where('s.stage_id', '=', 3);
-
-			break;
-			case 4: // Aguardando decisão
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
-
-				$qb->where(function ($qb) {
-					$lastdecisionIds = Capsule::table('edit_decisions');
-					$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
-					$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
-					$lastdecisionIds->where('edit_decisions.decision','<>',16); // Onde a última decisão não foi nova rodada de avaliaçao
-					$lastdecisionIds->groupBy('edit_decisions.submission_id');
-
-					$editoresAssociados = Capsule::table('user_user_groups');
-					$editoresAssociados->select(Capsule::raw('user_user_groups.user_id'));
-					$editoresAssociados->where('user_user_groups.user_group_id', '=', 5);
-
-					$qb->where('s.stage_id', '=', 3);
-					$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
-					$qb->whereIn('ed.editor_id', $editoresAssociados);
-				});
-
-				$qb->orWhere(function ($qb) {
-
-					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
-					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
-
-					$qb->where('s.stage_id', '=', 3);
-					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado);
-
-				});
-
-			break;
-			case 5: // Aguardando envio para avaliação de ilustração
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryRevisorFiguraNãoDesignado = Capsule::table('stage_assignments');
-				$queryRevisorFiguraNãoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryRevisorFiguraNãoDesignado->where('stage_assignments.user_group_id', '=', 19); // Designadas a revisor de figura
-
-				$queryRevisorTradutorDesignado = Capsule::table('stage_assignments');
-				$queryRevisorTradutorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryRevisorTradutorDesignado->where('stage_assignments.user_group_id', '=', 7);  // Designadas a revisor/tradutor
-
-				$qb->whereNotIn('s.submission_id',$queryRevisorFiguraNãoDesignado); // Não designadas a revisor de figura
-				$qb->whereNotIn('s.submission_id',$queryRevisorTradutorDesignado); // Não designadas a revisor / tradutor
-				$qb->where('s.stage_id', '=', 4);
-
-			break;
-			case 6: // Em avaliação de ilustração'
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryRevisorFiguraDesignado = Capsule::table('stage_assignments');
-				$queryRevisorFiguraDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryRevisorFiguraDesignado->where('stage_assignments.user_group_id', '=', 19); // Designadas a revisor de figura
-
-/* 				$queryDiscussaoRevisaoFigura = Capsule::table('queries');
-				$queryDiscussaoRevisaoFigura->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoRevisaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoRevisaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoRevisaoFigura->where('notes.title', 'LIKE', '%figura%');
-				$queryDiscussaoRevisaoFigura->where('queries.closed', '=', 0); // Com discussão de revisão de figura em aberto
-				$qb->whereIn('s.submission_id',$queryDiscussaoRevisaoFigura);*/
-
-				$qb->whereIn('s.submission_id',$queryRevisorFiguraDesignado); // Designadas a revisor de figura
-				$qb->whereNotIn('s.submission_id',$queryUploadFiguraAlterada); // Sem upload de figura alterada
-				$qb->where('s.stage_id', '=', 4);
-
-			break;
-			case 7: // Aguardando envio de Carta de aprovação
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryCartaAprovacao = Capsule::table('queries');
-				$queryCartaAprovacao->select(Capsule::raw('queries.assoc_id'));
-				$queryCartaAprovacao->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryCartaAprovacao->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryCartaAprovacao->where('notes.title', 'LIKE', '%aprova%'); // Discussão de aprovação
-
-				$qb->whereIn('s.submission_id',$queryUploadFiguraAlterada); // Com figura revisada no box de Arquivos para edição de texto
-				$qb->whereNotIn('s.submission_id',$queryCartaAprovacao); // Com carta de aprovação não enviada
-				$qb->where('s.stage_id', '=', 4);
-
-			break;
-			case 8: //Aguardando revisão/Tradução'
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado); // Com Revisor/Tradutor designado
-				$qb->whereNotIn('s.submission_id',$uploadRevisorTradutor); // Sem arquivo de upload realizado por revisor/tradutor
-				$qb->where('s.stage_id', '=', 4);
-
-			break;
-			case 9: // Revisão/Tradução prontas
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->whereIn('s.submission_id',$queryRevisorTradutorDesignado); // Com Revisor/Tradutor designado
-				$qb->whereIn('s.submission_id',$uploadRevisorTradutor); // Com arquivo de upload realizado por revisor/tradutor
-				$qb->where('s.stage_id', '=', 4);
-
-			break;
-			case 11: // Aguardando padronizador
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryPadronizadorDesignado = Capsule::table('stage_assignments');
-				$queryPadronizadorDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-				$queryPadronizadorDesignado->where('stage_assignments.user_group_id', '=', 20);  // Designadas a padrozinador
-
-				$qb->whereNotIn('s.submission_id',$queryPadronizadorDesignado);
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
-			case 13: // Aguardando formatação de Figura
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-/* 				$queryDiscussaoEdicaoFigura = Capsule::table('queries');
-				$queryDiscussaoEdicaoFigura->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoEdicaoFigura->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoEdicaoFigura->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoEdicaoFigura->where('notes.title', 'LIKE', '%figura%');
-				$queryDiscussaoEdicaoFigura->where('queries.closed', '=', 0); // Com discussão de edição de figura em aberto */
-
-				$qb->whereIn('s.submission_id',$queryEditorFiguraDesignado); // Designada a editor de figura
-				$qb->whereIn('s.submission_id',$queryUploadFiguraParaFormatar); // Com arquivo Figura para formatar no box Arquivos prontos para Layout
-				$qb->whereNotIn('s.submission_id',$queryUploadFiguraFormatada); // Sem arquivo Figura formatada no box Arquivos prontos para Layout
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
-			case 14: // Aguardando produção de PDF padronizado
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->whereIn('s.submission_id',$queryUploadFiguraFormatada); // Com arquivo Figura formatada no box Arquivos prontos para Layout
-				$qb->whereNotIn('s.submission_id',$queryDiscussaoProvaPrelo); // Sem discussão de prova de prelo aberta
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
-			case 15: // Prova de Prelo e declaração enviadas
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPrelo); // Com discussão de prova de prelo
-				$qb->whereNotIn('s.submission_id',$queryDiscussaoProvaPreloRespondida); // Sem discussão de prova de prelo respondida pelo autor
-				//$qb->whereNotIn('s.submission_id',$queryUploadAutor); // Sem arquivo enviado por autor no box Discussão da Editoração
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
-			case 16: // Prova de Prelo e declaração recebidas
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$queryDiscussaoProvaPreloRespondida = Capsule::table('queries');
-				$queryDiscussaoProvaPreloRespondida->select(Capsule::raw('queries.assoc_id'));
-				$queryDiscussaoProvaPreloRespondida->leftJoin('query_participants','query_participants.query_id','=','queries.query_id');
-				$queryDiscussaoProvaPreloRespondida->leftJoin('notes','notes.assoc_id','=','queries.query_id');
-				$queryDiscussaoProvaPreloRespondida->leftJoin('user_user_groups','user_user_groups.user_id','=','notes.user_id');
-				$queryDiscussaoProvaPreloRespondida->where('user_user_groups.user_group_id', '=', 14); // Autor
-				$queryDiscussaoProvaPreloRespondida->where('queries.stage_id', '=', 5); // Estágio editoração
-				$queryDiscussaoProvaPreloRespondida->whereNull('notes.title'); // Com discussão de prova de prelo respondida
-
-				$qb->whereIn('s.submission_id',$queryDiscussaoProvaPreloRespondida); // Com discussão de prova de prelo respondida pelo autor
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
-			case 17: // Aguardando diagramação
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->whereIn('s.submission_id',$queryDiagramadorDesignado);
-				$qb->where('s.stage_id', '=', 5);
-
-			break;
-			case 20: // Aguardando autor
-				unset($qb->wheres[2]);
-				unset($qb->joins[0]->wheres[1]);
-				unset($qb->joins[1]);
-
-				$qb->leftJoin('edit_decisions as ed','ed.submission_id','=','s.submission_id');
-
-				$qb->where(function ($qb) {
-					$lastdecisionIds = Capsule::table('edit_decisions');
-					$lastdecisionIds->select(Capsule::raw('MAX(edit_decisions.edit_decision_id)'));
-					$lastdecisionIds->leftJoin('user_user_groups','user_user_groups.user_id','=','edit_decisions.editor_id');
-					$lastdecisionIds->where('edit_decisions.decision','=',2); // Onde a última decisão não foi solicitar modificações
-					$lastdecisionIds->groupBy('edit_decisions.submission_id');
-
-					$qb->where('s.stage_id', '=', 3);
-					$qb->whereIn('ed.edit_decision_id',$lastdecisionIds);
-				});
-
-				$qb->orWhere(function ($qb) {
-
-					$queryEditorAssociadoDesignado = Capsule::table('stage_assignments');
-					$queryEditorAssociadoDesignado->select(Capsule::raw('DISTINCT stage_assignments.submission_id'));
-					$queryEditorAssociadoDesignado->where('stage_assignments.user_group_id', '=', 5);
-
-					$qb->where('s.stage_id', '=', 3);
-					$qb->WhereNotIn('s.submission_id', $queryEditorAssociadoDesignado);
-
-				});
-
-			break;
-		}
-		$params = $args[1];
 	}
 
 	/**
@@ -609,8 +299,240 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function setupGridHandler($hookName, $params) {
 		$component =& $params[0];
+		$request = \Application::get()->getRequest();
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
 			return true;
+		}
+		if ($component == 'grid.users.stageParticipant.stageParticipantGrid.SaveParticipantHandler') {
+			if($request->getUserVar('accept')){
+
+				$submissionId = $request->getUserVar('submissionId');
+				$userGroupId = $request->getUserVar('userGroupId');
+				$userId = $request->getUserVar('userIdSelected');
+
+				$stageId = $request->getUserVar('stageId');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
+				while ($user = $users->next()) {
+					$userAssigned = $user;
+				}
+				if(!$userAssigned){
+					$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+					$stageAssignment = $stageAssignmentDao->newDataObject();
+					$stageAssignment->setSubmissionId($submissionId);
+					$stageAssignment->setUserGroupId($userGroupId);
+					$stageAssignment->setUserId($userId);
+					$stageAssignment->setRecommendOnly(1);
+					$stageAssignment->setCanChangeMetadata(1);
+					$stageAssignmentDao->insertObject($stageAssignment);
+
+					$submissionDAO = Application::getSubmissionDAO();
+					$submission = $submissionDAO->getById($submissionId);
+
+					$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+					$assignedUser = $userDao->getById($userId);
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$userGroup = $userGroupDao->getById($userGroupId);
+
+					import('lib.pkp.classes.log.SubmissionLog');
+					SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
+				}
+
+				$context = $request->getContext();
+				$request->redirect($context->getPath(), 'workflow', null, array('submissionId' => $submissionId, 'stageId' => $stageId));
+				return true;
+			}
+		}
+
+		if ($component == 'modals.editorDecision.EditorDecisionHandler') {
+			if($request->getUserVar('decision') == 1){
+				if($params[1] == "savePromote" or $params[1] == "savePromoteInReview"){
+					$submissionId = $request->getUserVar('submissionId');
+					$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+
+					import('lib.pkp.classes.file.SubmissionFileManager');
+
+					$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+					$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
+					foreach ($submissionFiles as $submissionFile) {
+						$genreIds[] = $submissionFile->_data["genreId"];
+					}
+
+					if (in_array(10, $genreIds)) { // Se houverem figuras, revisores de figura são designados e conversa é iniciada com autor
+
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$result = $userDao->retrieve(
+							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							FROM user_user_groups g
+							LEFT JOIN user_group_settings s
+							ON s.user_group_id = g.user_group_id
+							LEFT JOIN stage_assignments a
+							ON g.user_id = a.user_id AND a.submission_id = ?
+							WHERE s.setting_value = ?',array((int) $submissionId, (string) 'Revisor de figura')
+						);
+
+						import('lib.pkp.classes.mail.MailTemplate');
+
+						while (!$result->EOF) {
+
+							if($result->GetRowAssoc(0)['assigned'] == NULL){
+
+								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
+								$userId = $result->GetRowAssoc(0)['user_id'];
+								$users[] = $userId;
+
+								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+								$stageAssignment = $stageAssignmentDao->newDataObject();
+								$stageAssignment->setSubmissionId($submissionId);
+								$stageAssignment->setUserGroupId($userGroupId);
+								$stageAssignment->setUserId($userId);
+								$stageAssignment->setRecommendOnly(1);
+								$stageAssignment->setCanChangeMetadata(1);
+								$stageAssignmentDao->insertObject($stageAssignment);
+
+								$submissionDAO = Application::getSubmissionDAO();
+								$submission = $submissionDAO->getById($submissionId);
+
+								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+								$assignedUser = $userDao->getById($userId);
+								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+								$userGroup = $userGroupDao->getById($userGroupId);
+
+								import('lib.pkp.classes.log.SubmissionLog');
+								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
+							}
+							$result->MoveNext();
+						}
+
+						$submissionDAO = Application::getSubmissionDAO();
+						$submission = $submissionDAO->getById($submissionId);
+						$publication = $submission->getCurrentPublication();
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$authorDao = DAORegistry::getDAO('AuthorDAO');
+						$author = $authorDao->getById($publication->getData('primaryContactId'));
+						$author = $userDao->getUserByEmail($author->getData('email'));
+						$users[] = $author->getData('id');
+
+						import('lib.pkp.controllers.grid.queries.form.QueryForm');
+
+						$assocType = 1048585;
+						$getAssocId = $submissionId;
+						$stageId = 4;
+
+						$queryForm = new QueryForm(
+							$request,
+							$assocType,
+							$getAssocId,
+							$stageId
+						);
+						$queryForm->initData();
+
+						//$request->_requestVars["queryId"] = 690;
+						$request->_requestVars["users"] = $users;
+
+						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
+						$request->_requestVars["subject"] = $mail->getData('subject');
+						$request->_requestVars["comment"] = $mail->getData('body');
+
+						$queryForm = new QueryForm(
+							$request,
+							$assocType,
+							$getAssocId,
+							$stageId,
+							$queryForm->_query->_data["id"]
+						);
+						$queryForm->readInputData();
+
+						if ($queryForm->validate()) {
+							$queryForm->execute();
+
+								// Update submission notifications
+								$notificationMgr = new NotificationManager();
+								$notificationMgr->updateNotification(
+									$request,
+									array(
+										NOTIFICATION_TYPE_ASSIGN_COPYEDITOR,
+										NOTIFICATION_TYPE_AWAITING_COPYEDITS,
+										NOTIFICATION_TYPE_ASSIGN_PRODUCTIONUSER,
+										NOTIFICATION_TYPE_AWAITING_REPRESENTATIONS,
+									),
+									null,
+									ASSOC_TYPE_SUBMISSION,
+									$getAssocId
+								);
+						}
+
+						$now = date('Y-m-d H:i:s');
+						$userDao->retrieve(
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',array((string)'ed_text_em_avaliacao_ilustracao', (string)$now, (int)$submissionId)
+						);
+					}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
+						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $request->getUserVar('stageId'), 24);
+						import('lib.pkp.classes.mail.MailTemplate');
+						$mail = new MailTemplate('EDITOR_DECISION_ACCEPT');
+						while ($user = $users->next()) {
+							$mail->addRecipient($user->getEmail(), $user->getFullName());
+						}
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+
+						$now = date('Y-m-d H:i:s');
+						$userDao->retrieve(
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',array((string)'ed_text_envio_carta_aprovacao', (string)$now, (int)$submissionId)
+						);
+					}
+				}
+			}
+			if($request->getUserVar('decision') == 7){
+				// Quando submissão é enviada para editoração, padronizadores recebem email com convite para assumir padronização
+				if($params[1] == "savePromote"){
+					$userGroupPadronizador = 20;
+					$request = \Application::get()->getRequest();
+					$submissionId = $request->getUserVar('submissionId');
+					$userDao = DAORegistry::getDAO('UserDAO');
+					$context = $request->getContext();
+					$result = $userDao->retrieve(
+						'SELECT u.email, u.user_id
+						FROM users u
+						LEFT JOIN user_user_groups g
+						ON u.user_id = g.user_id
+						WHERE  g.user_group_id = ?',
+						array((int)$userGroupPadronizador)
+					);
+
+					import('lib.pkp.classes.mail.MailTemplate');
+					while (!$result->EOF) {
+						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
+						$mail->addRecipient($result->GetRowAssoc(0)['email']);
+						$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupPadronizador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+						$result->MoveNext();
+					}
+				}
+			}
+			if($request->getUserVar('decision') == 9){
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					<<<QUERY
+					UPDATE status_csp SET status = 'rejeitada', date_status = '$now' WHERE submission_id = $submissionId
+					QUERY
+				);
+			}
+		}
+		if ($component == 'api.file.ManageFileApiHandler') {
+			$locale = AppLocale::getLocale();
+			$submissionId = $request->getUserVar('submissionId');
+			$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
 		}
 		return false;
 	}
@@ -618,6 +540,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function addparticipantformExecute($hookName, $args){
 		$args[0]->_data["userGroupId"] = 1;
 		$request = \Application::get()->getRequest();
+		if($request->getUserVar("userGroupId") == 5){
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$submissionId = $request->getUserVar('submissionId');
+			$userDao->retrieve(
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+			);
+		}
+		if($request->getUserVar("userGroupId") == 7){ // Quando designa revisor/tradutor status é alterado para "Em revisão tradução"
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$submissionId = $request->getUserVar('submissionId');
+			$userDao->retrieve(
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ed_text_em_revisao_traducao', (string)$now, (int)$submissionId)
+			);
+		}
+		if($request->getUserVar("userGroupId") == 22){ // Quando designa diagramador status é alterado para "Em diagramação"
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$now = date('Y-m-d H:i:s');
+			$submissionId = $request->getUserVar('submissionId');
+			$userDao->retrieve(
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'edit_em_diagramacao', (string)$now, (int)$submissionId)
+			);
+		}
 	}
 
 	function mail_send($hookName, $args){
@@ -626,23 +575,56 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$stageId = $request->getUserVar('stageId');
 		$decision = $request->getUserVar('decision');
 		$submissionId = $request->getUserVar('submissionId');
+		$locale = AppLocale::getLocale();
+		$userDao = DAORegistry::getDAO('UserDAO');
 
-		if($stageId == 3 && $decision == 1){  // AO ACEITAR SUBMISSÃO, OS EDITORES ASSISTENTES DEVEM SER NOTIFICADOS
+		if($stageId == 3){
 
-			$request = \Application::get()->getRequest();
-			$submissionId = $request->getUserVar('submissionId');
-			$stageId = $request->getUserVar('stageId');
-			$locale = AppLocale::getLocale();
+			if($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
+				(new CspDeclinedSubmissions())->saveDeclinedSubmission($submissionId, $args[0]);
 
-			import('lib.pkp.classes.mail.MailTemplate');
-
-			$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-			$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-			unset($args[0]->_data["recipients"]);
-			while ($user = $users->next()) {
-				$args[0]->_data["recipients"][]= ["name" => $user->getFullName(), "email" => $user->getEmail()];
+				return true;
 			}
 
+			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada
+
+				unset($args[0]->_data["recipients"]);
+
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 23);
+
+				while ($user = $users->next()) {
+					$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
+				}
+			}
+
+			$recipient = $userDao->getUserByEmail($args[0]->_data["recipients"][0]["email"]);
+			$context = $request->getContext();
+			$isManager = $recipient->hasRole(array(ROLE_ID_MANAGER), $context->getId());
+				if($isManager){ // Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe"
+					$now = date('Y-m-d H:i:s');
+					$userDao->retrieve(
+						<<<QUERY
+						UPDATE status_csp SET status = 'ava_consulta_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
+						QUERY
+					);
+				}
+
+			if($decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_autor', (string)$now, (int)$submissionId)
+				);
+			}
+
+			if($request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_editor_chefe', (string)$now, (int)$submissionId)
+				);
+			}
 		}
 
 		if($request->_router->_page == "reviewer"){ 
@@ -650,36 +632,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 			if($request->_requestVars["step"] == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
-
 				return true;
 			}
 
 		}
-		if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // QUANDO AUTOR SUBMETE TEXTO REVISADO, EMAIL VAI PARA SECRETARIA
 
-			unset($args[0]->_data["recipients"]);
-
-			$locale = AppLocale::getLocale();
-
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT u.email, x.setting_value as name
-				FROM ojs.stage_assignments a
-				LEFT JOIN ojs.users u
-				ON a.user_id = u.user_id
-				LEFT JOIN (SELECT user_id, setting_value FROM ojs.user_settings WHERE setting_name = 'givenName' AND locale = '$locale') x
-				ON x.user_id = u.user_id
-				WHERE submission_id = $submissionId AND user_group_id = 23
-				QUERY
+		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
+			$now = date('Y-m-d H:i:s');
+			$userDao->retrieve(
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ed_text_para_revisao_traducao', (string)$now, (int)$submissionId)
 			);
-
-			while (!$result->EOF) {
-				$args[0]->_data["recipients"][] =  array("name" => $result->GetRowAssoc(0)['name'], "email" => $result->GetRowAssoc(0)['email']);
-				//$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-
-				$result->MoveNext();
-			}
+		}
+		if($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")){  // É enviado email de prova de prelo
+			$now = date('Y-m-d H:i:s');
+			$userDao->retrieve(
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'edit_em_prova_prelo', (string)$now, (int)$submissionId)
+			);
 		}
 		$args[0]->_data["from"]["name"] = "Cadernos de Saúde Pública";
 		$args[0]->_data["from"]["email"] = "noreply@fiocruz.br";
@@ -705,41 +675,40 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');
 		$submissionId = $request->getUserVar('submissionId');
-		//$itemId = $request->getUserVar('istemId');
+		import('lib.pkp.classes.mail.MailTemplate');
 
-		if ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
+		if ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
+
+			return true;
+		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
+
+			return true;
+		}elseif($args[1] == 'controllers/grid/queries/readQuery.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('readQuery.tpl'));
 
 			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'controllers/grid/grid.tpl'){
-			$userId = $_SESSION["userId"];
-			$submission = $request->getUserVar('submissionId');
+		} elseif ($args[1] == 'user/identityForm.tpl'){
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('identityForm.tpl'));
 
-			// Check if the user is an author of this submission
-			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$authorUserGroupIds = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_AUTHOR);
-			$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $userId);
-
-			$authorDashboard = false;
-			while ($stageAssignment = $stageAssignmentsFactory->next()) {
-				if (in_array($stageAssignment->getUserGroupId(), $authorUserGroupIds)) {
-					$authorDashboard = true;
+			return true;
+		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
+			if($request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/submission/editor-submission-details-files-grid/fetch-grid" 
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/final/final-draft-files-grid/fetch-grid" 
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/review/editor-review-files-grid/fetch-grid"
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call$\$$/grid/files/production-ready/production-ready-files-grid/fetch-grid"){ //Busca comentários somente quando grid for de arquivos
+				$row = $templateMgr->getVariable('row');
+				if($row->value->_data["submissionFile"]->_data["comentario"]){
+					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
 				}
 			}
-			if($authorDashboard){
-				$templateMgr->assign('autor', true);
-			}
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('grid.tpl'));
-			return true;
 
-		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
-
 			return true;
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadConfirmationForm.tpl'));
@@ -831,6 +800,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		}elseif ($args[1] == 'controllers/grid/users/stageParticipant/addParticipantForm.tpl') {
+
+			if($stageId == 3 OR $stageId == 1){
+
+				$mail = new MailTemplate('EDITOR_ASSIGN');
+				$templateSubject['EDITOR_ASSIGN'] = $mail->_data["subject"];
+				$templateBody = ['EDITOR_ASSIGN' => $mail->_data["body"]];
+
+			}
+			if($stageId == 4){
+
+				$mail = new MailTemplate('COPYEDIT_REQUEST');
+				$templateSubject['COPYEDIT_REQUEST'] = $mail->_data["subject"];
+				$templateBody['COPYEDIT_REQUEST'] = $mail->_data["body"];
+			}
+
 			if($stageId == 5){
 				$locale = AppLocale::getLocale();
 				$userDao = DAORegistry::getDAO('UserDAO');
@@ -844,13 +828,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 						FROM
 						(
 							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
+							FROM email_templates_settings
 							WHERE setting_name = 'body' AND locale = '$locale'
 						)a
 						LEFT JOIN
 						(
 								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
+								FROM email_templates_settings
 								WHERE setting_name = 'subject' AND locale = '$locale'
 						)b
 						ON a.email_id = b.email_id
@@ -867,143 +851,37 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					$result->MoveNext();
 				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					//'stageId' => $stageId,
-					//'submissionId' => $this->_submissionId,
-					//'itemId' => $this->_itemId,
-					'message' => json_encode($templateBody),
-					'comment' => reset($templateBody)
-				));
-
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
-
-				return true;
-			}elseif($stageId == 4){
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'COPYEDIT%'
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					//'stageId' => $stageId,
-					//'submissionId' => $this->_submissionId,
-					//'itemId' => $this->_itemId,
-					'message' => json_encode($templateBody),
-					'comment' => reset($templateBody)
-				));
-
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
-
-				return true;
-
-			}elseif($stageId == 3 OR $stageId == 1){
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key = 'EDITOR_ASSIGN'
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					//'stageId' => $stageId,
-					//'submissionId' => $this->_submissionId,
-					//'itemId' => $this->_itemId,
-					'message' => json_encode($templateBody),
-					'comment' => reset($templateBody)
-				));
-
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
-
-				return true;
-
 			}
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $templateSubject,
+				'message' => json_encode($templateBody),
+				'comment' => reset($templateBody)
+			));
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('addParticipantForm.tpl'));
+
+			return true;
 
 		}elseif ($args[1] == 'controllers/modals/editorDecision/form/promoteForm.tpl') {
 			$decision = $request->_requestVars["decision"];
 			if ($stageId == 3 or $stageId == 1){
-				if($decision == 1){
+				if($decision == 1){ // Quando submissão é aceita, editores assistentes são designados
 
 						$request = \Application::get()->getRequest();
 						$submissionId = $request->getUserVar('submissionId');
 
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
-							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM ojs.user_user_groups g
-							LEFT JOIN ojs.user_group_settings s
+							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							FROM user_user_groups g
+							LEFT JOIN user_group_settings s
 							ON s.user_group_id = g.user_group_id
-							LEFT JOIN ojs.stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = $submissionId
-							WHERE s.setting_value = 'Assistente editorial'
-							QUERY
+							LEFT JOIN stage_assignments a
+							ON g.user_id = a.user_id AND a.submission_id = ?
+							WHERE s.setting_value = ?',
+							array((int)$submissionId, (string)'Assistente editorial')
 						);
 						while (!$result->EOF) {
 
@@ -1036,340 +914,120 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 							$result->MoveNext();
 						}
-
 				}
-				//$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage1And3.tpl'));
 
 				return true;
 
-			}elseif ($stageId == 4){
-				$templateMgr->assign('skipEmail',1); // PASSA VARIÁVEL PARA NÃO ENVIAR EMAIL PARA O AUTOR
+			}elseif ($stageId == 4){ // Quando submissão é enviada para editoração, o status é alterado para "Aguardando padronizador"
+				$templateMgr->assign('skipEmail',1); // Passa variável para não enviar email para o autor
+
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_aguardando_padronizador', (string)$now, (int)$submissionId)
+				);
+
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
 
 				return true;
 			}
-		}elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 
-			$decision = $request->_requestVars["decision"];
+		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl') {
 
-			if ($decision == 2){ // BOTÃO SOLICITAR MODIFICAÇÕES
-				/*
-
-				$templateMgr->assign('skipEmail',0); // PASSA VARIÁVEL PARA ENVIAR EMAIL PARA O AUTOR
-				$templateMgr->assign('decision',3); // PASSA VARIÁVEL PARA SELECIONAR O CAMPO " Solicitar modificações ao autor que estarão sujeitos a avaliação futura."
-
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-
-					SELECT a.email_key, a.body, a.subject
-
-					FROM
-
-					(
-						SELECT 	d.email_key, d.body, d.subject
-						FROM 	email_templates_default_data d
-						WHERE 	d.locale = '$locale'
-
-						UNION ALL
-
-						SELECT 	t.email_key, o.body, o.subject
-						FROM 	ojs.email_templates t
-
-						LEFT JOIN
-						(
-							SELECT 	a.body, b.subject, a.email_id
-							FROM
-							(
-								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings
-								WHERE 	setting_name = 'body' AND locale = '$locale'
-							)a
-							LEFT JOIN
-							(
-									SELECT 	setting_value as subject, email_id
-									FROM 	email_templates_settings
-									WHERE 	setting_name = 'subject' AND locale = '$locale'
-							)b
-							ON a.email_id = b.email_id
-						) o
-						ON o.email_id = t.email_id
-						WHERE t.enabled = 1
-					) a
-					WHERE 	a.email_key LIKE 'REQUEST_REVISIONS%'
-
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					'stageId' => $stageId,
-					'message' => json_encode($templateBody),
-					'default' => reset($templateBody)
-				));						 */
-
-			}elseif ($decision == 4 or $decision == 9){  // BOTÃO REJEITAR SUBMISSÃO
-				return;
-				$locale = AppLocale::getLocale();
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					<<<QUERY
-
-					SELECT a.email_key, a.body, a.subject
-
-					FROM
-
-					(
-						SELECT 	d.email_key, d.body, d.subject
-						FROM 	email_templates_default_data d
-						WHERE 	d.locale = '$locale'
-
-						UNION ALL
-
-						SELECT 	t.email_key, o.body, o.subject
-						FROM 	ojs.email_templates t
-
-						LEFT JOIN
-						(
-							SELECT 	a.body, b.subject, a.email_id
-							FROM
-							(
-								SELECT 	setting_value as body, email_id
-								FROM 	email_templates_settings
-								WHERE 	setting_name = 'body' AND locale = '$locale'
-							)a
-							LEFT JOIN
-							(
-									SELECT 	setting_value as subject, email_id
-									FROM 	email_templates_settings
-									WHERE 	setting_name = 'subject' AND locale = '$locale'
-							)b
-							ON a.email_id = b.email_id
-						) o
-						ON o.email_id = t.email_id
-						WHERE t.enabled = 1
-					) a
-					WHERE 	a.email_key LIKE 'EDITOR_DECISION_INITIAL_DECLINE%'
-
-					QUERY
-				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
-				}
-
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->assign(array(
-					'templates' => $templateSubject,
-					'stageId' => $stageId,
-					'message' => json_encode($templateBody),
-					'default' => reset($templateBody)
-				));
-			}
-
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
-
-			return true;
-
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "1") {
-			$locale = AppLocale::getLocale();
+			/// Se o usuário for o autor, o destinatário será a secretaria, caso contrário, o destinatário será o autor
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$publication = $submission->getCurrentPublication();
 			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT t.email_key, o.body, o.subject
-				FROM email_templates t
-				LEFT JOIN
-				(
-					SELECT a.body, b.subject, a.email_id
-					FROM
-					(
-						SELECT setting_value as body, email_id
-						FROM ojs.email_templates_settings
-						WHERE setting_name = 'body' AND locale = '$locale'
-					)a
-					LEFT JOIN
-					(
-							SELECT setting_value as subject, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'subject' AND locale = '$locale'
-					)b
-					ON a.email_id = b.email_id
-				) o
-				ON o.email_id = t.email_id
-				WHERE t.enabled = 1 AND t.email_key LIKE 'PRE_AVALIACAO%'
-				QUERY
-			);
-			$i = 0;
-			while (!$result->EOF) {
-				$i++;
-				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$author = $authorDao->getById($publication->getData('primaryContactId'));
+			$author = $userDao->getUserByEmail($author->getData('email'));
 
-				$result->MoveNext();
-			}
+			if ($author->getData('id') == $_SESSION["userId"]) {
 
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
-				'itemId' => $this->_itemId,
-				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
-			));
+				$mail = new MailTemplate('MSG_AUTOR_SECRETARIA');
+				$templateSubject['MSG_AUTOR_SECRETARIA'] = $mail->_data["subject"];
+				$templateBody['MSG_AUTOR_SECRETARIA'] = $mail->_data["body"];
 
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+				$templateMgr->assign('author', true);
+				$templateMgr->assign('to', 14); // BUSCAR ID DA SECRETARIA
+				$templateMgr->assign('toName', 'Secretaria');
+				$templateMgr->assign('from', $_SESSION["userId"]);
 
-			return true;
-
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "4") {
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$userId = $_SESSION["userId"];
-			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É AUTOR
-				<<<QUERY
-				SELECT g.user_group_id , g.user_id
-				FROM ojs.user_user_groups g
-				WHERE g.user_group_id = 14 AND user_id = $userId
-				QUERY
-			);
-
-			if($result->_numOfRows == 0){
-
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO%'
-					QUERY
-				);
 			}else{
-				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT t.email_key, o.body, o.subject
-					FROM email_templates t
-					LEFT JOIN
-					(
-						SELECT a.body, b.subject, a.email_id
-						FROM
-						(
-							SELECT setting_value as body, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'body' AND locale = '$locale'
-						)a
-						LEFT JOIN
-						(
-								SELECT setting_value as subject, email_id
-								FROM ojs.email_templates_settings
-								WHERE setting_name = 'subject' AND locale = '$locale'
-						)b
-						ON a.email_id = b.email_id
-					) o
-					ON o.email_id = t.email_id
-					WHERE t.enabled = 1 AND t.email_key LIKE 'EDICAO_TEXTO_APROVD%'
-					QUERY
-				);
+				if($stageId == "1"){ // Se o estágio for Pré-avaliação, template específico é exibido
+					$mail = new MailTemplate('PRE_AVALIACAO');
+					$templateSubject['PRE_AVALIACAO'] = $mail->_data["subject"];
+					$templateBody['PRE_AVALIACAO'] = $mail->_data["body"];
+				}
+				if($stageId == "4"){ // Se o estágio for Edição de texto, templates específicos são exibidos para cada perfil
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+					$manager = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_MANAGER);
+					$assistent = $userGroupDao->getUserGroupIdsByRoleId(ROLE_ID_ASSISTANT);
+					$stageAssignmentsFactory = $stageAssignmentDao->getBySubmissionAndStageId($request->getUserVar('submissionId'), null, null, $_SESSION["userId"]);
+
+					$isManager = false;
+					$isAssistent = false;
+					while ($stageAssignment = $stageAssignmentsFactory->next()) {
+						if ($isManager || $isAssistent){
+							break;
+						}
+						if (in_array($stageAssignment->getUserGroupId(), $manager)) {
+							$isManager = true;
+						}
+						if (in_array($stageAssignment->getUserGroupId(), $assistent)) {
+							$isAssistent = true;
+						}
+					}
+					if($isManager){
+						$mail = new MailTemplate('EDICAO_TEXTO_APROVD');
+						$templateSubject['EDICAO_TEXTO_APROVD'] = $mail->_data["subject"];
+						$templateBody['EDICAO_TEXTO_APROVD'] = $mail->_data["body"];
+					}elseif($isAssistent){
+						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
+						$templateSubject['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["subject"];
+						$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["body"];
+					}
+				}
+
+				if($stageId == "5"){// Se o estágio for Editoração, template específico é exibido
+					$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
+					$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
+					$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
+				}
 			}
-			$i = 0;
-			while (!$result->EOF) {
-				$i++;
-				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
 
-				$result->MoveNext();
-			}
+			$authorName = $author->getLocalizedGivenName();
+			$submissionTitle = $publication->getLocalizedTitle();
+			$submissionIdCSP = 999;
+			$context = $request->getContext();
+			$contextName = $context->getLocalizedName();
 
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $this->_submissionId,
-				'itemId' => $this->_itemId,
-				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
-			));
-
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
-
-			return true;
-		}elseif ($args[1] == 'controllers/grid/queries/form/queryForm.tpl' && $stageId == "5") {
-			$locale = AppLocale::getLocale();
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT t.email_key, o.body, o.subject
-				FROM email_templates t
-				LEFT JOIN
-				(
-					SELECT a.body, b.subject, a.email_id
-					FROM
-					(
-						SELECT setting_value as body, email_id
-						FROM ojs.email_templates_settings
-						WHERE setting_name = 'body' AND locale = '$locale'
-					)a
-					LEFT JOIN
-					(
-							SELECT setting_value as subject, email_id
-							FROM ojs.email_templates_settings
-							WHERE setting_name = 'subject' AND locale = '$locale'
-					)b
-					ON a.email_id = b.email_id
-				) o
-				ON o.email_id = t.email_id
-				WHERE t.enabled = 1 AND t.email_key LIKE 'EDITORACAO%'
-				QUERY
+			$comment = str_replace(
+				[
+					'{$authorName}',
+					'{$submissionTitle}',
+					'{$submissionIdCSP}',
+					'{$contextName}'
+				],
+				[
+					$authorName,
+					$submissionTitle,
+					$submissionIdCSP,
+					$contextName
+				],
+				$templateBody
 			);
-			$i = 0;
-			while (!$result->EOF) {
-				$i++;
-				$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-				$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
 
-				$result->MoveNext();
-			}
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'templates' => $templateSubject,
-				'stageId' => $stageId,
-				'submissionId' => $submissionId,
-				//'itemId' => $itemId,
 				'message' => json_encode($templateBody),
-				'comment' => reset($templateBody)
+				'comment' => reset($comment)
 			));
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
@@ -1395,20 +1053,31 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT setting_value
-					FROM ojs.genre_settings
-					WHERE genre_id = $genreId AND locale = '$locale'
-					QUERY
+					'SELECT setting_value
+					FROM genre_settings
+					WHERE genre_id = ? AND locale = ?',
+					array((int)$genreId, (string)$locale)
 				);
 				$genreName = $result->GetRowAssoc(false)['setting_value'];
 				$genreName = str_replace(" ","_",$genreName);
 
 				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
 
-				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$genreName.".".$extensao;
+				$tplvars->_form->_submissionFile->_data["name"][$locale] = $genreName.".".$extensao;
 
 			}
+
+			$currentUser = $request->getUser();
+			$context = $request->getContext();
+			$hasAccess = $currentUser->hasRole(array(ROLE_ID_MANAGER, ROLE_ID_ASSISTANT, ROLE_ID_SITE_ADMIN), $context->getId());
+
+			if($hasAccess){
+				$templateMgr->assign('display', true);
+			}
+
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionFileMetadataForm.tpl'));
+
+			return true;
 
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/readReview.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('readReview.tpl'));
@@ -1419,6 +1088,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->assign(array(
 				'skipEmail' => true,
+				'skipDiscussionSkip' => true,
 				'recommendationOptions' =>	array(
 												'' => 'common.chooseOne',
 												SUBMISSION_EDITOR_RECOMMEND_PENDING_REVISIONS => 'editor.submission.decision.requestRevisions',
@@ -1440,10 +1110,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$columns->value["assigns"]->_title = "author.users.contributor.assign";
 
 		}
-
-
-
-
 		return false;
 	}
 
@@ -1464,20 +1130,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 2 && $submissionProgress == 0){
 
-/* 			$templateMgr->setData('revisionOnly',false);
-			$templateMgr->setData('isReviewAttachment',true);
-			$templateMgr->setData('submissionFileOptions',[]);
- */
-			//$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
-
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				'SELECT A.genre_id, setting_value
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key = 'SUBMISSAO_PDF'
-				QUERY
+				WHERE locale = ? AND entry_key = ?',
+				array((string)$locale, (string)'SUBMISSAO_PDF')
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1492,13 +1151,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
 
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				'SELECT A.genre_id, setting_value
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA%'
-				QUERY
+				WHERE locale = ? AND entry_key LIKE ?',
+				array((string)$locale, (string)'AVAL_SECRETARIA%')
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1514,13 +1172,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
 
 			$result = $userDao->retrieve(
-				<<<QUERY
-				SELECT A.genre_id, setting_value
-				FROM ojs.genre_settings A
-				LEFT JOIN ojs.genres B
+				'SELECT A.genre_id, setting_value
+				FROM genre_settings A
+				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
-				WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AVALIADOR%'
-				QUERY
+				WHERE locale = ? AND entry_key LIKE ?',
+				array((string)$locale, (string)'AVAL_AVALIADOR%')
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1535,23 +1192,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 6) {
 
 			$result = $userDao->retrieve( // PEGA O PERFIL
-				<<<QUERY
-				SELECT g.user_group_id
-				FROM ojs.user_user_groups g
-				WHERE user_id = $userId
-				QUERY
+				'SELECT g.user_group_id
+				FROM user_user_groups g
+				WHERE user_id = ?',
+				array((int)$userId)
 			);
 
 			while (!$result->EOF) {
 				if($result->GetRowAssoc(0)['user_group_id'] == 19){ // PERFIL REVISOR DE FIGURA
 					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						'SELECT A.genre_id, setting_value
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TEXTO_FIG_ALT%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'EDICAO_TEXTO_FIG_ALT%')
 					);
 				break;
 				}
@@ -1577,32 +1232,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($fileStage == 9) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS DE REVISÃO DE TEXTO
 
 			$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE REVISOR/TRADUTOR
-				<<<QUERY
-				SELECT g.user_group_id , g.user_id
-				FROM ojs.user_user_groups g
-				WHERE g.user_group_id = 7 AND user_id = $userId
-				QUERY
+				'SELECT g.user_group_id , g.user_id
+				FROM user_user_groups g
+				WHERE g.user_group_id = ? AND user_id = ?',
+				array((int)7,(int)$userId)
 			);
 
 			if($result->_numOfRows == 0){
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_ASSIST_ED%'
-					QUERY
+					WHERE locale = ? AND entry_key LIKE ?',
+					array((string)$locale,(string)'EDICAO_ASSIST_ED%')
 				);
 			}else{
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT A.genre_id, setting_value
-					FROM ojs.genre_settings A
-					LEFT JOIN ojs.genres B
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
 					ON B.genre_id = A.genre_id
-					WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TRADUT%'
-					QUERY
+					WHERE locale = ? AND entry_key LIKE ?',
+					array((string)$locale, (string)'EDICAO_TRADUT%')
 				);
 			}
 
@@ -1615,52 +1267,58 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileGenres', $genreList);
 
 		}
-		if ($fileStage == 10) { // UPLOAD DE PDF PARA PUBLICAÇÃO
-			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
-		}
-		if ($fileStage == 11) { // UPLOAD DE ARQUIVO EM BOX DE ARQUIVOS PRONTOS PARA LAYOUT
-
-			$result = $userDao->retrieve( // CONSULTA O PERFIL
-				<<<QUERY
-				SELECT g.user_group_id
-				FROM ojs.user_user_groups g
-				WHERE user_id = $userId
-				QUERY
+		if ($fileStage == 10) { // Upload de PDF para publicação
+			$result = $userDao->retrieve(
+				'SELECT A.genre_id, setting_value
+				FROM genre_settings A
+				LEFT JOIN genres B
+				ON B.genre_id = A.genre_id
+				WHERE locale = ? AND entry_key LIKE ?',
+				array((string)$locale, (string)'EDITORACAO_DIAGRM_PDF_PUBL%')
 			);
 
 			while (!$result->EOF) {
-				if($result->GetRowAssoc(0)['user_group_id'] == 24){ // ASSISTENTE EDITORIAL
-					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
-						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND (entry_key LIKE 'EDITORACAO_ASSIS_ED_TEMPLT%' OR entry_key LIKE 'EDITORACAO_FIG_P_FORMATAR%')
-						QUERY
-					);
-				break;
-				}elseif($result->GetRowAssoc(0)['user_group_id'] == 21){ // EDITOR DE FIGURA
-					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
-						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_FIG_FORMATA%'
-						QUERY
-					);
-				break;
-				}
+				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
 
 				$result->MoveNext();
+			}
+
+			$templateMgr->setData('submissionFileGenres', $genreList);
+		}
+		if ($fileStage == 11) { // Upload de arquivo em box "Arquivos prontos para layout"
+
+			$userGroupAssignmentDao = DAORegistry::getDAO('UserGroupAssignmentDAO'); /* @var $userGroupAssignmentDao UserGroupAssignmentDAO */
+			$userGroupAssignments = $userGroupAssignmentDao->getByUserId($request->getUser()->getId());
+
+			while ($assignment = $userGroupAssignments->next()) {
+				$userGroupIds[] = $assignment->getUserGroupId();
+			}
+
+			if(!empty(array_intersect($userGroupIds, ['24']))){ // Assistente editorial
+				$result_genre = $userDao->retrieve(
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = ? AND (entry_key LIKE ? OR entry_key = ?)',
+					array((string)$locale, (string)'EDITORACAO_ASSIS_ED_TEMPLT%', (string)'EDITORACAO_FIG_P_FORMATAR')
+				);
+			}
+			if(!empty(array_intersect($userGroupIds, ['21','12']))){ // Editor de figura ou diagramador
+				$result_genre = $userDao->retrieve(
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = ? AND entry_key = ? OR entry_key = ?',
+					array((string)$locale, (string)'EDITORACAO_FIG_FORMATAD', (string)'EDITORACAO_PDF_DIAGRAMADO')
+				);
 			}
 
 			if(isset($result_genre)){
 
 				while (!$result_genre->EOF) {
 					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-
 					$result_genre->MoveNext();
 				}
 
@@ -1673,37 +1331,32 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if ($fileStage == 15) { // UPLOAD NOVA VERSÃO
 
-
-
 			$result = $userDao->retrieve( // BUSCAR PERFIL DO USUÁRIO
-				<<<QUERY
-				SELECT g.user_group_id
-				FROM ojs.user_user_groups g
-				WHERE user_id = $userId
-				QUERY
+				'SELECT g.user_group_id
+				FROM user_user_groups g
+				WHERE user_id = ?',
+				array((int)$userId)
 			);
 
 			while (!$result->EOF) {
 				if($result->GetRowAssoc(0)['user_group_id'] == 23){ // SECRETARIA
 					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						'SELECT A.genre_id, setting_value
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'AVAL_SECRETARIA_NOVA_VERSAO%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
 					);
 				break;
 				}elseif($result->GetRowAssoc(0)['user_group_id'] == 14){ // AUTOR
 					$result_genre = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						'SELECT A.genre_id, setting_value
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'AVAL_AUTOR%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'AVAL_AUTOR%')
 					);
 				break;
 				}
@@ -1737,30 +1390,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($stageId == 5){
 
 				$autor = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
-					<<<QUERY
-					SELECT g.user_group_id , g.user_id
-					FROM ojs.user_user_groups g
-					WHERE g.user_group_id = 14 AND user_id = $userId
-					QUERY
+					'SELECT g.user_group_id , g.user_id
+					FROM user_user_groups g
+					WHERE g.user_group_id = ? AND user_id = ?',
+					array((int)14, (int)$userId)
 				);
 
 				$editor_assistente = $userDao->retrieve( // VERIFICA SE O PERFIL É DE ASSISTENTE EDITORIAL PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
-					<<<QUERY
-					SELECT g.user_group_id , g.user_id
-					FROM ojs.user_user_groups g
-					WHERE g.user_group_id = 24 AND user_id = $userId
-					QUERY
+					'SELECT g.user_group_id , g.user_id
+					FROM user_user_groups g
+					WHERE g.user_group_id = ? AND user_id = ?',
+					array((int)24, (int)$userId)
 				);
 
 				if($autor->_numOfRows > 0){
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						'SELECT A.genre_id, setting_value
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_AUTOR%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale, (string)'EDITORACAO_AUTOR%')
 					);
 
 					while (!$result->EOF) {
@@ -1772,13 +1422,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$templateMgr->setData('submissionFileGenres', $genreList);
 				}elseif($editor_assistente->_numOfRows > 0) {
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						'SELECT A.genre_id, setting_value
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDITORACAO_ASSIST_ED%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale,(string)'EDITORACAO_ASSIST_ED%')
 					);
 
 					while (!$result->EOF) {
@@ -1792,26 +1441,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 				}
 
-
 			}elseif($stageId == 4){
+				// Buscar componentes de arquivos específicos para o autor
+				$submissionId = $request->getUserVar('submissionId');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 14);
 
-				$result = $userDao->retrieve( // VERIFICA SE O PERFIL É DE AUTOR PARA EXIBIR SOMENTE OS COMPONENTES DO PERFIL
-					<<<QUERY
-					SELECT g.user_group_id , g.user_id
-					FROM ojs.user_user_groups g
-					WHERE g.user_group_id = 14 AND user_id = $userId
-					QUERY
-				);
+				while ($user = $users->next()) {
+					if($user->getData('id') == $_SESSION["userId"]){
+						$isAuthor = true;
+					}
+				}
 
-				if($result->_numOfRows > 0){
+				if(isset($isAuthor)){
 					$result = $userDao->retrieve(
-						<<<QUERY
-						SELECT A.genre_id, setting_value
-						FROM ojs.genre_settings A
-						LEFT JOIN ojs.genres B
+						'SELECT A.genre_id, setting_value
+						FROM genre_settings A
+						LEFT JOIN genres B
 						ON B.genre_id = A.genre_id
-						WHERE locale = '$locale' AND entry_key LIKE 'EDICAO_TEXTO_FIG_ALT%'
-						QUERY
+						WHERE locale = ? AND entry_key LIKE ?',
+						array((string)$locale,(string)'PEND_TEC_%')
 					);
 					while (!$result->EOF) {
 						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
@@ -1821,11 +1470,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					$templateMgr->setData('submissionFileGenres', $genreList);
 				}else{
-					$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+					$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 				}
 
 			}else{
-				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
+				$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 			}
 
 		}
@@ -1895,12 +1544,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				// retrieve all columns of table users
 				$result = $userDao->retrieve(
-					<<<QUERY
-					SELECT `COLUMN_NAME`
-					  FROM `INFORMATION_SCHEMA`.`COLUMNS`
-					 WHERE `TABLE_SCHEMA`='ojs'
-					   AND `TABLE_NAME`='users';
-					QUERY
+					'SELECT COLUMN_NAME
+					FROM INFORMATION_SCHEMA.COLUMNS
+					WHERE TABLE_SCHEMA = ?
+					AND TABLE_NAME = ?',
+					array((string)'ojs', (string)'users')
 				);
 				while (!$result->EOF) {
 					$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
@@ -1957,8 +1605,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0] = <<<QUERY
 					SELECT q1.*, COALESCE(q2.assigns,0) AS assigns FROM ({$args[0]}) q1
 					LEFT JOIN (SELECT COUNT(*) AS assigns, user_id
-					FROM ojs.stage_assignments a
-					JOIN ojs.submissions s
+					FROM stage_assignments a
+					JOIN submissions s
 					ON s.submission_id = a.submission_id AND s.stage_id <= 3
 					WHERE a.user_group_id = ?
 					GROUP BY a.user_id) q2
@@ -1981,37 +1629,39 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function authorform_initdata($hookName, $args)
 	{
+
 		$request = \Application::get()->getRequest();
 		$type = $request->getUserVar('type');
-		if ($type != 'csp') {
+		$form = $args[0];
+		if ($type == 'csp') {
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$userCsp = $userDao->retrieve(
+				<<<QUERY
+				SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
+						TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
+						email, orcid,
+						TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
+					FROM csp.Pessoa p
+					WHERE p.idPessoa = ?
+				QUERY,
+				[(int) $request->getUserVar('userId')]
+			)->GetRowAssoc(0);
+			$locale = AppLocale::getLocale();
+			$form->setData('givenName', [$locale => $userCsp['given_name']]);
+			$form->setData('familyName', [$locale => $userCsp['family_name']]);
+			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
+			$form->setData('email', $userCsp['email']);
+			$form->setData('orcid', $userCsp['orcid']);
+		}elseif($form->_author != null){
+			$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
+			$author = $form->_author;
+			$form->setData('authorContribution', $author->getData('authorContribution'));
+			$form->setData('affiliation2', $author->getData('affiliation2'));
+		}else{
 			return;
 		}
-
-		$form = $args[0];
-		$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
-
-		$userDao = DAORegistry::getDAO('UserDAO');
-		$userCsp = $userDao->retrieve(
-			<<<QUERY
-			SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
-					TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
-					email, orcid,
-					TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
-				FROM csp.Pessoa p
-				WHERE p.idPessoa = ?
-			QUERY,
-			[(int) $request->getUserVar('userId')]
-		)->GetRowAssoc(0);
-		$locale = AppLocale::getLocale();
-		$form->setData('givenName', [$locale => $userCsp['given_name']]);
-		$form->setData('familyName', [$locale => $userCsp['family_name']]);
-		$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
-		$form->setData('email', $userCsp['email']);
-		$form->setData('orcid', $userCsp['orcid']);
-
 		$args[0] = $form;
 	}
-
 	/**
 	 * @copydoc Plugin::getDisplayName()
 	 */
@@ -2048,19 +1698,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		$smarty =& $params[1];
 		$output =& $params[2];
-		//$output .= $smarty->fetch($this->getTemplateResource('RemovePrefixoTitulo.tpl'));
 
 		if($sectionId == 5){
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
 		}
 
 		if($sectionId == 4){
-			$output .= $smarty->fetch($this->getTemplateResource('Tema.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
-		//$output .= $smarty->fetch($this->getTemplateResource('FonteFinanciamento.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
 
 		if($sectionId == 6){
@@ -2073,34 +1721,56 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
- 	function metadataReadUserVars($hookName, $params) {
+	function metadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'conflitoInteresse';
-		//$userVars[] = 'conflitoInteresseQual';
-		//$userVars[] = 'FonteFinanciamento';
-		//$userVars[] = 'FonteFinanciamentoQual';
 		$userVars[] = 'agradecimentos';
 		$userVars[] = 'codigoTematico';
-		$userVars[] = 'Tema';
+		$userVars[] = 'tema';
 		$userVars[] = 'codigoArtigoRelacionado';
 		$userVars[] = 'CodigoArtigo';
-		//$userVars[] = 'doi';
 
 		return false;
 	}
 
- 	function metadataExecuteStep3($hookName, $params) {
+	function authorformReadUserVars($hookName, $params) {
+		$userVars =& $params[1];
+		$userVars[] = 'authorContribution';
+		$userVars[] = 'affiliation2';
+
+		return false;
+	}
+
+	function submissionFilesMetadataReadUserVars($hookName, $params) {
+		$userVars =& $params[1];
+		$userVars[] = 'comentario';
+
+		return false;
+	}
+
+	function submissionfiledaodelegateAdditionalFieldNames($hookName, $params) {
+		$additionalFieldNames =& $params[1];
+		$additionalFieldNames[] = 'comentario';
+
+		return false;
+	}
+
+	function submissionFilesMetadataExecute($hookName, $params) {
+		$form =& $params[0];
+		$submissionFile = $form->_submissionFile;
+		$submissionFile->setData('comentario', $form->getData('comentario'));
+
+		return false;
+	}
+
+	function metadataExecuteStep3($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
-		//$article->setData('conflitoInteresseQual', $form->getData('conflitoInteresseQual'));
-		//$article->setData('FonteFinanciamento', $form->getData('FonteFinanciamento'));
-		//$article->setData('FonteFinanciamentoQual', $form->getData('FonteFinanciamentoQual'));
 		$article->setData('agradecimentos', $form->getData('agradecimentos'));
 		$article->setData('codigoTematico', $form->getData('codigoTematico'));
-		$article->setData('Tema', $form->getData('Tema'));
+		$article->setData('tema', $form->getData('tema'));
 		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
-		//$article->setData('doi', $form->getData('doi'));
 
 		return false;
 	}
@@ -2118,52 +1788,58 @@ class CspSubmissionPlugin extends GenericPlugin {
 		);
 		$article->setData('CodigoArtigo', $result->GetRowAssoc(false)['code']);
 
+		$now = date('Y-m-d H:i:s');
+		$submissionId = $article->getData('id');
+		$userDao->retrieve(
+			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
+			array((int)$submissionId, (string)'pre_aguardando_secretaria',$now)
+		);
+
 
 		return false;
 	}
 
+	function authorformExecute($hookName, $params) {
+		$form =& $params[0];
+		$author = $form->_author;
+		$author->setData('authorContribution', $form->getData('authorContribution'));
+		$author->setData('affiliation2', $form->getData('affiliation2'));
+
+		return false;
+	}
 
 	/**
 	 * Init article Campo1
 	 */
- 	function metadataInitData($hookName, $params) {
+	function metadataInitData($hookName, $params) {
 		$form =& $params[0];
 		$article = $form->submission;
 		$this->sectionId = $article->getData('sectionId');
-		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
-		//$form->setData('conflitoInteresseQual', $article->getData('conflitoInteresseQual'));
-		//$form->setData('FonteFinanciamento', $article->getData('FonteFinanciamento'));
-		//$form->setData('FonteFinanciamentoQual', $article->getData('FonteFinanciamentoQual'));
 		$form->setData('agradecimentos', $article->getData('agradecimentos'));
 		$form->setData('codigoTematico', $article->getData('codigoTematico'));
-		$form->setData('Tema', $article->getData('Tema'));
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
-		//$form->setData('doi', $article->getData('doi'));
+		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
+		$form->setData('tema', $article->getData('tema'));
 
 		return false;
 	}
-
 
 	function publicationEdit($hookName, $params) {
 		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 		$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 		$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
-
-		//$params[0]->setData('doi', $params[3]->_requestVars["doi"]);
-		//$params[1]->setData('doi', $params[3]->_requestVars["doi"]);
-		//$params[2]["doi"] = $params[3]->_requestVars["doi"];
-
 		$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
 		$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
 		$params[2]["codigoTematico"] = $params[3]->_requestVars["codigoTematico"];
-
 		$params[0]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
 		$params[1]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
 		$params[2]["codigoArtigoRelacionado"] = $params[3]->_requestVars["codigoArtigoRelacionado"];
-
 		$params[0]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
 		$params[1]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
 		$params[2]["conflitoInteresse"] = $params[3]->_requestVars["conflitoInteresse"];
+		$params[0]->setData('tema', $params[3]->_requestVars["tema"]);
+		$params[1]->setData('tema', $params[3]->_requestVars["tema"]);
+		$params[2]["tema"] = $params[3]->_requestVars["tema"];
 
 		return false;
 	}
@@ -2175,7 +1851,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		if($this->sectionId == 4){
 			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
-			$form->addCheck(new FormValidatorLength($form, 'Tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
+			$form->addCheck(new FormValidatorLength($form, 'tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
 		}
 
 		if($this->sectionId == 6){
@@ -2199,7 +1875,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return in_array($statusCode,[303,200]);
 		}));
 
-
 		return false;
 	}
 
@@ -2211,10 +1886,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case 1: // Corpo do artigo
 			case 13: // Tabela ou quadro
 			case 19: // Nova versão corpo
+			case 18: // Legendas
 			case 20: // Nova versão tabela ou quadro
-				if (($_FILES['uploadedFile']['type'] <> 'application/msword') /*Doc*/
-				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') /*docx*/
-				and ($_FILES['uploadedFile']['type'] <> 'application/vnd.oasis.opendocument.text')/*odt*/) {
+				if (!in_array($_FILES['uploadedFile']['type'],
+				['application/msword', 'application/wps-office.doc', /*Doc*/
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
+				'application/vnd.oasis.opendocument.text'] /*odt*/
+				)) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody')
 					);
@@ -2359,15 +2037,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 					if($genreId == '46'){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA
 
 						$result = $userDao->retrieve(
-							<<<QUERY
-							SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM ojs.user_user_groups g
-							LEFT JOIN ojs.user_group_settings s
+							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
+							FROM user_user_groups g
+							LEFT JOIN user_group_settings s
 							ON s.user_group_id = g.user_group_id
-							LEFT JOIN ojs.stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = $submissionId
-							WHERE s.setting_value = 'Editor da revista'
-							QUERY
+							LEFT JOIN stage_assignments a
+							ON g.user_id = a.user_id AND a.submission_id = ?
+							WHERE s.setting_value = ?',
+							array((int)$submissionId,(string)'Editor da revista')
 						);
 						while (!$result->EOF) {
 
@@ -2400,6 +2077,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 							$result->MoveNext();
 						}
+						$now = date('Y-m-d H:i:s');
+						$userDao->retrieve(
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							array((string)'pre_aguardando_editor_chefe',(string)$now,(int)$submissionId)
+						);
 					}
 					if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
 						$stageId = $request->getUserVar('stageId');
@@ -2460,6 +2142,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ed_texto_traducao_metadados', (string)$now, (int)$submissionId)
+				);
 
 			break;
 			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
@@ -2484,7 +2172,76 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
+
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ed_text_envio_carta_aprovacao', (string)$now, (int)$submissionId)
+				);
 			break;
+			case '57': // PDF para publicação PT
+			case '58': // PDF para publicação EN
+			case '59': // PDF para publicação ES
+				// Quando é feito upload PDF para publicação, editores de XML recebem email de convite para produzir XML
+				$userGroupEditorXML = 25;
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$site = $request->getSite();
+				$context = $request->getContext();
+				$result = $userDao->retrieve(
+					'SELECT u.email, u.user_id
+					FROM users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = ?',
+					array((int)$userGroupEditorXML)
+				);
+
+				import('lib.pkp.classes.mail.MailTemplate');
+				while (!$result->EOF) {
+					$mail = new MailTemplate('PRODUCAO_XML');
+					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+					$result->MoveNext();
+				}
+			break;        
+			case '60': // Template PT
+			case '61': // Template ES
+			case '62': // Template EN
+				// Quando é feito upload de template, diagramadores recebem email de convite para produzir PDF
+				$userGroupDiagramador = 12;
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$result = $userDao->retrieve(
+					'SELECT u.email, u.user_id
+					FROM users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = ?',
+					array((int)$userGroupDiagramador)
+				);
+
+				import('lib.pkp.classes.mail.MailTemplate');
+				while (!$result->EOF) {
+					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
+					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupDiagramador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+					$result->MoveNext();
+				}
+			break;        
 			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
 				$request = \Application::get()->getRequest();
@@ -2507,10 +2264,104 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_pdf_padronizado', (string)$now, (int)$submissionId)
+				);
+			break;
+			case '65': // Figura para formatar
+				// Quando é feito upload de figura para formatar, editores de figura recebem email de convite para formatar figura
+				$userGroupEditorFigura = 21;
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$site = $request->getSite();
+				$context = $request->getContext();
+				$result = $userDao->retrieve(
+					'SELECT u.email, u.user_id
+					FROM users u
+					LEFT JOIN user_user_groups g
+					ON u.user_id = g.user_id
+					WHERE  g.user_group_id = ?',
+					array((int)$userGroupEditorFigura)
+				);
+
+				import('lib.pkp.classes.mail.MailTemplate');
+				while (!$result->EOF) {
+					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
+					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorFigura&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+					$result->MoveNext();
+				}
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_em_formatacao_figura', (string)$now, (int)$submissionId)
+				);
 			break;
 			case '':
 				$args[0]->setData('genreId',47);
 				$args[1] = true;
+			break;
+			case '68': // Fluxograma
+				$file = $_FILES['uploadedFile']['type'];
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/svg+xml','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Fluxograma')
+					);
+				}
+			break;
+			case '69': // Gráfico
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/svg+xml','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Gráfico')
+					);
+				}
+			break;
+			case '70': // Mapa
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/svg+xml','image/x-eps', 'image/wmf'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Mapa')
+					);
+				}
+			break;
+			case '71': // Fotografia
+				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff'])) {
+					$args[0]->addError('genreId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Fotografia')
+					);
+				}
+			break;
+			case '73':// Quando diagramador faz upload de PDF diagramado editores assistentes são notificados
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$stageId = $request->getUserVar('stageId');
+
+					import('lib.pkp.classes.mail.MailTemplate');
+
+					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+					while ($user = $users->next()) {
+
+						$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
+						$mail->addRecipient($user->getEmail(), $user->getFullName());
+
+						if (!$mail->send()) {
+							import('classes.notification.NotificationManager');
+							$notificationMgr = new NotificationManager();
+							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+						}
+					}
 			break;
 		return true;
 		}
@@ -2532,12 +2383,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if (!$args[0]->isValid()) {
 			return true;
 		}
+		if($args[0]->getData('reviewRoundId')){
+			if($args[0]->getData('fileStage')  == 15){ ///// Quando autor insere nova versão, o status é alterado
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_secretaria', (string)$now, (int)$submissionId)
+				);
+			}
+			if($args[0]->getData('fileStage')  == 4){ ///// Quando secretaria insere nova versão de PDF, o status é alterado
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+				);
+			}
+		}
 		return false;
 	}
 
 	public function SubmissionHandler_saveSubmit($hookName, $args)
 	{
 		$this->article = $args[1];
+
 	}
 
 	function fileManager_downloadFile($hookName, $args)
@@ -2559,7 +2431,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$result = $submissionDao->retrieve(
 					<<<QUERY
 					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
-					FROM ojs.submission_settings
+					FROM submission_settings
 					WHERE setting_name = 'CodigoArtigo' AND submission_id = ?
 					QUERY,
 					[$matches['id']]
@@ -2581,5 +2453,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		HookRegistry::call('FileManager::downloadFileFinished', array(&$returner));
 		return true;
+	}
+
+	public function submissionDelete($hookName, $args){
+		$submissionId = $args[0]->getData('id');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$now = date('Y-m-d H:i:s');
+		$userDao->retrieve(
+			<<<QUERY
+			UPDATE status_csp SET status = 'deletada', date_status = '$now' WHERE submission_id = $submissionId
+			QUERY
+		);
+	}
+
+	public function publicationPublish($hookName, $args){
+		$submissionId = $args[0]->getData('id');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$now = date('Y-m-d H:i:s');
+		$userDao->retrieve(
+			<<<QUERY
+			UPDATE status_csp SET status = 'publicada', date_status = '$now' WHERE submission_id = $submissionId
+			QUERY
+		);
 	}
 }

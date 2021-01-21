@@ -24,14 +24,14 @@
  *}
 
 {fbvFormArea id="userDetails"}
-	{fbvFormSection title="user.name"}
-		{fbvElement type="text" label="user.givenName" multilingual="true" name="givenName" id="givenName" value=$givenName maxlength="255" inline=true size=$fbvStyles.size.MEDIUM required="true"}
+	{fbvFormSection title="user.name" required="true"}
+		{fbvElement type="text" label="user.givenName" multilingual="true" name="givenName" id="givenName" value=$givenName maxlength="255" inline=true size=$fbvStyles.size.MEDIUM}
 		{fbvElement type="text" label="user.familyName" multilingual="true" name="familyName" id="familyName" value=$familyName maxlength="255" inline=true size=$fbvStyles.size.MEDIUM}
 	{/fbvFormSection}
 
-	{fbvFormSection for="preferredPublicName" description="user.preferredPublicName.description"}
+{* 	{fbvFormSection for="preferredPublicName" description="user.preferredPublicName.description"}
 		{fbvElement type="text" label="user.preferredPublicName" multilingual="true" name="preferredPublicName" id="preferredPublicName" value=$preferredPublicName size=$fbvStyles.size.LARGE}
-	{/fbvFormSection}
+	{/fbvFormSection} *}
 
 	{if !$disableUserNameSection}
 		{if !$userId}{capture assign="usernameInstruction"}{translate key="user.register.usernameRestriction"}{/capture}{/if}
@@ -48,8 +48,8 @@
 	{/if}
 
 	{if !$disableEmailSection}
-		{fbvFormSection title="about.contact"}
-			{fbvElement type="text" label="user.email" id="email" required="true" value=$email maxlength="90" size=$fbvStyles.size.MEDIUM}
+		{fbvFormSection title="about.contact" title="user.email" required="true"}
+			{fbvElement type="text"  id="email" required="true" value=$email maxlength="90" size=$fbvStyles.size.MEDIUM}
 		{/fbvFormSection}
 	{/if}
 
@@ -93,8 +93,8 @@
 	{else}
 		{assign var="countryRequired" value=false}
 	{/if}
-	{fbvFormSection for="country" title="common.country"}
-		{fbvElement type="select" label="common.country" name="country" id="country" required=$countryRequired defaultLabel="" defaultValue="" from=$countries selected=$country translate="0" size=$fbvStyles.size.MEDIUM}
+	{fbvFormSection for="country" title="common.country" required="true"}
+		{fbvElement type="select" name="country" id="country" required=$countryRequired defaultLabel="" defaultValue="" from=$countries selected=$country translate="0" size=$fbvStyles.size.MEDIUM}
 	{/fbvFormSection}
 
 	{if !$disableSendNotifySection}
@@ -138,10 +138,13 @@
 			{/fbvFormSection}
 		{/if}
 
-		{fbvFormSection for="affiliation"}
-			{fbvElement type="text" label="user.affiliation" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE}
+		{fbvFormSection for="affiliation" title="user.affiliation"}
+			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE}
 		{/fbvFormSection}
 
+		{fbvFormSection for="affiliation2" title="user.affiliation"}
+			{fbvElement type="text" name="affiliation2" id="affiliation2" value=$affiliation2 inline=true size=$fbvStyles.size.LARGE}
+		{/fbvFormSection}
 		
 
 		{if !$disableMailingSection}
