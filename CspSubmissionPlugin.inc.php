@@ -791,11 +791,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorName'] = 'reviewerId';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorType'] = 'checkbox';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selected'] = [];
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
-			return false;
+			return true;
 		}elseif ($args[1] == 'reviewer/review/step1.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('reviewStep1.tpl'));
 
