@@ -146,6 +146,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'priority' => STYLE_SEQUENCE_LAST,
 				)
 			);
+		} elseif ($args[1] == "workflow/workflow.tpl") {
+
+			$request =& Registry::get('request');
+			$templateManager =& $args[0];
+
+			// Load JavaScript file
+			$templateManager->addJavaScript(
+				'teste',
+				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+				array(
+					'contexts' => 'backend',
+					'priority' => STYLE_SEQUENCE_LAST,
+				)
+			);
 		} elseif ($args[1] == "dashboard/index.tpl") {
 			$request = \Application::get()->getRequest();
 			$currentUser = $request->getUser();
