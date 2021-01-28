@@ -70,7 +70,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			// This hook is used to register the components this plugin implements to
 			// permit administration of custom block plugins.
-			HookRegistry::register('LoadComponentHandler', array($this, 'setupGridHandler'));
+			HookRegistry::register('LoadComponentHandler', array($this, 'LoadComponentHandler'));
 
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
 
@@ -311,10 +311,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @param $hookName string The name of the hook being invoked
 	 * @param $args array The parameters to the invoked hook
 	 */
-	function setupGridHandler($hookName, $params) {
+	function loadComponentHandler($hookName, $params) {
 		$component =& $params[0];
 		$request = \Application::get()->getRequest();
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
+			return true;
+		}
+		if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
+			$component = 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler';
 			return true;
 		}
 		if ($component == 'grid.users.stageParticipant.stageParticipantGrid.SaveParticipantHandler') {

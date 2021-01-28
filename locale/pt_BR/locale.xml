@@ -69,4 +69,5 @@
   <message key="editor.submission.consultKfinder">Consultar Kfinder</message>
   <message key="grid.action.consultKfinder">Consultar Kfinder</message>
   <message key="editor.submission.addReviewerSagas">Adicionar avaliador</message>
+  <message key="editor.review.reviewerId.emptyArray">Selecione ao menos um revisor</message>
 </locale>

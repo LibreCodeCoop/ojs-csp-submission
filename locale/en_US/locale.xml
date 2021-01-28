@@ -53,4 +53,5 @@
   <message key="editor.submission.consultKfinder">Consult Kfinder</message>
   <message key="grid.action.consultKfinder">Consult Kfinder</message>
   <message key="editor.submission.addReviewerSagas">Add reviewer</message>
+  <message key="editor.review.reviewerId.emptyArray">Select a reviewer</message>
 </locale>
