@@ -705,12 +705,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$reviewer = $userDao->getUserByEmail($args[0]->_data["from"]["email"]);
 				$reviewerName = $reviewer->getLocalizedGivenName();
 
-				$this->replace_string_odt_file('plugins/generic/cspSubmission/temp', 'plugins/generic/cspSubmission/declaracao_parecer.odt', 'plugins/generic/cspSubmission/declaracao_parecer2.odt', $submissionId, $reviewerName);
-				$origin = "plugins/generic/cspSubmission/declaracao_parecer2.odt";
-				$converter = new NcJoes\OfficeConverter\OfficeConverter($origin);
-				$converter->convertTo('parecer2.pdf');
+				$this->replace_string_odt_file('files/usageStats/declaracoes/declaracao_parecer', 'files/usageStats/declaracoes/declaracao_parecer.odt', 'files/usageStats/declaracoes/declaracao_parecer_editado.odt', $submissionId, $reviewerName);
+				$converter = new NcJoes\OfficeConverter\OfficeConverter('files/usageStats/declaracoes/declaracao_parecer_editado.odt');
+				$converter->convertTo('declaracao_parecer.pdf');
 
-				$args[0]->AddAttachment('/ojs/plugins/generic/cspSubmission/parecer2.pdf', 'parecer2.pdf','application/pdf');
+				$args[0]->AddAttachment('/ojs/files/usageStats/declaracoes/declaracao_parecer.pdf', 'declaracao_parecer.pdf','application/pdf');
 			}
 		}
 
