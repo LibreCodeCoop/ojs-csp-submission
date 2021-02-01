@@ -41,11 +41,9 @@ class AddReviewerSagasFeature extends GridFeature
                 'addReviewerSagas',
                 new AjaxModal(
                     $router->url($request, null, null, 'showReviewerForm', null, $actionArgs),
-                    __('editor.submission.addReviewerSagas'),
-                    'modal_add_user'
+                    __('editor.submission.addReviewerSagas')
                 ),
                 __('editor.submission.addReviewer'),
-                'add_user'
                 )
             );
     }
