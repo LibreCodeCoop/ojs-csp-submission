@@ -106,8 +106,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function replace_string_odt_file($extractFolder, $inputFile, $zipOutputFile, $submissionId, $reviewerName) {
 
 		$zip = new ZipArchive;
-		$res = $zip->open($inputFile);
-		if ($res === true) {
+		if ($zip->open($inputFile) === true) {
 			$zip->extractTo($extractFolder);
 			$zip->close();
 		}
@@ -116,7 +115,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$timestamp = strtotime('today');
 		$dateFormatShort = Config::getVar('general', 'date_format_short');
 		$dateFormatShort = strftime($dateFormatShort, $timestamp);
-		$dateFormatLong = \Config::getVar('general', 'date_format_long');
+		$dateFormatLong = Config::getVar('general', 'date_format_long');
 		$dateFormatLong = strftime($dateFormatLong, $timestamp);
 
 		$submissionDAO = Application::getSubmissionDAO();
@@ -145,7 +144,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return false;
 		}
 
-		$zip = new ZipArchive();
 		if (!$zip->open($zipOutputFile, ZIPARCHIVE::CREATE)) {
 			return false;
 		}
@@ -173,7 +171,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		else if (is_file($extractFolder) === true) {
 			$zip->addFromString(basename($extractFolder), file_get_contents($extractFolder));
 		}
-
 		return $zip->close();
 
 	}
@@ -704,12 +701,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$reviewer = $userDao->getUserByEmail($args[0]->_data["from"]["email"]);
 				$reviewerName = $reviewer->getLocalizedGivenName();
+				$tempId = rand(10,100);
 
-				$this->replace_string_odt_file('files/usageStats/declaracoes/declaracao_parecer', 'files/usageStats/declaracoes/declaracao_parecer.odt', 'files/usageStats/declaracoes/declaracao_parecer_editado.odt', $submissionId, $reviewerName);
-				$converter = new NcJoes\OfficeConverter\OfficeConverter('files/usageStats/declaracoes/declaracao_parecer_editado.odt');
-				$converter->convertTo('declaracao_parecer.pdf');
+				import('lib.pkp.classes.file.TemporaryFileManager');
+				$temporaryFileManager = new TemporaryFileManager();
+				$temporaryBasePath = $temporaryFileManager->getBasePath();
 
-				$args[0]->AddAttachment('/ojs/files/usageStats/declaracoes/declaracao_parecer.pdf', 'declaracao_parecer.pdf','application/pdf');
+				$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_parecer.odt', $temporaryBasePath.$tempId.'.odt', $submissionId, $reviewerName);
+
+				$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+				$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+				$converter->convertTo('declaracao_parecer'.$tempId.'.pdf');
+
+				import('lib.pkp.classes.file.FileManager');
+				$fileManager = new FileManager();
+				$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+				$args[0]->AddAttachment($temporaryBasePath.'declaracao_parecer'.$tempId.'.pdf', 'declaracao_parecer'.$tempId.'.pdf','application/pdf');
 			}
 		}
 
