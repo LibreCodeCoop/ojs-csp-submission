@@ -1,6 +1,7 @@
 {
     "require": {
         "phpoffice/phpword": "^0.17.0",
-        "symfony/http-client": "^5.0"
+        "symfony/http-client": "^5.0",
+        "ncjoes/office-converter": "^1.0"
     }
 }

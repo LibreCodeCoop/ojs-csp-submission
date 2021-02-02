@@ -103,6 +103,78 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	}
 
+	function replace_string_odt_file($extractFolder, $inputFile, $zipOutputFile, $submissionId, $reviewerName) {
+
+		$zip = new ZipArchive;
+		if ($zip->open($inputFile) === true) {
+			$zip->extractTo($extractFolder);
+			$zip->close();
+		}
+
+		$date = getDate();
+		$timestamp = strtotime('today');
+		$dateFormatShort = Config::getVar('general', 'date_format_short');
+		$dateFormatShort = strftime($dateFormatShort, $timestamp);
+		$dateFormatLong = Config::getVar('general', 'date_format_long');
+		$dateFormatLong = strftime($dateFormatLong, $timestamp);
+
+		$submissionDAO = Application::getSubmissionDAO();
+		$submission = $submissionDAO->getById($submissionId);
+		$submissionIdCsp = $submission->getData('codigoArtigo');
+
+		$source = file_get_contents($extractFolder.'/content.xml');
+		$source = str_replace(
+			[
+				'[NOME]',
+				'[IDARTIGO]',
+				'[ANO]',
+				'[DATA]'
+			],
+			[
+				$reviewerName,
+				$submissionIdCsp,
+				$date['year'],
+				$dateFormatLong
+			],
+			$source
+		);
+		file_put_contents($extractFolder.'/content.xml', $source);
+
+		if (!extension_loaded('zip') || !file_exists($extractFolder)) {
+			return false;
+		}
+
+		if (!$zip->open($zipOutputFile, ZIPARCHIVE::CREATE)) {
+			return false;
+		}
+
+		if (is_dir($extractFolder) === true) {
+			$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($extractFolder), RecursiveIteratorIterator::SELF_FIRST);
+
+			foreach ($files as $file) {
+				$file = str_replace('\\', DIRECTORY_SEPARATOR, $file);
+
+				if (in_array(substr($file, strrpos($file, '/')+1), array('.', '..'))) {
+					continue;
+				}
+
+				if (is_dir($file) === true) {
+					$dirName = str_replace($extractFolder.DIRECTORY_SEPARATOR, '', $file.DIRECTORY_SEPARATOR);
+					$zip->addEmptyDir($dirName);
+				}
+				else if (is_file($file) === true) {
+					$fileName = str_replace($extractFolder.DIRECTORY_SEPARATOR, '', $file);
+					$zip->addFromString($fileName, file_get_contents($file));
+				}
+			}
+		}
+		else if (is_file($extractFolder) === true) {
+			$zip->addFromString(basename($extractFolder), file_get_contents($extractFolder));
+		}
+		return $zip->close();
+
+	}
+
 	/**
 	 * Hooked to the the `display` callback in TemplateManager
 	 * @param $hookName string
@@ -613,14 +685,41 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 
-		if($request->_router->_page == "reviewer"){ 
-			if($request->_requestVars["step"] == 1){
+		if($request->getRequestedPage() == "reviewer"){
+			if($request->getUserVar('step') == 1){
 				return true;
 			}
-			if($request->_requestVars["step"] == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
+			if($request->getUserVar('step') == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
 				return true;
 			}
+			if($request->getUserVar('step') == 4){
 
+				$path = $request->getRequestPath();
+				$pathItens = explode('/', $path);
+				$submissionId = $pathItens[6];
+
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$reviewer = $userDao->getUserByEmail($args[0]->_data["from"]["email"]);
+				$reviewerName = $reviewer->getLocalizedGivenName();
+				$tempId = rand(10,100);
+
+				import('lib.pkp.classes.file.TemporaryFileManager');
+				$temporaryFileManager = new TemporaryFileManager();
+				$temporaryBasePath = $temporaryFileManager->getBasePath();
+
+				$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_parecer.odt', $temporaryBasePath.$tempId.'.odt', $submissionId, $reviewerName);
+
+				$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+				$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+				$converter->convertTo('declaracao_parecer'.$tempId.'.pdf');
+
+				import('lib.pkp.classes.file.FileManager');
+				$fileManager = new FileManager();
+				$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+				$args[0]->AddAttachment($temporaryBasePath.'declaracao_parecer'.$tempId.'.pdf', 'declaracao_parecer'.$tempId.'.pdf','application/pdf');
+			}
 		}
 
 		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
@@ -1714,7 +1813,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'codigoTematico';
 		$userVars[] = 'tema';
 		$userVars[] = 'codigoArtigoRelacionado';
-		$userVars[] = 'CodigoArtigo';
+		$userVars[] = 'codigoArtigo';
 
 		return false;
 	}
@@ -1772,7 +1871,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			WHERE YEAR(date_submitted) = YEAR(now())
 			QUERY
 		);
-		$article->setData('CodigoArtigo', $result->GetRowAssoc(false)['code']);
+		$article->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
 
 		$now = date('Y-m-d H:i:s');
 		$submissionId = $article->getData('id');
@@ -1806,6 +1905,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
 		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
 		$form->setData('tema', $article->getData('tema'));
+		$form->setData('codigoArtigo', $article->getData('codigoArtigo'));
 
 		return false;
 	}
@@ -1833,6 +1933,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * Add check/validation for the Campo1 field (= 6 numbers)
 	 */
 	function addCheck($hookName, $params) {
+
 		$form =& $params[0];
 
 		if($this->sectionId == 4){
@@ -2418,7 +2519,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					<<<QUERY
 					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
 					FROM submission_settings
-					WHERE setting_name = 'CodigoArtigo' AND submission_id = ?
+					WHERE setting_name = 'codigoArtigo' AND submission_id = ?
 					QUERY,
 					[$matches['id']]
 				);
