@@ -759,6 +759,49 @@ class CspSubmissionPlugin extends GenericPlugin {
 			);
 		}
 		if($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")){  // É enviado email de prova de prelo
+			$periodico = $args[0]->params["contextName"];
+
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
+			$titulo = $publication->getLocalizedTitle($locale);
+
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$primaryContact = $authorDao->getById($publication->getData('primaryContactId'));
+			$autorCorrespondencia = $primaryContact->getLocalizedGivenName($locale) ." ". $primaryContact->getLocalizedFamilyName($locale);
+			$authors = $publication->getData('authors');
+			foreach($authors as $author) {
+					$autores[] = $author->getLocalizedFamilyName($locale);
+			}
+
+			$timestamp = strtotime('today');
+			$dateFormatLong = Config::getVar('general', 'date_format_long');
+			$dateFormatLong = strftime($dateFormatLong, $timestamp);
+
+			$strings = ['[AUTOR_CORRESPONDENCIA]','[PERIODICO]','[AUTORES]','[TITULO]','[DATA]'];
+			$replaces = [$autorCorrespondencia,$periodico,implode(',',$autores),$titulo,$dateFormatLong];
+
+			$tempId = rand(10,100);
+
+			import('lib.pkp.classes.file.TemporaryFileManager');
+			$temporaryFileManager = new TemporaryFileManager();
+			$temporaryBasePath = $temporaryFileManager->getBasePath();
+
+			$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/aprovacao_prova_prelo.odt', $temporaryBasePath.$tempId.'.odt', $strings, $replaces);
+
+			$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+			$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+			$converter->convertTo('aprovacao_prova_prelo'.$tempId.'.pdf');
+
+			import('lib.pkp.classes.file.FileManager');
+			$fileManager = new FileManager();
+			$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+			$args[0]->AddAttachment($temporaryBasePath.'aprovacao_prova_prelo'.$tempId.'.pdf', 'aprovacao_prova_prelo'.$tempId.'.pdf','application/pdf');
+			$args[0]->AddAttachment('files/usageStats/declaracoes/cessao_direitos_autorais.pdf', 'cessao_direitos_autorais.pdf','application/pdf');
+			$args[0]->AddAttachment('files/usageStats/declaracoes/termos_condicoes.pdf', 'termos_condicoes.pdf','application/pdf');
+
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
