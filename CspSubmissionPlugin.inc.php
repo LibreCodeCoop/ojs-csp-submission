@@ -103,7 +103,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	}
 
-	function replace_string_odt_file($extractFolder, $inputFile, $zipOutputFile, $submissionId, $reviewerName) {
+	function replace_string_odt_file($extractFolder, $inputFile, $zipOutputFile, $string, $replaces) {
 
 		$zip = new ZipArchive;
 		if ($zip->open($inputFile) === true) {
@@ -111,33 +111,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$zip->close();
 		}
 
-		$date = getDate();
-		$timestamp = strtotime('today');
-		$dateFormatShort = Config::getVar('general', 'date_format_short');
-		$dateFormatShort = strftime($dateFormatShort, $timestamp);
-		$dateFormatLong = Config::getVar('general', 'date_format_long');
-		$dateFormatLong = strftime($dateFormatLong, $timestamp);
-
-		$submissionDAO = Application::getSubmissionDAO();
-		$submission = $submissionDAO->getById($submissionId);
-		$submissionIdCsp = $submission->getData('codigoArtigo');
-
 		$source = file_get_contents($extractFolder.'/content.xml');
-		$source = str_replace(
-			[
-				'[NOME]',
-				'[IDARTIGO]',
-				'[ANO]',
-				'[DATA]'
-			],
-			[
-				$reviewerName,
-				$submissionIdCsp,
-				$date['year'],
-				$dateFormatLong
-			],
-			$source
-		);
+		$source = str_replace($string,$replaces,$source);
 		file_put_contents($extractFolder.'/content.xml', $source);
 
 		if (!extension_loaded('zip') || !file_exists($extractFolder)) {
@@ -697,6 +672,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$path = $request->getRequestPath();
 				$pathItens = explode('/', $path);
 				$submissionId = $pathItens[6];
+				$submissionDAO = Application::getSubmissionDAO();
+				$submission = $submissionDAO->getById($submissionId);
+				$submissionIdCsp = $submission->getData('codigoArtigo');
 
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$reviewer = $userDao->getUserByEmail($args[0]->_data["from"]["email"]);
@@ -707,8 +685,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$temporaryFileManager = new TemporaryFileManager();
 				$temporaryBasePath = $temporaryFileManager->getBasePath();
 
-				$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_parecer.odt', $temporaryBasePath.$tempId.'.odt', $submissionId, $reviewerName);
+				$date = getDate();
+				$timestamp = strtotime('today');
+				$dateFormatLong = Config::getVar('general', 'date_format_long');
+				$dateFormatLong = strftime($dateFormatLong, $timestamp);
 
+				$strings = ['[NOME]','[IDARTIGO]','[ANO]','[DATA]'];
+				$replaces = [$reviewerName,$submissionIdCsp,$date['year'],$dateFormatLong];
+
+				$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_parecer.odt', $temporaryBasePath.$tempId.'.odt', $strings, $replaces);
 				$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
 
 				$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
@@ -723,6 +708,50 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
+			$periodico = $args[0]->params["contextName"];
+
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
+			$titulo = $publication->getLocalizedTitle($locale);
+
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$primaryContact = $authorDao->getById($publication->getData('primaryContactId'));
+
+			$autorCorrespondencia = $primaryContact->getLocalizedGivenName($locale) ." ". $primaryContact->getLocalizedFamilyName($locale);
+			$authors = $publication->getData('authors');
+			foreach($authors as $author) {
+				if($publication->getData('primaryContactId') <> $author->getData('id')){
+					$coAutores[] = $author->getLocalizedFamilyName($locale);
+				}
+			}
+
+			$timestamp = strtotime('today');
+			$dateFormatLong = Config::getVar('general', 'date_format_long');
+			$dateFormatLong = strftime($dateFormatLong, $timestamp);
+
+			$strings = ['[AUTOR_CORRESPONDENCIA]','[PERIODICO]','[CO_AUTORES]','[TITULO]','[DATA]'];
+			$replaces = [$autorCorrespondencia,$periodico,implode(',',$coAutores),$titulo,$dateFormatLong];
+
+			$tempId = rand(10,100);
+
+			import('lib.pkp.classes.file.TemporaryFileManager');
+			$temporaryFileManager = new TemporaryFileManager();
+			$temporaryBasePath = $temporaryFileManager->getBasePath();
+
+			$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_aprovacao.odt', $temporaryBasePath.$tempId.'.odt', $strings, $replaces);
+
+			$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+			$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+			$converter->convertTo('declaracao_aprovacao'.$tempId.'.pdf');
+
+			import('lib.pkp.classes.file.FileManager');
+			$fileManager = new FileManager();
+			$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+			$args[0]->AddAttachment($temporaryBasePath.'declaracao_aprovacao'.$tempId.'.pdf', 'declaracao_aprovacao'.$tempId.'.pdf','application/pdf');
+
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
