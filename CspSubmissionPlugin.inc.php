@@ -842,10 +842,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
 
 			return true;
-		}elseif($args[1] == 'controllers/grid/queries/readQuery.tpl'){
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('readQuery.tpl'));
-
-			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
