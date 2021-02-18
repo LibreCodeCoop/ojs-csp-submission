@@ -1154,7 +1154,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
-			if($stageId <> "3"){ // No estágio de Avaliação, não tem template pré-definido
+			if($stageId <> "3" or $author->getData('id') == $_SESSION["userId"]){ // No estágio de Avaliação, não tem template pré-definido
 				$authorName = $author->getLocalizedGivenName();
 				$submissionTitle = $publication->getLocalizedTitle();
 				$submissionIdCSP = 999;
