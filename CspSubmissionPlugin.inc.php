@@ -1154,38 +1154,40 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
-			$authorName = $author->getLocalizedGivenName();
-			$submissionTitle = $publication->getLocalizedTitle();
-			$submissionIdCSP = 999;
-			$context = $request->getContext();
-			$contextName = $context->getLocalizedName();
+			if($stageId <> "3"){ // No estágio de Avaliação, não tem template pré-definido
+				$authorName = $author->getLocalizedGivenName();
+				$submissionTitle = $publication->getLocalizedTitle();
+				$submissionIdCSP = 999;
+				$context = $request->getContext();
+				$contextName = $context->getLocalizedName();
 
-			$comment = str_replace(
-				[
-					'{$authorName}',
-					'{$submissionTitle}',
-					'{$submissionIdCSP}',
-					'{$contextName}'
-				],
-				[
-					$authorName,
-					$submissionTitle,
-					$submissionIdCSP,
-					$contextName
-				],
-				$templateBody
-			);
+				$comment = str_replace(
+					[
+						'{$authorName}',
+						'{$submissionTitle}',
+						'{$submissionIdCSP}',
+						'{$contextName}'
+					],
+					[
+						$authorName,
+						$submissionTitle,
+						$submissionIdCSP,
+						$contextName
+					],
+					$templateBody
+				);
 
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'message' => json_encode($templateBody),
-				'comment' => reset($comment)
-			));
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign(array(
+					'templates' => $templateSubject,
+					'message' => json_encode($templateBody),
+					'comment' => reset($comment)
+				));
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+				return true;
 
-			return true;
+			}
 
 		}elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
 
