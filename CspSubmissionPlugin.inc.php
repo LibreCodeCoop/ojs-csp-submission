@@ -1436,7 +1436,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
 				WHERE locale = ? AND entry_key LIKE ?',
-				array((string)$locale, (string)'EDITORACAO_DIAGRM_PDF_PUBL%')
+				array((string)$locale, (string)'EDITORACAO_DIAGRM%')
 			);
 
 			while (!$result->EOF) {
