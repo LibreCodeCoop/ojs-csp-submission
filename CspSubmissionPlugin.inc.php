@@ -541,7 +541,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 					while (!$result->EOF) {
 						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
 						$mail->addRecipient($result->GetRowAssoc(0)['email']);
-						$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupPadronizador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+						$indexUrl = $request->getIndexUrl();
+						$contextPath = $request->getRequestedContextPath();
+						$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+													"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+													"submissionId=$submissionId".
+													"&userGroupId=$userGroupPadronizador".
+													"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+													"&stageId=5&accept=1";
 						if (!$mail->send()) {
 							import('classes.notification.NotificationManager');
 							$notificationMgr = new NotificationManager();
@@ -2360,7 +2367,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('PRODUCAO_XML');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$indexUrl = $request->getIndexUrl();
+					$contextPath = $request->getRequestedContextPath();
+					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+												"submissionId=$submissionId".
+												"&userGroupId=$userGroupEditorXML".
+												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2390,7 +2404,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupDiagramador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$indexUrl = $request->getIndexUrl();
+					$contextPath = $request->getRequestedContextPath();
+					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+												"submissionId=$submissionId".
+												"&userGroupId=$userGroupDiagramador".
+												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2449,7 +2470,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorFigura&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$indexUrl = $request->getIndexUrl();
+					$contextPath = $request->getRequestedContextPath();
+					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+												"submissionId=$submissionId".
+												"&userGroupId=$userGroupEditorFigura".
+												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
