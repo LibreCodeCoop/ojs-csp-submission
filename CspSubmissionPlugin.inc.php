@@ -919,10 +919,42 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
 
-			$request = \Application::get()->getRequest();
+			$locale = AppLocale::getLocale();
 			$submissionDAO = Application::getSubmissionDAO();
-			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
-			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
+			$submission = $submissionDAO->getById($submissionId);
+			$submissionIdCsp = $submission->getData('codigoArtigo');
+			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
+			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
+			$templateBody['REVIEW_REQUEST_ONECLICK'] = $mail->_data["body"];
+			$publication = $submission->getCurrentPublication();
+			$submissionTitle = $publication->getLocalizedTitle($locale);
+			$submissionAbstract = $submission->getLocalizedAbstract($locale);
+			$context = $request->getContext();
+			$contextName = $context->getLocalizedName();
+			$section = $submission->getSectionTitle();
+
+			$templateBody = str_replace(
+				[
+					'{$submissionIdCSP}',
+					'{$submissionTitle}',
+					'{$contextName}',
+					'{$submissionAbstract}'
+				],
+				[
+					$submissionIdCSP,
+					$submissionTitle,
+					$contextName,
+					$submissionAbstract
+				],
+				$templateBody
+			);
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $templateSubject,
+				'personalMessage' => reset($templateBody)
+			));
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
 			return true;
