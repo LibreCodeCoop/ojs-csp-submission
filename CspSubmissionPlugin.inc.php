@@ -1237,9 +1237,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
 			$tplvars = $templateMgr->getFBV();
 			$locale = AppLocale::getLocale();
-
 			$genreId = $tplvars->_form->_submissionFile->_data["genreId"];
-			if($genreId == 47){ // SEM PRE-DEFINIÇÃO DE GÊNERO
+
+			// Id do tipo de arquivo "Outros"
+			$genreDao = \DAORegistry::getDAO('GenreDAO');
+			$request = \Application::get()->getRequest();
+			$context = $request->getContext();
+			$contextId = $context->getData('id');
+			$genre = $genreDao->getByKey('OTHER', $contextId);
+
+			if($genreId == $genre->getData('id')){
 
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$tplvars->_form->_submissionFile->_data["originalFileName"];
 
@@ -2527,7 +2534,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 			break;
 			case '':
-				$args[0]->setData('genreId',47);
+				$genreDao = \DAORegistry::getDAO('GenreDAO');
+				$request = \Application::get()->getRequest();
+				$context = $request->getContext();
+				$contextId = $context->getData('id');
+				$genre = $genreDao->getByKey('OTHER', $contextId);
+				$genreId = $genre->getData('id');
+				$args[0]->setData('genreId',$genreId);
 				$args[1] = true;
 			break;
 			case '68': // Fluxograma
