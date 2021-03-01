@@ -2094,7 +2094,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (!in_array($_FILES['uploadedFile']['type'],
 				['application/msword', 'application/wps-office.doc', /*Doc*/
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
-				'application/vnd.oasis.opendocument.text'] /*odt*/
+				'application/vnd.oasis.opendocument.text', /*odt*/
+				'application/rtf'] /*rtf*/
 				)) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody')
