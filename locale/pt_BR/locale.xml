@@ -54,7 +54,7 @@
   <message key="plugins.generic.CspSubmission.SectionFile.invalidFormat.Mapa">Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .eps, .svg ou .wmf</message>
   <message key="plugins.generic.CspSubmission.SectionFile.invalidFormat.Fotografia">Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .bmp ou .tiff</message>
   <message key="plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF">Formato de arquivo inválido! Este arquivo deve estar no formato PDF.</message>
-  <message key="plugins.generic.CspSubmission.doi">Caso tenha sido colocado em algum local como preprint, favor informar o acesso (DOI ou LINK)</message>
+  <message key="plugins.generic.CspSubmission.doi">Caso tenha sido colocado em algum local como preprint, favor informar o acesso (DOI)</message>
   <message key="plugins.generic.CspSubmission.doi.Valid">DOI inválido</message>
   <message key="plugins.generic.CspSubmission.searchForAuthor">Informe o nome do coautor</message>
   <message key="author.list.count">{$count} autores</message>
