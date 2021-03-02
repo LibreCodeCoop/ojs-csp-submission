@@ -1907,15 +1907,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($sectionId == 4){
 			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
 		}
 
 		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
-
-		if($sectionId == 6){
-			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
-		}
-
 		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
 
 
@@ -2055,9 +2051,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($this->sectionId == 4){
 			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
 			$form->addCheck(new FormValidatorLength($form, 'tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
-		}
-
-		if($this->sectionId == 6){
 			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
 		}
 
