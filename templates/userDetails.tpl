@@ -139,8 +139,8 @@
 			{/fbvFormSection}
 		{/if}
 
-		{fbvFormSection for="affiliation" title="user.affiliation"}
-			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE}
+		{fbvFormSection for="affiliation" title="user.affiliation" required=true}
+			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE required=true}
 		{/fbvFormSection}
 
 		{fbvFormSection for="affiliation2" title="user.affiliation"}
