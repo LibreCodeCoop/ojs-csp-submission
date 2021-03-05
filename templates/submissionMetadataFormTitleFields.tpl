@@ -24,10 +24,11 @@
 	{fbvElement type="text" multilingual=true name="subtitle" id="subtitle" label="common.subtitle.tip" maxlength="70" value=$subtitle readonly=$readOnly}
 {/fbvFormSection}
 
-
+{if $abstractDisplay}
 {fbvFormSection title="common.abstract" for="abstract" required=$abstractsRequired}
 	{if $wordCount}
 		<p class="pkp_help">{translate key="submission.abstract.wordCount.description" wordCount=$wordCount}
 	{/if}
 	{fbvElement type="textarea" multilingual=true name="abstract" id="abstract" value=$abstract rich="extended" readonly=$readOnly wordCount=$wordCount}
 {/fbvFormSection}
+{/if}
