@@ -855,7 +855,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$publication = $submission->getCurrentPublication();
 			$sectionId = $publication->getData('sectionId');
 			$templateMgr->assign('abstractDisplay', true);
-			if($sectionId == 15){ // Comentário
+			if(in_array($sectionId, array(2, 3, 10, 11, 12, 13, 14, 15))){ // Editorial, Perspectivas, Entrevista, Carta, Resenhas, Obituário, Errata, Comentários
 				$templateMgr->assign('keywordsEnabled', false);
 				$templateMgr->assign('keywordsRequired', false);
 				$templateMgr->assign('abstractDisplay', false);
