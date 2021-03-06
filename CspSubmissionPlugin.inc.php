@@ -28,6 +28,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function register($category, $path, $mainContextId = null) {
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success) {
+			HookRegistry::register('userdao::_getbyusername', array($this, 'userdao__getbyusername'));
 
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
@@ -92,6 +93,73 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		}
 		return $success;
+	}
+
+	public function userdao__getbyusername($hookName, $args) {
+		$request = \Application::get()->getRequest();
+		if (!strpos($request->getRequestPath(), 'login/signIn')) {
+			return false;
+		}
+
+		if (empty($args[1][0])) {
+			return false;
+		}
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$result = $userDao->retrieve(
+			<<<QUERY
+			SELECT login AS username,
+			       p.email,
+			       p.telefone AS phone,
+			       p.pais AS country,
+			       p.orcid AS orcid,
+			       CASE WHEN p.idioma = 'pt' THEN 'pt_BR'
+			            WHEN p.idioma = 'in' THEN 'en_US'
+			            WHEN p.idioma = 'es' THEN 'es_ES'
+			        END AS locales,
+			        CASE WHEN 0 THEN 14 -- Autor => Autor
+			             WHEN 1 THEN 16 -- Consultor => Avaliador
+			             WHEN 2 THEN 5 -- Editor Associado => Editor de seção 
+			             WHEN 3 THEN 3 -- Editor Chefe => Editor da revista
+			             WHEN 4 THEN 7 -- Editor Assistente => Editor de texto
+			             WHEN 5 THEN 7 -- Assistente Editorial => Editor de texto
+			             WHEN 6 THEN 1 -- Administrador
+			             WHEN 7 THEN 4 -- Diagramador => Editor de leiaute
+			             WHEN 8 THEN 15 -- Tradutor/Revisor (SAGAAS) => Tradutor
+			             WHEN 9 THEN 1 -- Administrador SAGAAS => Administrador
+			             WHEN 10 THEN 16 -- Consultor => Avaliador
+			             WHEN 11 THEN 2 -- Secretaria Editorial e Diagramador => Gerente de revista
+			         END AS `group`,
+			       p.lattes,
+			       p.sexo,
+			       p.observacao,
+			       p.instituicao1,
+			       p.instituicao2,
+			       p.endereco,
+			       p.cidade,
+			       p.estado,
+			       p.cep
+			  FROM csp.Login l
+			  JOIN csp.Pessoa p ON l.idPessoaFK = p.idPessoa
+			 WHERE l.login = ? AND l.senha = ?
+			QUERY,
+			[$args[1][0], md5($request->getUserVar('password'))]
+		);
+		if (!$result->RowCount()) {
+			return false;
+		}
+		$row = $result->GetRowAssoc(false);
+		$user = $userDao->newDataObject(); /** @var User */
+		$user->setAllData($row);
+		$user->setPassword(\Validation::encryptCredentials(
+			$row['username'],
+			$request->getUserVar('password')
+		));
+		$userDao->insertObject($user);
+
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+		$userGroupDao->assignUserToGroup($user->getId(), $row['group']);
+		$args[2] = $userDao->retrieve($args[0], [$args[1][0]]);
+		return true;
 	}
 
 	public function countStatus($status, $date){
