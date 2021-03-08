@@ -71,7 +71,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			// This hook is used to register the components this plugin implements to
 			// permit administration of custom block plugins.
-			HookRegistry::register('LoadComponentHandler', array($this, 'setupGridHandler'));
+			HookRegistry::register('LoadComponentHandler', array($this, 'LoadComponentHandler'));
 
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
 
@@ -80,6 +80,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 
 			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
+
+			HookRegistry::register('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
 
 			// Hook para adicionar o campo comentário no upload de arquivos
 			HookRegistry::register('submissionfilesmetadataform::readuservars', array($this, 'submissionFilesMetadataReadUserVars'));
@@ -90,7 +92,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Submission::delete', array($this, 'submissionDelete'));
 			// Updates status table when the submission is published
 			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
-
 		}
 		return $success;
 	}
@@ -219,6 +220,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	/**
+	 * Hook to intercept the reviewer grid
+	 * @param $hookName string
+	 * @param $args array
+	 * @return void
+	 */
+	public function reviewergridhandler_initfeatures($hookName, $args)
+	{
+		$returner = &$args[3];
+		import('plugins.generic.cspSubmission.controllers.grid.feature.AddReviewerSagasFeature');
+		$returner[] = new AddReviewerSagasFeature();
+	}
+
+	/**
 	 * Hooked to the the `display` callback in TemplateManager
 	 * @param $hookName string
 	 * @param $args array
@@ -242,6 +256,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateManager->addStyleSheet(
 				'coautor',
 				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
+				array(
+					'contexts' => 'backend',
+					'priority' => STYLE_SEQUENCE_LAST,
+				)
+			);
+		} elseif ($args[1] == "workflow/workflow.tpl") {
+
+			$request =& Registry::get('request');
+			$templateManager =& $args[0];
+
+			// Load JavaScript file
+			$templateManager->addJavaScript(
+				'teste',
+				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
 				array(
 					'contexts' => 'backend',
 					'priority' => STYLE_SEQUENCE_LAST,
@@ -398,10 +426,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @param $hookName string The name of the hook being invoked
 	 * @param $args array The parameters to the invoked hook
 	 */
-	function setupGridHandler($hookName, $params) {
+	function loadComponentHandler($hookName, $params) {
 		$component =& $params[0];
 		$request = \Application::get()->getRequest();
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
+			return true;
+		}
+		if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
+			$component = 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler';
 			return true;
 		}
 		if ($component == 'grid.users.stageParticipant.stageParticipantGrid.SaveParticipantHandler') {
@@ -993,7 +1025,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$locale = AppLocale::getLocale();
 			$submissionDAO = Application::getSubmissionDAO();
-			$submission = $submissionDAO->getById($submissionId);
+
+      $submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
+			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
+			$templateMgr->tpl_vars['reviewerActions']->value[] = 
+				new LinkAction(
+					'consultKfinder',
+					new OpenWindowAction(
+						'http://www.kfinder.com/member-search/login.cgi?medweb=1&data=qhjnK2a9jJgT28s2GQY8YGwvX8XUOvW8W6pvj85npuq8hq&searchstring='.
+						$submission->getTitle(AppLocale::getLocale()).
+						'&dbproduct=MEDLINE&searchlogic=fuzzy&getcount=200&relevance=50&segments=4&getchunk=20&concept_mapping=on&wordvars=on&relevance_sort=on'
+					),
+					__('editor.submission.consultKfinder')
+				);
+
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorName'] = 'reviewerId';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorType'] = 'checkbox';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selected'] = [];
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
+
+      $submission = $submissionDAO->getById($submissionId);
 			$submissionIdCsp = $submission->getData('codigoArtigo');
 			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
 			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
