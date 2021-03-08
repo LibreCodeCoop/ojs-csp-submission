@@ -572,7 +572,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($component == 'api.file.ManageFileApiHandler') {
 			$locale = AppLocale::getLocale();
 			$submissionId = $request->getUserVar('submissionId');
-			$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
+			if (!empty($request->_requestVars["name"][$locale])) {
+				$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
+			} elseif(!empty($request->_requestVars["name"])) {
+				$request->_requestVars["name"] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"];
+			}
 		}
 		return false;
 	}
