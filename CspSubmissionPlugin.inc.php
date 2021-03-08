@@ -28,6 +28,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function register($category, $path, $mainContextId = null) {
 		$success = parent::register($category, $path, $mainContextId);
 		if ($success) {
+			HookRegistry::register('userdao::_getbyusername', array($this, 'userdao__getbyusername'));
 
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
@@ -95,12 +96,126 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return $success;
 	}
 
+	public function userdao__getbyusername($hookName, $args) {
+		$request = \Application::get()->getRequest();
+		if (!strpos($request->getRequestPath(), 'login/signIn')) {
+			return false;
+		}
+
+		if (empty($args[1][0])) {
+			return false;
+		}
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$result = $userDao->retrieve(
+			<<<QUERY
+			SELECT login AS username,
+			       p.email,
+			       p.telefone AS phone,
+			       p.pais AS country,
+			       p.orcid AS orcid,
+			       CASE WHEN p.idioma = 'pt' THEN 'pt_BR'
+			            WHEN p.idioma = 'in' THEN 'en_US'
+			            WHEN p.idioma = 'es' THEN 'es_ES'
+			        END AS locales,
+			        CASE WHEN 0 THEN 14 -- Autor => Autor
+			             WHEN 1 THEN 16 -- Consultor => Avaliador
+			             WHEN 2 THEN 5 -- Editor Associado => Editor de seção 
+			             WHEN 3 THEN 3 -- Editor Chefe => Editor da revista
+			             WHEN 4 THEN 7 -- Editor Assistente => Editor de texto
+			             WHEN 5 THEN 7 -- Assistente Editorial => Editor de texto
+			             WHEN 6 THEN 1 -- Administrador
+			             WHEN 7 THEN 4 -- Diagramador => Editor de leiaute
+			             WHEN 8 THEN 15 -- Tradutor/Revisor (SAGAAS) => Tradutor
+			             WHEN 9 THEN 1 -- Administrador SAGAAS => Administrador
+			             WHEN 10 THEN 16 -- Consultor => Avaliador
+			             WHEN 11 THEN 2 -- Secretaria Editorial e Diagramador => Gerente de revista
+			         END AS `group`,
+			       p.lattes,
+			       p.sexo,
+			       p.observacao,
+			       p.instituicao1,
+			       p.instituicao2,
+			       p.endereco,
+			       p.cidade,
+			       p.estado,
+			       p.cep
+			  FROM csp.Login l
+			  JOIN csp.Pessoa p ON l.idPessoaFK = p.idPessoa
+			 WHERE l.login = ? AND l.senha = ?
+			QUERY,
+			[$args[1][0], md5($request->getUserVar('password'))]
+		);
+		if (!$result->RowCount()) {
+			return false;
+		}
+		$row = $result->GetRowAssoc(false);
+		$user = $userDao->newDataObject(); /** @var User */
+		$user->setAllData($row);
+		$user->setPassword(\Validation::encryptCredentials(
+			$row['username'],
+			$request->getUserVar('password')
+		));
+		$userDao->insertObject($user);
+
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+		$userGroupDao->assignUserToGroup($user->getId(), $row['group']);
+		$args[2] = $userDao->retrieve($args[0], [$args[1][0]]);
+		return true;
+	}
+
 	public function countStatus($status, $date){
 
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = $userDao->retrieve('SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = ? and date_status <= ?', array((string) $status,(string) $date));
 		$count = $result->GetRowAssoc(false);
 		return $count["contador"];
+
+	}
+
+	function replace_string_odt_file($extractFolder, $inputFile, $zipOutputFile, $string, $replaces) {
+
+		$zip = new ZipArchive;
+		if ($zip->open($inputFile) === true) {
+			$zip->extractTo($extractFolder);
+			$zip->close();
+		}
+
+		$source = file_get_contents($extractFolder.'/content.xml');
+		$source = str_replace($string,$replaces,$source);
+		file_put_contents($extractFolder.'/content.xml', $source);
+
+		if (!extension_loaded('zip') || !file_exists($extractFolder)) {
+			return false;
+		}
+
+		if (!$zip->open($zipOutputFile, ZIPARCHIVE::CREATE)) {
+			return false;
+		}
+
+		if (is_dir($extractFolder) === true) {
+			$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($extractFolder), RecursiveIteratorIterator::SELF_FIRST);
+
+			foreach ($files as $file) {
+				$file = str_replace('\\', DIRECTORY_SEPARATOR, $file);
+
+				if (in_array(substr($file, strrpos($file, '/')+1), array('.', '..'))) {
+					continue;
+				}
+
+				if (is_dir($file) === true) {
+					$dirName = str_replace($extractFolder.DIRECTORY_SEPARATOR, '', $file.DIRECTORY_SEPARATOR);
+					$zip->addEmptyDir($dirName);
+				}
+				else if (is_file($file) === true) {
+					$fileName = str_replace($extractFolder.DIRECTORY_SEPARATOR, '', $file);
+					$zip->addFromString($fileName, file_get_contents($file));
+				}
+			}
+		}
+		else if (is_file($extractFolder) === true) {
+			$zip->addFromString(basename($extractFolder), file_get_contents($extractFolder));
+		}
+		return $zip->close();
 
 	}
 
@@ -526,7 +641,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 					while (!$result->EOF) {
 						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
 						$mail->addRecipient($result->GetRowAssoc(0)['email']);
-						$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupPadronizador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+						$indexUrl = $request->getIndexUrl();
+						$contextPath = $request->getRequestedContextPath();
+						$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+													"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+													"submissionId=$submissionId".
+													"&userGroupId=$userGroupPadronizador".
+													"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+													"&stageId=5&accept=1";
 						if (!$mail->send()) {
 							import('classes.notification.NotificationManager');
 							$notificationMgr = new NotificationManager();
@@ -550,7 +672,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($component == 'api.file.ManageFileApiHandler') {
 			$locale = AppLocale::getLocale();
 			$submissionId = $request->getUserVar('submissionId');
-			$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
+			if (!empty($request->_requestVars["name"][$locale])) {
+				$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
+			} elseif(!empty($request->_requestVars["name"])) {
+				$request->_requestVars["name"] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"];
+			}
 		}
 		return false;
 	}
@@ -645,17 +771,98 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 
-		if($request->_router->_page == "reviewer"){ 
-			if($request->_requestVars["step"] == 1){
+		if($request->getRequestedPage() == "reviewer"){
+			if($request->getUserVar('step') == 1){
 				return true;
 			}
-			if($request->_requestVars["step"] == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
+			if($request->getUserVar('step') == 3){ // Editoras chefe não recebem email de notificação quando é submetida uma nova avaliaçao
 				return true;
 			}
+			if($request->getUserVar('step') == 4){
 
+				$path = $request->getRequestPath();
+				$pathItens = explode('/', $path);
+				$submissionId = $pathItens[6];
+				$submissionDAO = Application::getSubmissionDAO();
+				$submission = $submissionDAO->getById($submissionId);
+				$submissionIdCsp = $submission->getData('codigoArtigo');
+
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$reviewer = $userDao->getUserByEmail($args[0]->_data["from"]["email"]);
+				$reviewerName = $reviewer->getLocalizedGivenName();
+				$tempId = rand(10,100);
+
+				import('lib.pkp.classes.file.TemporaryFileManager');
+				$temporaryFileManager = new TemporaryFileManager();
+				$temporaryBasePath = $temporaryFileManager->getBasePath();
+
+				$date = getDate();
+				$timestamp = strtotime('today');
+				$dateFormatLong = Config::getVar('general', 'date_format_long');
+				$dateFormatLong = strftime($dateFormatLong, $timestamp);
+
+				$strings = ['[NOME]','[IDARTIGO]','[ANO]','[DATA]'];
+				$replaces = [$reviewerName,$submissionIdCsp,$date['year'],$dateFormatLong];
+
+				$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_parecer.odt', $temporaryBasePath.$tempId.'.odt', $strings, $replaces);
+				$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+				$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+				$converter->convertTo('declaracao_parecer'.$tempId.'.pdf');
+
+				import('lib.pkp.classes.file.FileManager');
+				$fileManager = new FileManager();
+				$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+				$args[0]->AddAttachment($temporaryBasePath.'declaracao_parecer'.$tempId.'.pdf', 'declaracao_parecer'.$tempId.'.pdf','application/pdf');
+			}
 		}
 
 		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
+			$periodico = $args[0]->params["contextName"];
+
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
+			$titulo = $publication->getLocalizedTitle($locale);
+
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$primaryContact = $authorDao->getById($publication->getData('primaryContactId'));
+
+			$autorCorrespondencia = $primaryContact->getLocalizedGivenName($locale) ." ". $primaryContact->getLocalizedFamilyName($locale);
+			$authors = $publication->getData('authors');
+			foreach($authors as $author) {
+				if($publication->getData('primaryContactId') <> $author->getData('id')){
+					$coAutores[] = $author->getLocalizedFamilyName($locale);
+				}
+			}
+
+			$timestamp = strtotime('today');
+			$dateFormatLong = Config::getVar('general', 'date_format_long');
+			$dateFormatLong = strftime($dateFormatLong, $timestamp);
+
+			$strings = ['[AUTOR_CORRESPONDENCIA]','[PERIODICO]','[CO_AUTORES]','[TITULO]','[DATA]'];
+			$replaces = [$autorCorrespondencia,$periodico,implode(',',$coAutores),$titulo,$dateFormatLong];
+
+			$tempId = rand(10,100);
+
+			import('lib.pkp.classes.file.TemporaryFileManager');
+			$temporaryFileManager = new TemporaryFileManager();
+			$temporaryBasePath = $temporaryFileManager->getBasePath();
+
+			$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/declaracao_aprovacao.odt', $temporaryBasePath.$tempId.'.odt', $strings, $replaces);
+
+			$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+			$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+			$converter->convertTo('declaracao_aprovacao'.$tempId.'.pdf');
+
+			import('lib.pkp.classes.file.FileManager');
+			$fileManager = new FileManager();
+			$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+			$args[0]->AddAttachment($temporaryBasePath.'declaracao_aprovacao'.$tempId.'.pdf', 'declaracao_aprovacao'.$tempId.'.pdf','application/pdf');
+
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
@@ -663,6 +870,49 @@ class CspSubmissionPlugin extends GenericPlugin {
 			);
 		}
 		if($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")){  // É enviado email de prova de prelo
+			$periodico = $args[0]->params["contextName"];
+
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
+			$titulo = $publication->getLocalizedTitle($locale);
+
+			$authorDao = DAORegistry::getDAO('AuthorDAO');
+			$primaryContact = $authorDao->getById($publication->getData('primaryContactId'));
+			$autorCorrespondencia = $primaryContact->getLocalizedGivenName($locale) ." ". $primaryContact->getLocalizedFamilyName($locale);
+			$authors = $publication->getData('authors');
+			foreach($authors as $author) {
+					$autores[] = $author->getLocalizedFamilyName($locale);
+			}
+
+			$timestamp = strtotime('today');
+			$dateFormatLong = Config::getVar('general', 'date_format_long');
+			$dateFormatLong = strftime($dateFormatLong, $timestamp);
+
+			$strings = ['[AUTOR_CORRESPONDENCIA]','[PERIODICO]','[AUTORES]','[TITULO]','[DATA]'];
+			$replaces = [$autorCorrespondencia,$periodico,implode(',',$autores),$titulo,$dateFormatLong];
+
+			$tempId = rand(10,100);
+
+			import('lib.pkp.classes.file.TemporaryFileManager');
+			$temporaryFileManager = new TemporaryFileManager();
+			$temporaryBasePath = $temporaryFileManager->getBasePath();
+
+			$this->replace_string_odt_file($temporaryBasePath.$tempId, 'files/usageStats/declaracoes/aprovacao_prova_prelo.odt', $temporaryBasePath.$tempId.'.odt', $strings, $replaces);
+
+			$temporaryFileManager->rmtree($temporaryBasePath.$tempId);
+
+			$converter = new NcJoes\OfficeConverter\OfficeConverter($temporaryBasePath.$tempId.'.odt');
+			$converter->convertTo('aprovacao_prova_prelo'.$tempId.'.pdf');
+
+			import('lib.pkp.classes.file.FileManager');
+			$fileManager = new FileManager();
+			$fileManager->deleteByPath($temporaryBasePath.$tempId.'.odt');
+
+			$args[0]->AddAttachment($temporaryBasePath.'aprovacao_prova_prelo'.$tempId.'.pdf', 'aprovacao_prova_prelo'.$tempId.'.pdf','application/pdf');
+			$args[0]->AddAttachment('files/usageStats/declaracoes/cessao_direitos_autorais.pdf', 'cessao_direitos_autorais.pdf','application/pdf');
+			$args[0]->AddAttachment('files/usageStats/declaracoes/termos_condicoes.pdf', 'termos_condicoes.pdf','application/pdf');
+
 			$now = date('Y-m-d H:i:s');
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
@@ -701,10 +951,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
-
-			return true;
-		}elseif($args[1] == 'controllers/grid/queries/readQuery.tpl'){
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('readQuery.tpl'));
 
 			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
@@ -777,9 +1023,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/advancedSearchReviewerForm.tpl') {
 
-			$request = \Application::get()->getRequest();
+			$locale = AppLocale::getLocale();
 			$submissionDAO = Application::getSubmissionDAO();
-			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+
+      $submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
 			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
 			$templateMgr->tpl_vars['reviewerActions']->value[] = 
@@ -798,6 +1045,41 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selected'] = [];
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
+
+      $submission = $submissionDAO->getById($submissionId);
+			$submissionIdCsp = $submission->getData('codigoArtigo');
+			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
+			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
+			$templateBody['REVIEW_REQUEST_ONECLICK'] = $mail->_data["body"];
+			$publication = $submission->getCurrentPublication();
+			$submissionTitle = $publication->getLocalizedTitle($locale);
+			$submissionAbstract = $submission->getLocalizedAbstract($locale);
+			$context = $request->getContext();
+			$contextName = $context->getLocalizedName();
+			$section = $submission->getSectionTitle();
+
+			$templateBody = str_replace(
+				[
+					'{$submissionIdCSP}',
+					'{$submissionTitle}',
+					'{$contextName}',
+					'{$submissionAbstract}'
+				],
+				[
+					$submissionIdCSP,
+					$submissionTitle,
+					$contextName,
+					$submissionAbstract
+				],
+				$templateBody
+			);
+
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->assign(array(
+				'templates' => $templateSubject,
+				'personalMessage' => reset($templateBody)
+			));
+
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('advancedSearchReviewerForm.tpl'));
 
 			return true;
@@ -1036,38 +1318,40 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			}
 
-			$authorName = $author->getLocalizedGivenName();
-			$submissionTitle = $publication->getLocalizedTitle();
-			$submissionIdCSP = 999;
-			$context = $request->getContext();
-			$contextName = $context->getLocalizedName();
+			if($stageId <> "3" or $author->getData('id') == $_SESSION["userId"]){ // No estágio de Avaliação, não tem template pré-definido
+				$authorName = $author->getLocalizedGivenName();
+				$submissionTitle = $publication->getLocalizedTitle();
+				$submissionIdCSP = 999;
+				$context = $request->getContext();
+				$contextName = $context->getLocalizedName();
 
-			$comment = str_replace(
-				[
-					'{$authorName}',
-					'{$submissionTitle}',
-					'{$submissionIdCSP}',
-					'{$contextName}'
-				],
-				[
-					$authorName,
-					$submissionTitle,
-					$submissionIdCSP,
-					$contextName
-				],
-				$templateBody
-			);
+				$comment = str_replace(
+					[
+						'{$authorName}',
+						'{$submissionTitle}',
+						'{$submissionIdCSP}',
+						'{$contextName}'
+					],
+					[
+						$authorName,
+						$submissionTitle,
+						$submissionIdCSP,
+						$contextName
+					],
+					$templateBody
+				);
 
-			$templateMgr = TemplateManager::getManager($request);
-			$templateMgr->assign(array(
-				'templates' => $templateSubject,
-				'message' => json_encode($templateBody),
-				'comment' => reset($comment)
-			));
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign(array(
+					'templates' => $templateSubject,
+					'message' => json_encode($templateBody),
+					'comment' => reset($comment)
+				));
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
 
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('queryForm.tpl'));
+				return true;
 
-			return true;
+			}
 
 		}elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
 
@@ -1078,9 +1362,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
 			$tplvars = $templateMgr->getFBV();
 			$locale = AppLocale::getLocale();
-
 			$genreId = $tplvars->_form->_submissionFile->_data["genreId"];
-			if($genreId == 47){ // SEM PRE-DEFINIÇÃO DE GÊNERO
+
+			// Id do tipo de arquivo "Outros"
+			$genreDao = \DAORegistry::getDAO('GenreDAO');
+			$request = \Application::get()->getRequest();
+			$context = $request->getContext();
+			$contextId = $context->getData('id');
+			$genre = $genreDao->getByKey('OTHER', $contextId);
+
+			if($genreId == $genre->getData('id')){
 
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$tplvars->_form->_submissionFile->_data["originalFileName"];
 
@@ -1309,7 +1600,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				LEFT JOIN genres B
 				ON B.genre_id = A.genre_id
 				WHERE locale = ? AND entry_key LIKE ?',
-				array((string)$locale, (string)'EDITORACAO_DIAGRM_PDF_PUBL%')
+				array((string)$locale, (string)'EDITORACAO_DIAGRM%')
 			);
 
 			while (!$result->EOF) {
@@ -1763,7 +2054,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'codigoTematico';
 		$userVars[] = 'tema';
 		$userVars[] = 'codigoArtigoRelacionado';
-		$userVars[] = 'CodigoArtigo';
+		$userVars[] = 'codigoArtigo';
 
 		return false;
 	}
@@ -1821,7 +2112,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			WHERE YEAR(date_submitted) = YEAR(now())
 			QUERY
 		);
-		$article->setData('CodigoArtigo', $result->GetRowAssoc(false)['code']);
+		$article->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
 
 		$now = date('Y-m-d H:i:s');
 		$submissionId = $article->getData('id');
@@ -1855,6 +2146,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
 		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
 		$form->setData('tema', $article->getData('tema'));
+		$form->setData('codigoArtigo', $article->getData('codigoArtigo'));
 
 		return false;
 	}
@@ -1882,6 +2174,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * Add check/validation for the Campo1 field (= 6 numbers)
 	 */
 	function addCheck($hookName, $params) {
+
 		$form =& $params[0];
 
 		if($this->sectionId == 4){
@@ -2238,7 +2531,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('PRODUCAO_XML');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorXML&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$indexUrl = $request->getIndexUrl();
+					$contextPath = $request->getRequestedContextPath();
+					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+												"submissionId=$submissionId".
+												"&userGroupId=$userGroupEditorXML".
+												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2268,7 +2568,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupDiagramador&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$indexUrl = $request->getIndexUrl();
+					$contextPath = $request->getRequestedContextPath();
+					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+												"submissionId=$submissionId".
+												"&userGroupId=$userGroupDiagramador".
+												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2327,7 +2634,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				while (!$result->EOF) {
 					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
 					$mail->addRecipient($result->GetRowAssoc(0)['email']);
-					$mail->params["acceptLink"] = $request->_router->_indexUrl."/".$request->_router->_contextPaths[0]."/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?submissionId=$submissionId&userGroupId=$userGroupEditorFigura&userIdSelected=".$result->GetRowAssoc(0)['user_id']."&stageId=5&accept=1";
+					$indexUrl = $request->getIndexUrl();
+					$contextPath = $request->getRequestedContextPath();
+					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
+												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
+												"submissionId=$submissionId".
+												"&userGroupId=$userGroupEditorFigura".
+												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2345,7 +2659,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 			break;
 			case '':
-				$args[0]->setData('genreId',47);
+				$genreDao = \DAORegistry::getDAO('GenreDAO');
+				$request = \Application::get()->getRequest();
+				$context = $request->getContext();
+				$contextId = $context->getData('id');
+				$genre = $genreDao->getByKey('OTHER', $contextId);
+				$genreId = $genre->getData('id');
+				$args[0]->setData('genreId',$genreId);
 				$args[1] = true;
 			break;
 			case '68': // Fluxograma
@@ -2467,7 +2787,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					<<<QUERY
 					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
 					FROM submission_settings
-					WHERE setting_name = 'CodigoArtigo' AND submission_id = ?
+					WHERE setting_name = 'codigoArtigo' AND submission_id = ?
 					QUERY,
 					[$matches['id']]
 				);
