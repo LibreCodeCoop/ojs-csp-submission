@@ -112,11 +112,12 @@
 {capture assign="extraContent"}
 	{fbvFormArea id="userFormExtendedLeft"}
 		{fbvFormSection}
-			{fbvElement type="text" label="user.url" name="userUrl" id="userUrl" value=$userUrl maxlength="255" inline=true size=$fbvStyles.size.SMALL}
 			{if !$disablePhoneSection}
 				{fbvElement type="text" label="user.phone" name="phone" id="phone" value=$phone maxlength="24" inline=true size=$fbvStyles.size.SMALL}
 			{/if}
-			{fbvElement type="text" label="user.orcid" name="orcid" id="orcid" value=$orcid maxlength="37" inline=true size=$fbvStyles.size.SMALL}
+		{/fbvFormSection}
+		{fbvFormSection for="orcid" title="user.orcid"}
+			{fbvElement type="text" name="orcid" id="orcid" value=$orcid inline=true size=$fbvStyles.size.MEDIUM}
 		{/fbvFormSection}
 
 		{if !$disableLocaleSection && count($availableLocales) > 1}
@@ -138,8 +139,8 @@
 			{/fbvFormSection}
 		{/if}
 
-		{fbvFormSection for="affiliation" title="user.affiliation"}
-			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE}
+		{fbvFormSection for="affiliation" title="user.affiliation" required=true}
+			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE required=true}
 		{/fbvFormSection}
 
 		{fbvFormSection for="affiliation2" title="user.affiliation"}
@@ -163,9 +164,7 @@
 
 {fbvFormSection}
 	{if $extraContentSectionUnfolded}
-		{fbvFormSection title="grid.user.userDetails"}
-			{$extraContent}
-		{/fbvFormSection}
+		{$extraContent}
 	{else}
 		<div id="userExtraFormFields" class="left full">
 			{include file="controllers/extrasOnDemand.tpl"

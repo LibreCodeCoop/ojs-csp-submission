@@ -67,7 +67,7 @@
 		{/if}
 		{if $keywordsEnabled}
 			{fbvFormSection label="common.keywords" required=$keywordsRequired}
-				{fbvElement type="keyword" id="keywords" label="plugins.generic.CspSubmission.keywords.tip" multilingual=true current=$keywords disabled=$readOnly}
+				{fbvElement type="keyword" id="keywords" label="plugins.generic.CspSubmission.keywords.tip" multilingual=true current=$keywords disabled=$readOnly required=$keywordsRequired}
 			{/fbvFormSection}
 		{/if}
 		{if $agenciesEnabled}
