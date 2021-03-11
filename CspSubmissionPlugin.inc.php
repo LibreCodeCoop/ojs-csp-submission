@@ -953,6 +953,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
 
 			return true;
+		} elseif ($args[1] == 'controllers/grid/gridRow.tpl') {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridRow.tpl'));
+
+			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($submissionId);
