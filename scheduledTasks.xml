@@ -15,4 +15,10 @@
         <descr>Send declined submissions emails.</descr>
         <frequency hour="3"/>
     </task>
+    <task class="plugins.generic.cspSubmission.ReviewQuewe">
+        <descr>Process reviewer queue.</descr>
+        <frequency hour="0"/>
+        <frequency minute="30"/>
+        <arg>5</arg>
+    </task>
 </scheduled_tasks>
