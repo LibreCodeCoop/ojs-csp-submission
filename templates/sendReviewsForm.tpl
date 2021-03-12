@@ -43,7 +43,7 @@
 			{fbvElement type="textarea" name="personalMessage" id="personalMessage" value=$personalMessage rich=true variables=$allowedVariables variablesType=$allowedVariablesType}
 		{/fbvFormSection}
 
-		{* Button to add reviews to the email automatically *}
+		{* Button to add reviews to the email automatically
 		{if $reviewsAvailable}
 			{fbvFormSection}
 				<a id="importPeerReviews" href="#" class="pkp_button">
@@ -52,6 +52,7 @@
 				</a>
 			{/fbvFormSection}
 		{/if}
+		*}
 	</div>
 
 	{** Some decisions can be made before review is initiated (i.e. no attachments). **}

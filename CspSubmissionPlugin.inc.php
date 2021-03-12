@@ -946,6 +946,96 @@ class CspSubmissionPlugin extends GenericPlugin {
 		import('lib.pkp.classes.mail.MailTemplate');
 
 		if ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
+			// Retrieve peer reviews.
+			$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
+			$submissionCommentDao = DAORegistry::getDAO('SubmissionCommentDAO'); /* @var $submissionCommentDao SubmissionCommentDAO */
+			$reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO'); /* @var $reviewFormResponseDao ReviewFormResponseDAO */
+			$reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO'); /* @var $reviewFormElementDao ReviewFormElementDAO */
+
+			$reviewAssignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $request->getUserVar('reviewRoundId'));
+			$reviewIndexes = $reviewAssignmentDao->getReviewIndexesForRound($submissionId, $request->getUserVar('reviewRoundId'));
+			AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION);
+
+			$body = '';
+			$textSeparator = '------------------------------------------------------';
+			foreach ($reviewAssignments as $reviewAssignment) {
+				// If the reviewer has completed the assignment, then import the review.
+				if ($reviewAssignment->getDateCompleted() != null && $reviewAssignment->getUnconsidered() != 1) {
+					// Get the comments associated with this review assignment
+					$submissionComments = $submissionCommentDao->getSubmissionComments($submissionId, COMMENT_TYPE_PEER_REVIEW, $reviewAssignment->getId());
+
+					$body .= "<br><br>$textSeparator<br>";
+					// If it is an open review, show reviewer's name.
+					if ($reviewAssignment->getReviewMethod() == SUBMISSION_REVIEW_METHOD_OPEN) {
+						$body .= $reviewAssignment->getReviewerFullName() . "<br>\n";
+					} else {
+						$body .= __('submission.comments.importPeerReviews.reviewerLetter', array('reviewerLetter' => PKPString::enumerateAlphabetically($reviewIndexes[$reviewAssignment->getId()]))) . "<br>\n";
+					}
+
+					while ($comment = $submissionComments->next()) {
+						// If the comment is viewable by the author, then add the comment.
+						if ($comment->getViewable()) {
+							$body .= PKPString::stripUnsafeHtml($comment->getComments());
+						}
+					}
+
+					// Add reviewer recommendation
+					$recommendation = $reviewAssignment->getLocalizedRecommendation();
+					$body .= __('submission.recommendation', array('recommendation' => $recommendation)) . "<br>\n";
+
+					$body .= "<br>$textSeparator<br><br>";
+
+					if ($reviewFormId = $reviewAssignment->getReviewFormId()) {
+						$reviewId = $reviewAssignment->getId();
+
+
+						$reviewFormElements = $reviewFormElementDao->getByReviewFormId($reviewFormId);
+						if(!$submissionComments) {
+							$body .= "$textSeparator<br>";
+
+							$body .= __('submission.comments.importPeerReviews.reviewerLetter', array('reviewerLetter' => PKPString::enumerateAlphabetically($reviewIndexes[$reviewAssignment->getId()]))) . '<br><br>';
+						}
+						while ($reviewFormElement = $reviewFormElements->next()) {
+							if (!$reviewFormElement->getIncluded()) continue;
+
+							$body .= PKPString::stripUnsafeHtml($reviewFormElement->getLocalizedQuestion());
+							$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
+
+							if ($reviewFormResponse) {
+								$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
+								// See issue #2437.
+								if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES, REVIEW_FORM_ELEMENT_TYPE_RADIO_BUTTONS))) {
+									ksort($possibleResponses);
+									$possibleResponses = array_values($possibleResponses);
+								}
+								if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
+									if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
+										$body .= '<ul>';
+										foreach ($reviewFormResponse->getValue() as $value) {
+											$body .= '<li>' . PKPString::stripUnsafeHtml($possibleResponses[$value]) . '</li>';
+										}
+										$body .= '</ul>';
+									} else {
+										$body .= '<blockquote>' . PKPString::stripUnsafeHtml($possibleResponses[$reviewFormResponse->getValue()]) . '</blockquote>';
+									}
+									$body .= '<br>';
+								} else {
+									$body .= '<blockquote>' . nl2br(htmlspecialchars($reviewFormResponse->getValue())) . '</blockquote>';
+								}
+							}
+
+						}
+						$body .= "$textSeparator<br><br>";
+
+					}
+				}
+			}
+
+			import('lib.pkp.classes.mail.MailTemplate');
+			$mail = new MailTemplate('EDITOR_DECISION_RESUBMIT');
+			$mail->getData('body');
+
+			$templateMgr->assign('personalMessage', $mail->getData('body').$body);
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
 
 			return true;
