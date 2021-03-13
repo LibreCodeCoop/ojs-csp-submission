@@ -62,6 +62,27 @@ class ReviewQuewe extends ScheduledTask
 
     private function proccessQueue()
     {
+        $totalReviewers = $this->countAvailableReviewers();
+        $queue = $this->getQueue();
+        if ($totalReviewers < $this->args[2] && count($queue)) {
+
+        }
+    }
+
+    private function getQueue()
+    {
+        $result = $this->reviewAssignmentDao->retrieve(
+            <<<SQL
+            SELECT *
+              FROM reviewer_queue
+             ORDER BY created_at
+            SQL
+        );
+        $return = [];
+        foreach($result as $row) {
+            $return[] = $row;
+        }
+        return $return;
     }
 
     /**
