@@ -4,10 +4,13 @@ import('lib.pkp.classes.scheduledTask.ScheduledTask');
 
 class ReviewQuewe extends ScheduledTask
 {
+    /** @var array */
+    protected $args = [];
     /**@var $reviewAssignmentDao ReviewAssignmentDAO */
     private $reviewAssignmentDao;
     public function __construct($args)
     {
+        $this->args = $args;
         parent::__construct($args);
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
     }
