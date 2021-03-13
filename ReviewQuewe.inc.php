@@ -64,6 +64,27 @@ class ReviewQuewe extends ScheduledTask
     {
     }
 
+    /**
+     * Count available reviewers
+     *
+     * @return int
+     */
+    public function countAvailableReviewers()
+    {
+        $result = $this->reviewAssignmentDao->retrieve(
+            <<<SQL
+            SELECT *
+              FROM review_assignments
+             WHERE declined = 0
+               AND cancelled = 0
+               AND date_completed IS NULL
+            SQL
+        );
+        $returner = isset($result->fields[0]) ? $result->fields[0] : 0;
+        $result->Close();
+        return $returner;
+    }
+
     private function unasign(ReviewAssignment $reviewAssignment)
     {
         $reviewRoundId = $reviewAssignment->getReviewRoundId();
