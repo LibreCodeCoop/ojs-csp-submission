@@ -19,6 +19,6 @@
         <descr>Process reviewer queue.</descr>
         <frequency hour="0"/>
         <frequency minute="30"/>
-        <arg>5</arg>
+        <arg>1</arg>
     </task>
 </scheduled_tasks>

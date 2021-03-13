@@ -39,7 +39,14 @@ class ReviewQuewe extends ScheduledTask
         );
         foreach ($result as $review) {
             if (!$review['date_confirmed']) {
-                if ($review['date_response_due'] + $this->_args[1] < time()) {
+                $incrementedResponseDue = strtotime($review['date_response_due'] . ' + ' . $this->args[0] . ' days');
+                if ($incrementedResponseDue < time()) {
+                    $this->unasign($review);
+                    continue;
+                }
+            } else {
+                $incrementedDateDue = strtotime($review['date_due'] . ' + ' . $this->args[0] . ' days');
+                if ($incrementedDateDue < time()) {
                     $this->unasign($review);
                     continue;
                 }
