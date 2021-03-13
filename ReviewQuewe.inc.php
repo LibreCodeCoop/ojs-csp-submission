@@ -37,25 +37,59 @@ class ReviewQuewe extends ScheduledTask
                AND date_completed IS NULL
             SQL
         );
-        foreach ($result as $review) {
-            if (!$review['date_confirmed']) {
-                $incrementedResponseDue = strtotime($review['date_response_due'] . ' + ' . $this->args[0] . ' days');
+        while (!$result->EOF) {
+            $reviewAssignment = $this->reviewAssignmentDao->_fromRow($result->GetRowAssoc(false));
+            if (!$reviewAssignment->getDateConfirmed()) {
+                $incrementedResponseDue = strtotime($reviewAssignment->getDateResponseDue() . ' + ' . $this->args[0] . ' days');
                 if ($incrementedResponseDue < time()) {
-                    $this->unasign($review);
+                    $this->unasign($reviewAssignment);
+                    $result->MoveNext();
                     continue;
                 }
             } else {
-                $incrementedDateDue = strtotime($review['date_due'] . ' + ' . $this->args[0] . ' days');
+                $incrementedDateDue = strtotime($reviewAssignment->getDateDue() . ' + ' . $this->args[0] . ' days');
                 if ($incrementedDateDue < time()) {
-                    $this->unasign($review);
+                    $this->unasign($reviewAssignment);
+                    $result->MoveNext();
                     continue;
                 }
             }
+            $result->MoveNext();
         }
         return true;
     }
 
-    private function unasign(array $review)
+    private function unasign(ReviewAssignment $reviewAssignment)
     {
+        $reviewRoundId = $reviewAssignment->getReviewRoundId();
+        $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+        $reviewRound = $reviewRoundDao->getById($reviewRoundId);
+
+        $reviewRoundDao = DAORegistry::getDAO('SubmissionDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+        $submission = $reviewRoundDao->getById($reviewAssignment->getSubmissionId());
+
+        $userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+        $user = $userDao->getById($this->args[1]);
+        Registry::set('user', $user);
+
+        import('lib.pkp.controllers.grid.users.reviewer.form.UnassignReviewerForm');
+        $unassignReviewerForm = new UnassignReviewerForm($reviewAssignment, $reviewRound, $submission);
+
+        import('lib.pkp.classes.mail.SubmissionMailTemplate');
+        $template = new SubmissionMailTemplate($submission, $unassignReviewerForm->getEmailKey());
+        if ($template) {
+            $reviewer = $userDao->getById($reviewAssignment->getReviewerId());
+
+            $template->assignParams(array(
+                'reviewerName' => $reviewer->getFullName(),
+                'signatureFullName' => $user->getFullname(),
+            ));
+            $template->replaceParams();
+
+            $unassignReviewerForm->setData('personalMessage', $template->getBody());
+        }
+
+        $unassignReviewerForm->setData('reviewerId', $reviewAssignment->getReviewerId());
+        $unassignReviewerForm->execute();
     }
 }
