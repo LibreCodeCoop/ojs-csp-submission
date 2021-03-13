@@ -65,8 +65,14 @@ class ReviewQuewe extends ScheduledTask
         $totalReviewers = $this->countAvailableReviewers();
         $queue = $this->getQueue();
         if ($totalReviewers < $this->args[2] && count($queue)) {
+            $this->addReviewer($queue[0]['user_id'], $queue['submission_id']);
             $this->removeFromQueue($queue[0]['user_id'], $queue['submission_id']);
         }
+    }
+
+    private function addReviewer($userId, $submissionId)
+    {
+
     }
 
     private function removeFromQueue($userId, $submissionId)
