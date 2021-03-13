@@ -56,7 +56,12 @@ class ReviewQuewe extends ScheduledTask
             }
             $result->MoveNext();
         }
+        $this->proccessQueue();
         return true;
+    }
+
+    private function proccessQueue()
+    {
     }
 
     private function unasign(ReviewAssignment $reviewAssignment)
