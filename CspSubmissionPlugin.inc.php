@@ -30,6 +30,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($success) {
 			HookRegistry::register('userdao::_getbyusername', array($this, 'userdao__getbyusername'));
 
+			HookRegistry::register('advancedsearchreviewerform::validate', array($this, 'advancedsearchreviewerform_validate'));
+
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
@@ -230,6 +232,40 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$returner = &$args[3];
 		import('plugins.generic.cspSubmission.controllers.grid.feature.AddReviewerSagasFeature');
 		$returner[] = new AddReviewerSagasFeature();
+	}
+
+	public function advancedsearchreviewerform_validate($hookName, $args)
+	{
+		$reviewerForm = $args[0];
+		$reviewerIds = json_decode($reviewerForm->getData('reviewerId'), true);
+		$reviewRoundId = $reviewerForm->getData('reviewRoundId');
+
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$result = $reviewAssignmentDao->retrieve(
+			<<<SQL
+			SELECT count(*) AS total
+			  FROM review_assignments
+			 WHERE declined = 0
+			   AND cancelled = 0
+			   AND date_completed IS NULL
+			   AND review_round_id = ?
+			SQL,
+			[$reviewRoundId]
+		);
+		$row = $result->GetRowAssoc(false);
+		if ($row['total'] > 3) {
+			$this->addToQueue();
+			$reviewerForm->setData('reviewerId', '[]');
+			return;
+		}
+		// if () {
+
+		// }
+	}
+
+	private function addToQueue()
+	{
+
 	}
 
 	/**
