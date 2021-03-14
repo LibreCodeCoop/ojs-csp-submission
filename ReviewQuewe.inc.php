@@ -158,8 +158,10 @@ class ReviewQuewe extends ScheduledTask
             SQL
         );
         $return = [];
-        foreach($result as $row) {
+        while (!$result->EOF) {
+            $row = $result->GetRowAssoc(false);
             $return[$row['review_round_id']][] = $row;
+            $result->MoveNext();
         }
         return $return;
     }
@@ -183,8 +185,10 @@ class ReviewQuewe extends ScheduledTask
             SQL
         );
         $return = [];
-        foreach($result as $row) {
-            $return[$row['review_round_id']] = $row;
+        while (!$result->EOF) {
+            $row = $result->GetRowAssoc(false);
+            $return[$row['review_round_id']][] = $row;
+            $result->MoveNext();
         }
         return $return;
     }
