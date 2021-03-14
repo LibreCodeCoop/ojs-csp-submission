@@ -105,13 +105,13 @@ class ReviewQuewe extends ScheduledTask
         $reviewerForm->execute();
     }
 
-    private function removeFromQueue($userId, $submissionId)
+    private function removeFromQueue($userId, $reviewRoundId)
     {
         $this->reviewAssignmentDao->update(
-            'DELETE FROM reviewer_queue WHERE user_id = ? AND submission_id = ?',
+            'DELETE FROM reviewer_queue WHERE user_id = ? AND review_round_id = ?',
             [
                 'user_id' => $userId,
-                'submission_id' => $submissionId
+                'review_round_id' => $reviewRoundId
             ]
         );
     }
