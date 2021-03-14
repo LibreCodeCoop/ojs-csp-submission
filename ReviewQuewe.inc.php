@@ -106,7 +106,7 @@ class ReviewQuewe extends ScheduledTask
                 if ($assignedInRound['total'] < $this->args['maxAssigned'] && count($queueOfRound)) {
                     $reviewer = $queueOfRound[0];
                     $this->addReviewer($reviewer['user_id'], $reviewer['review_round_id'], $context);
-                    $this->removeFromQueue($queueOfRound['user_id'], $reviewRoundId);
+                    $this->removeFromQueue($reviewer['user_id'], $reviewRoundId);
                 }
             }
         }
