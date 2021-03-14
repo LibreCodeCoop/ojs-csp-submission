@@ -72,8 +72,8 @@ class ReviewQuewe extends ScheduledTask
         $journals = $journalDao->getAll(true);
         while ($journal = $journals->next()) {
             $_SERVER['PATH_INFO'] = $journal->getPath();
-            // Initialize context by path
-            $context = $router->getContext($request, 1, true);
+            // Initialize context by path, don't remove
+            $router->getContext($request, 1, true);
 
             $assignedReviewers = $this->assignedReviewers();
             $queue = $this->getQueue();
