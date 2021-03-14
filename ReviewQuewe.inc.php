@@ -11,7 +11,12 @@ class ReviewQuewe extends ScheduledTask
     public function __construct($args)
     {
         $this->args = array_combine(
-            ['incrementDays', 'idSupportUser', 'maxAssigned'],
+            [
+                'incrementDays',
+                'idSupportUser',
+                'maxAssigned',
+                'reviewMethod'
+            ],
             $args
         );
         parent::__construct($args);
@@ -113,6 +118,7 @@ class ReviewQuewe extends ScheduledTask
         $reviewerForm->setData('reviewerId', $reviewerId);
         $reviewerForm->setData('reviewDueDate', '?');
         $reviewerForm->setData('responseDueDate', '?');
+        $reviewerForm->setData('reviewMethod', constant($this->args['reviewMethod']));
 
         $reviewerForm->execute();
     }
