@@ -84,8 +84,6 @@ class ReviewQuewe extends ScheduledTask
     private function proccessQueue()
     {
         import('lib.pkp.classes.core.PKPApplication');
-        // $router = new PKPRouter();
-        // $router->setApplication(PKPApplication::get());
         $application = Application::get();
         $request = $application->getRequest();
         $request->setDispatcher($application->getDispatcher());
