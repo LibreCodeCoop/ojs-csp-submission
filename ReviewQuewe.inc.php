@@ -125,8 +125,6 @@ class ReviewQuewe extends ScheduledTask
         import('lib.pkp.controllers.grid.users.reviewer.form.ReviewerForm');
         $reviewerForm = new ReviewerForm($submission, $reviewRound);
         $reviewerForm->setData('reviewerId', $reviewerId);
-        $reviewerForm->setData('reviewDueDate', '?');
-        $reviewerForm->setData('responseDueDate', '?');
         $reviewerForm->setData('reviewMethod', constant($this->args['reviewMethod']));
 
         $numWeeks = (int) $context->getData('numWeeksPerReview');
