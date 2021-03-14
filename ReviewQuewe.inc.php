@@ -62,17 +62,47 @@ class ReviewQuewe extends ScheduledTask
 
     private function proccessQueue()
     {
-        $totalReviewers = $this->assignedReviewers();
-        $queue = $this->getQueue();
-        if ($totalReviewers < $this->args[2] && count($queue)) {
-            $this->addReviewer($queue[0]['user_id'], $queue['submission_id']);
-            $this->removeFromQueue($queue[0]['user_id'], $queue['submission_id']);
+        import('lib.pkp.classes.core.PKPApplication');
+        // $router = new PKPRouter();
+        // $router->setApplication(PKPApplication::get());
+        $request = Application::get()->getRequest();
+        $router = $request->getRouter();
+        $router->_contextPaths = [];
+        $journalDao = DAORegistry::getDAO('JournalDAO'); /* @var $journalDao JournalDAO */
+        $journals = $journalDao->getAll(true);
+        while ($journal = $journals->next()) {
+            $_SERVER['PATH_INFO'] = $journal->getPath();
+            // Initialize context by path
+            $context = $router->getContext($request, 1, true);
+
+            $assignedReviewers = $this->assignedReviewers();
+            $queue = $this->getQueue();
+            foreach ($queue as $review) {
+                $currentQueue = $queue[$review['review_round_id']];
+                if ($review['total'] < $this->args[2] && count($currentQueue)) {
+                    $reviewer = $currentQueue[0];
+                    $this->addReviewer($reviewer['user_id'], $reviewer['review_round_id']);
+                    $this->removeFromQueue($reviewer['user_id'], $queue['submission_id']);
+                }
+            }
         }
     }
 
-    private function addReviewer($userId, $submissionId)
+    private function addReviewer($reviewerId, $reviewRoundId)
     {
+        $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+        $reviewRound = $reviewRoundDao->getById($reviewRoundId);
 
+        $submissionDao = DAORegistry::getDAO('SubmissionDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+        $submission = $submissionDao->getById($reviewRound->getSubmissionId());
+
+        import('lib.pkp.controllers.grid.users.reviewer.form.ReviewerForm');
+        $reviewerForm = new ReviewerForm($submission, $reviewRound);
+        $reviewerForm->setData('reviewerId', $reviewerId);
+        $reviewerForm->setData('reviewDueDate', '?');
+        $reviewerForm->setData('responseDueDate', '?');
+
+        $reviewerForm->execute();
     }
 
     private function removeFromQueue($userId, $submissionId)
