@@ -113,6 +113,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			       p.telefone AS phone,
 			       p.pais AS country,
 			       p.orcid AS orcid,
+			       p.nome AS givenName,
 			       CASE WHEN p.idioma = 'pt' THEN 'pt_BR'
 			            WHEN p.idioma = 'in' THEN 'en_US'
 			            WHEN p.idioma = 'es' THEN 'es_ES'
