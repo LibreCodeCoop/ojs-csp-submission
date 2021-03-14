@@ -77,7 +77,9 @@ class ReviewQuewe extends ScheduledTask
         import('lib.pkp.classes.core.PKPApplication');
         // $router = new PKPRouter();
         // $router->setApplication(PKPApplication::get());
-        $request = Application::get()->getRequest();
+        $application = Application::get();
+        $request = $application->getRequest();
+        $request->setDispatcher($application->getDispatcher());
         $router = $request->getRouter();
         $router->_contextPaths = [];
         $journalDao = DAORegistry::getDAO('JournalDAO'); /* @var $journalDao JournalDAO */
