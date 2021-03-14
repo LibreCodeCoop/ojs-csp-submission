@@ -6,6 +6,10 @@ class ReviewQuewe extends ScheduledTask
 {
     /** @var array */
     protected $args = [];
+    /** @var UserDAO */
+    private $userDao;
+    /** @var User */
+    private $user;
     /**@var $reviewAssignmentDao ReviewAssignmentDAO */
     private $reviewAssignmentDao;
     public function __construct($args)
@@ -21,6 +25,11 @@ class ReviewQuewe extends ScheduledTask
         );
         parent::__construct($args);
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+
+        $this->userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+        $this->user = $this->userDao->getById($this->args['idSupportUser']);
+        Registry::set('user', $this->user);
+
     }
 
     /**
@@ -191,10 +200,6 @@ class ReviewQuewe extends ScheduledTask
 
         $reviewRoundDao = DAORegistry::getDAO('SubmissionDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
         $submission = $reviewRoundDao->getById($reviewAssignment->getSubmissionId());
-
-        $userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-        $user = $userDao->getById($this->args['idSupportUser']);
-        Registry::set('user', $user);
 
         import('lib.pkp.controllers.grid.users.reviewer.form.UnassignReviewerForm');
         $unassignReviewerForm = new UnassignReviewerForm($reviewAssignment, $reviewRound, $submission);
