@@ -10,7 +10,10 @@ class ReviewQuewe extends ScheduledTask
     private $reviewAssignmentDao;
     public function __construct($args)
     {
-        $this->args = $args;
+        $this->args = array_combine(
+            ['incrementDays', 'idSupportUser', 'maxAssigned'],
+            $args
+        );
         parent::__construct($args);
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
     }
@@ -40,14 +43,18 @@ class ReviewQuewe extends ScheduledTask
         while (!$result->EOF) {
             $reviewAssignment = $this->reviewAssignmentDao->_fromRow($result->GetRowAssoc(false));
             if (!$reviewAssignment->getDateConfirmed()) {
-                $incrementedResponseDue = strtotime($reviewAssignment->getDateResponseDue() . ' + ' . $this->args[0] . ' days');
+                $incrementedResponseDue = strtotime(
+                    $reviewAssignment->getDateResponseDue() . ' + ' . $this->args['incrementDays'] . ' days'
+                );
                 if ($incrementedResponseDue < time()) {
                     $this->unasign($reviewAssignment);
                     $result->MoveNext();
                     continue;
                 }
             } else {
-                $incrementedDateDue = strtotime($reviewAssignment->getDateDue() . ' + ' . $this->args[0] . ' days');
+                $incrementedDateDue = strtotime(
+                    $reviewAssignment->getDateDue() . ' + ' . $this->args['incrementDays'] . ' days'
+                );
                 if ($incrementedDateDue < time()) {
                     $this->unasign($reviewAssignment);
                     $result->MoveNext();
@@ -84,7 +91,7 @@ class ReviewQuewe extends ScheduledTask
                 } else {
                     $assignedInRound = ['total' => 0];
                 }
-                if ($assignedInRound['total'] < $this->args[2] && count($queueOfRound)) {
+                if ($assignedInRound['total'] < $this->args['maxAssigned'] && count($queueOfRound)) {
                     $reviewer = $queueOfRound[0];
                     $this->addReviewer($reviewer['user_id'], $reviewer['review_round_id']);
                     $this->removeFromQueue($queueOfRound['user_id'], $queueOfRound['review_round_id']);
@@ -172,7 +179,7 @@ class ReviewQuewe extends ScheduledTask
         $submission = $reviewRoundDao->getById($reviewAssignment->getSubmissionId());
 
         $userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-        $user = $userDao->getById($this->args[1]);
+        $user = $userDao->getById($this->args['idSupportUser']);
         Registry::set('user', $user);
 
         import('lib.pkp.controllers.grid.users.reviewer.form.UnassignReviewerForm');
