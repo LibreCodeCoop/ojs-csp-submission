@@ -77,12 +77,17 @@ class ReviewQuewe extends ScheduledTask
 
             $assignedReviewers = $this->assignedReviewers();
             $queue = $this->getQueue();
-            foreach ($queue as $review) {
-                $currentQueue = $queue[$review['review_round_id']];
-                if ($review['total'] < $this->args[2] && count($currentQueue)) {
-                    $reviewer = $currentQueue[0];
+            foreach ($queue as $queueReviewRound) {
+                $queueOfRound = $queue[$queueReviewRound['review_round_id']];
+                if (isset($assignedReviewers[$queueOfRound['review_round_id']])) {
+                    $assignedInRound = $assignedReviewers[$queueOfRound['review_round_id']];
+                } else {
+                    $assignedInRound = ['total' => 0];
+                }
+                if ($assignedInRound['total'] < $this->args[2] && count($queueOfRound)) {
+                    $reviewer = $queueOfRound[0];
                     $this->addReviewer($reviewer['user_id'], $reviewer['review_round_id']);
-                    $this->removeFromQueue($reviewer['user_id'], $queue['submission_id']);
+                    $this->removeFromQueue($queueOfRound['user_id'], $queueOfRound['review_round_id']);
                 }
             }
         }
