@@ -140,7 +140,7 @@ class ReviewQuewe extends ScheduledTask
     private function removeFromQueue($userId, $reviewRoundId)
     {
         $this->reviewAssignmentDao->update(
-            'DELETE FROM reviewer_queue WHERE user_id = ? AND review_round_id = ?',
+            'DELETE FROM csp_reviewer_queue WHERE user_id = ? AND review_round_id = ?',
             [
                 'user_id' => $userId,
                 'review_round_id' => $reviewRoundId
@@ -153,7 +153,7 @@ class ReviewQuewe extends ScheduledTask
         $result = $this->reviewAssignmentDao->retrieve(
             <<<SQL
             SELECT *
-              FROM reviewer_queue
+              FROM csp_reviewer_queue
              ORDER BY created_at
             SQL
         );
