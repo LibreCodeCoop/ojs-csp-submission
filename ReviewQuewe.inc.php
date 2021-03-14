@@ -126,6 +126,7 @@ class ReviewQuewe extends ScheduledTask
         $reviewerForm = new ReviewerForm($submission, $reviewRound);
         $reviewerForm->setData('reviewerId', $reviewerId);
         $reviewerForm->setData('reviewMethod', constant($this->args['reviewMethod']));
+        $reviewerForm->setData('template', $reviewerForm->_getMailTemplateKey($context));
 
         $numWeeks = (int) $context->getData('numWeeksPerReview');
         if ($numWeeks<=0) $numWeeks=4;
