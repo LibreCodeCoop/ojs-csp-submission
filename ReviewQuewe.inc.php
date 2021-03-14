@@ -84,8 +84,7 @@ class ReviewQuewe extends ScheduledTask
         $journals = $journalDao->getAll(true);
         while ($journal = $journals->next()) {
             $_SERVER['PATH_INFO'] = $journal->getPath();
-            // Initialize context by path, don't remove
-            $router->getContext($request, 1, true);
+            $context = $router->getContext($request, 1, true);
 
             $assignedReviewers = $this->assignedReviewers();
             $queue = $this->getQueue();
@@ -98,14 +97,14 @@ class ReviewQuewe extends ScheduledTask
                 }
                 if ($assignedInRound['total'] < $this->args['maxAssigned'] && count($queueOfRound)) {
                     $reviewer = $queueOfRound[0];
-                    $this->addReviewer($reviewer['user_id'], $reviewer['review_round_id']);
+                    $this->addReviewer($reviewer['user_id'], $reviewer['review_round_id'], $context);
                     $this->removeFromQueue($queueOfRound['user_id'], $queueOfRound['review_round_id']);
                 }
             }
         }
     }
 
-    private function addReviewer($reviewerId, $reviewRoundId)
+    private function addReviewer(int $reviewerId, int $reviewRoundId, Journal $context)
     {
         $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
         $reviewRound = $reviewRoundDao->getById($reviewRoundId);
