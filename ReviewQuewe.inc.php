@@ -119,6 +119,14 @@ class ReviewQuewe extends ScheduledTask
         $reviewerForm->setData('responseDueDate', '?');
         $reviewerForm->setData('reviewMethod', constant($this->args['reviewMethod']));
 
+        $numWeeks = (int) $context->getData('numWeeksPerReview');
+        if ($numWeeks<=0) $numWeeks=4;
+        $reviewerForm->setData('reviewDueDate', strtotime('+' . $numWeeks . ' week'));
+
+        $numWeeks = (int) $context->getData('numWeeksPerResponse');
+        if ($numWeeks<=0) $numWeeks=3;
+        $reviewerForm->setData('responseDueDate', strtotime('+' . $numWeeks . ' week'));
+
         $reviewerForm->execute();
     }
 
