@@ -97,15 +97,15 @@ class ReviewQuewe extends ScheduledTask
         );
         $return = [];
         foreach($result as $row) {
-            $return[] = $row;
+            $return[$row['review_round_id']][] = $row;
         }
         return $return;
     }
 
     /**
-     * Count available reviewers
+     * Get available reviewers
      *
-     * @return int
+     * @return array
      */
     public function assignedReviewers()
     {
