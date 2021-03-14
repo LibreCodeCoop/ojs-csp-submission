@@ -146,7 +146,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			[
 				$args[1][0],
 				$args[1][0],
-				md5($request->getUserVar('password'))
+				sha1($request->getUserVar('password'))
 			]
 		);
 		if (!$result->RowCount()) {
