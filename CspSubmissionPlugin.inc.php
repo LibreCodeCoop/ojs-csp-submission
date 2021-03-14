@@ -141,9 +141,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			       p.cep
 			  FROM csp.Login l
 			  JOIN csp.Pessoa p ON l.idPessoaFK = p.idPessoa
-			 WHERE l.login = ? AND l.senha = ?
+			 WHERE (l.login = ? OR p.email = ?) AND l.senha = ?
 			QUERY,
-			[$args[1][0], md5($request->getUserVar('password'))]
+			[
+				$args[1][0],
+				$args[1][0],
+				md5($request->getUserVar('password'))
+			]
 		);
 		if (!$result->RowCount()) {
 			return false;
