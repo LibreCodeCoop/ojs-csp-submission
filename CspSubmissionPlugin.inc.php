@@ -253,19 +253,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			[$reviewRoundId]
 		);
 		$row = $result->GetRowAssoc(false);
-		if ($row['total'] > 3) {
-			$this->addToQueue();
-			$reviewerForm->setData('reviewerId', '[]');
-			return;
+		if ($row['total'] + count($reviewerIds) > 3) {
+			$totalToAssingNow = 3 - $row['total'];
+			for ($i = count($reviewerIds) - 1; $i >= $totalToAssingNow; $i--) {
+				$this->addToQueue($reviewerIds[$i], $reviewRoundId);
+				unset($reviewerIds[$i]);
+			}
 		}
-		// if () {
-
-		// }
+		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
 	}
 
-	private function addToQueue()
+	private function addToQueue(int $reviewerId, int $reviewRoundId)
 	{
-
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignmentDao->update(
+			'INSERT INTO reviewer_queue (user_id, review_round_id, created_at) VALUES (?, ?, ?)',
+			[
+				'user_id' => $reviewerId,
+				'review_round_id' => $reviewRoundId,
+				'date' => date('Y-m-d H:i:s')
+			]
+		);
 	}
 
 	/**
