@@ -62,7 +62,7 @@ class ReviewQuewe extends ScheduledTask
 
     private function proccessQueue()
     {
-        $totalReviewers = $this->countAvailableReviewers();
+        $totalReviewers = $this->assignedReviewers();
         $queue = $this->getQueue();
         if ($totalReviewers < $this->args[2] && count($queue)) {
             $this->addReviewer($queue[0]['user_id'], $queue['submission_id']);
@@ -107,20 +107,24 @@ class ReviewQuewe extends ScheduledTask
      *
      * @return int
      */
-    public function countAvailableReviewers()
+    public function assignedReviewers()
     {
         $result = $this->reviewAssignmentDao->retrieve(
             <<<SQL
-            SELECT *
+            SELECT count(*) as total,
+                   review_round_id
               FROM review_assignments
              WHERE declined = 0
                AND cancelled = 0
                AND date_completed IS NULL
+             GROUP BY review_round_id
             SQL
         );
-        $returner = isset($result->fields[0]) ? $result->fields[0] : 0;
-        $result->Close();
-        return $returner;
+        $return = [];
+        foreach($result as $row) {
+            $return[$row['review_round_id']] = $row;
+        }
+        return $return;
     }
 
     private function unasign(ReviewAssignment $reviewAssignment)
