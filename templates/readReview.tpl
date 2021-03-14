@@ -16,7 +16,8 @@
 	$(function() {ldelim}
 		// Attach the form handler.
 		$('#readReviewForm').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
+		$('#unconsiderReviewForm').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
 	{rdelim});
 </script>
 
-{include file="core:controllers/grid/users/reviewer/readReview.tpl"}
+{include file="../plugins/generic/cspSubmission/templates/readReviewForm.tpl"}
