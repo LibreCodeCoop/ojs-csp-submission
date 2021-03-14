@@ -267,7 +267,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	{
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignmentDao->update(
-			'INSERT INTO reviewer_queue (user_id, review_round_id, created_at) VALUES (?, ?, ?)',
+			'INSERT INTO csp_reviewer_queue (user_id, review_round_id, created_at) VALUES (?, ?, ?)',
 			[
 				'user_id' => $reviewerId,
 				'review_round_id' => $reviewRoundId,
@@ -989,7 +989,56 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $request->getUserVar('submissionId');
 		import('lib.pkp.classes.mail.MailTemplate');
 
-		if ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
+		if ($args[1] == 'controllers/grid/gridBodyPart.tpl') {
+			return false;
+			if (!strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
+				return false;
+			}
+			$rows = $templateMgr->getVariable('rows');
+
+			$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+			$result = $reviewAssignmentDao->retrieve(
+				<<<SQL
+				SELECT *
+				  FROM csp_reviewer_queue
+				 WHERE review_round_id = ?
+				 ORDER BY created_at
+				SQL,
+				[$request->getUserVar('reviewRoundId')]
+			);
+			import('lib.pkp.controllers.grid.users.reviewer.ReviewerGridRow');
+			$columns = $templateMgr->getVariable('columns');
+			while (!$result->EOF) {
+				// $element = $reviewAssignmentDao->_fromRow($result->GetRowAssoc(0));
+
+				// $row = new ReviewerGridRow(false);
+				// $row->setGridId(1);
+				// $row->setId(1);
+				// $row->setData($element);
+				// // $row->setRequestArgs($this->getRequestArgs());
+				// $row->setIsModified(false);
+				// $element = new ReviewAssignment();
+				// $row->setData($element);
+				// $row->initialize($request);
+				// foreach ($columns->value as $column) {
+				// 	$cellProvider = $column->getCellProvider();
+				// 	$renderedCells[] = $cellProvider->render($request, $row, $column);
+				// }
+				// $templateMgr = TemplateManager::getManager($request);
+				// $templateMgr->assign(array(
+				// 	'grid' => $row,
+				// 	'columns' => $columns,
+				// 	'cells' => $renderedCells,
+				// 	'row' => $row,
+				// ));
+				// $rows->value[] = $templateMgr->fetch($row->getTemplate());
+
+				$rows->value[] = $rows->value[2];
+				// $rows->value[] = json_encode($result->GetRowAssoc(0));
+				$result->MoveNext();
+			}
+			return false;
+		} elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
 
 			return true;
