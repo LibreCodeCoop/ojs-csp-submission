@@ -21,5 +21,7 @@
         <frequency minute="30"/>
         <arg>1</arg>
         <arg>1</arg>
+        <arg>3</arg>
+        <arg>SUBMISSION_REVIEW_METHOD_DOUBLEBLIND</arg>
     </task>
 </scheduled_tasks>
