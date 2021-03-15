@@ -2,7 +2,25 @@
 
 import('lib.pkp.classes.controllers.grid.users.reviewer.PKPReviewerGridHandler');
 
-class ReviewerGridHandler extends PKPReviewerGridHandler {
+class ReviewerGridHandler extends GridHandler {
+
+	public function __construct()
+	{
+		parent::__construct();
+		$this->addRoleAssignment(
+			array(ROLE_ID_ASSISTANT),
+			['removeFromQueue']
+		);
+	}
+
+	/**
+	 * @copydoc PKPHandler::authorize()
+	 */
+	function authorize($request, &$args, $roleAssignments) {
+		$this->markRoleAssignmentsChecked();
+		return parent::authorize($request, $args, $roleAssignments);
+	}
+
 	/**
 	 * Edit a reviewer
 	 * @param $args array
