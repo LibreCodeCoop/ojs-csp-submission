@@ -22,7 +22,11 @@ class ReviewerGridHandler extends PKPReviewerGridHandler {
 	}
 
 	function getRequestArgs() {
-		return [];
+		$request = \Application::get()->getRequest();
+		if (strpos($request->getRequestPath(), 'reviewer-grid/remove-from-queue')) {
+			return [];
+		}
+		return parent::getRequestArgs();
 	}
 
 	/**
