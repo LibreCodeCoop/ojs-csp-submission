@@ -1167,7 +1167,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
 
-			$submission = $submissionDAO->getById($submissionId);
 			$submissionIdCSP = $submission->getData('codigoArtigo');
 			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
 			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
