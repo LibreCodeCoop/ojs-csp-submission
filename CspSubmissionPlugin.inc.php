@@ -488,6 +488,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
 			return true;
 		}
+		if ($component == 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler') {
+			return true;
+		}
 		if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
 			$component = 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler';
 			return true;
