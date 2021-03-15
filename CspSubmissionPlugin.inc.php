@@ -1002,7 +1002,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		import('lib.pkp.classes.mail.MailTemplate');
 
 		if ($args[1] == 'controllers/grid/gridBodyPart.tpl') {
-			return false;
 			if (!strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
 				return false;
 			}
