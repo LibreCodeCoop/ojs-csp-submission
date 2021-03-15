@@ -2,13 +2,13 @@
 
 import('lib.pkp.classes.controllers.grid.users.reviewer.PKPReviewerGridHandler');
 
-class ReviewerGridHandler extends GridHandler {
+class ReviewerGridHandler extends PKPReviewerGridHandler {
 
 	public function __construct()
 	{
 		parent::__construct();
 		$this->addRoleAssignment(
-			array(ROLE_ID_ASSISTANT),
+			[ROLE_ID_SITE_ADMIN, ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR],
 			['removeFromQueue']
 		);
 	}
@@ -19,6 +19,10 @@ class ReviewerGridHandler extends GridHandler {
 	function authorize($request, &$args, $roleAssignments) {
 		$this->markRoleAssignmentsChecked();
 		return parent::authorize($request, $args, $roleAssignments);
+	}
+
+	function getRequestArgs() {
+		return [];
 	}
 
 	/**

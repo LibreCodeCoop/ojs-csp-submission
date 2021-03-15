@@ -17,7 +17,7 @@ class ReviewerQueueGridRow extends GridRow {
 			case 'name':
 				return array('label' => $element['user']->getFullName());
 			case 'considered':
-				return array('label' => __('plugins.generic.CspSubmission.reviewerQueue.inQueue'));
+				return array('label' => __('plugins.generic.CspSubmission.reviewer.inQueue'));
 			case 'actions':
 				return array('label' => '');
 		}
