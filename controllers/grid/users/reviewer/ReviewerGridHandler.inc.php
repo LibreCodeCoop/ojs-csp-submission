@@ -61,4 +61,16 @@ class ReviewerGridHandler extends GridHandler {
 			return new JSONMessage(true, $reviewerForm->fetch($request));
 		}
 	}
+
+	public function removeFromQueue($args, $request) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignmentDao->update(
+			'DELETE FROM csp_reviewer_queue WHERE user_id = ? AND review_round_id = ?',
+			[
+				'user_id' => $args['userId'],
+				'review_round_id' => $args['reviewRoundId']
+			]
+		);
+		return new JSONMessage(true, '');
+	}
 }
