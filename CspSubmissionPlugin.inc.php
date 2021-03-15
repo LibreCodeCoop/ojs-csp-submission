@@ -155,7 +155,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				sha1($request->getUserVar('password'))
 			]
 		);
-		if (!$result->RowCount()) {
+		if (!$result->RecordCount()) {
 			$args[0].= ' OR email = ?';
 			$args[1] = [$args[1][0], $args[1][0]];
 			return false;
@@ -1020,6 +1020,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				SQL,
 				[$request->getUserVar('reviewRoundId')]
 			);
+			if (!$result->RecordCount()) {
+				return;
+			}
 			$userDao = DAORegistry::getDAO('UserDAO');
 			import('plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerQueueGridRow');
 			$columns = $templateMgr->getVariable('columns');
