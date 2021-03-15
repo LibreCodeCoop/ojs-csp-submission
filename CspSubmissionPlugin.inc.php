@@ -1150,7 +1150,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		} elseif ($args[1] == 'controllers/grid/gridRow.tpl') {
 			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
 				$columns = $templateMgr->getVariable('columns');
-				unset($columns->value['method']);
+				if (isset($columns->value['method'])) {
+					unset($columns->value['method']);
+				}
 			}
 
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
