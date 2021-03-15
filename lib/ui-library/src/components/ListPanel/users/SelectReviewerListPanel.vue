@@ -170,9 +170,7 @@ export default {
 			}
 			let newItems = [];
 			this.selected.forEach(item => {
-				newItems.push(this.items.filter(
-					selected => item === selected.id
-				)[0]);
+				newItems.push(this.items.filter(selected => item === selected.id)[0]);
 			});
 			pkp.eventBus.$emit('reviewersSelected', newItems);
 		}

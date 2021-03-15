@@ -1240,7 +1240,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$locale = AppLocale::getLocale();
 			$submissionDAO = Application::getSubmissionDAO();
 
-      $submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
 			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
 			$templateMgr->tpl_vars['reviewerActions']->value[] = 
@@ -1260,8 +1260,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
 
-      $submission = $submissionDAO->getById($submissionId);
-			$submissionIdCsp = $submission->getData('codigoArtigo');
+			$submissionIdCSP = $submission->getData('codigoArtigo');
 			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
 			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
 			$templateBody['REVIEW_REQUEST_ONECLICK'] = $mail->_data["body"];
@@ -1270,7 +1269,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionAbstract = $submission->getLocalizedAbstract($locale);
 			$context = $request->getContext();
 			$contextName = $context->getLocalizedName();
-			$section = $submission->getSectionTitle();
 
 			$templateBody = str_replace(
 				[
