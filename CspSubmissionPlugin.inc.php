@@ -141,8 +141,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			       p.estado,
 			       p.cep
 			  FROM csp.Login l
+			  LEFT JOIN ojs.users ou ON ou.username = l.login
 			  JOIN csp.Pessoa p ON l.idPessoaFK = p.idPessoa
-			 WHERE (l.login = ? OR p.email = ?) AND l.senha = ?
+			 WHERE (l.login = ? OR p.email = ?)
+			   AND l.senha = ?
+			   AND ou.user_id IS NULL
 			QUERY,
 			[
 				$args[1][0],
@@ -151,12 +154,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			]
 		);
 		if (!$result->RowCount()) {
+			$args[0].= ' OR email = ?';
+			$args[1] = [$args[1][0], $args[1][0]];
 			return false;
 		}
 		$row = $result->GetRowAssoc(false);
 		$user = $userDao->newDataObject(); /** @var User */
 		$user->setAllData($row);
 		$user->setGivenName($row['givenname'], $row['locales']);
+		$user->setLocales([$row['locales']]);
 		$user->setPassword(\Validation::encryptCredentials(
 			$row['username'],
 			$request->getUserVar('password')
@@ -165,7 +171,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
 		$userGroupDao->assignUserToGroup($user->getId(), $row['group']);
-		$args[2] = $userDao->retrieve($args[0], [$args[1][0]]);
+		$args[2] = $userDao->retrieve($args[0], [$row['username']]);
 		return true;
 	}
 
