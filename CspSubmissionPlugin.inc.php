@@ -1020,35 +1020,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 				SQL,
 				[$request->getUserVar('reviewRoundId')]
 			);
-			import('lib.pkp.controllers.grid.users.reviewer.ReviewerGridRow');
+			$userDao = DAORegistry::getDAO('UserDAO');
+			import('plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerQueueGridRow');
 			$columns = $templateMgr->getVariable('columns');
 			while (!$result->EOF) {
-				// $element = $reviewAssignmentDao->_fromRow($result->GetRowAssoc(0));
+				$data = $result->GetRowAssoc(0);
+				$user = $userDao->getById($data['user_id']);
+				$data['user'] = $user;
 
-				// $row = new ReviewerGridRow(false);
-				// $row->setGridId(1);
-				// $row->setId(1);
-				// $row->setData($element);
-				// // $row->setRequestArgs($this->getRequestArgs());
-				// $row->setIsModified(false);
-				// $element = new ReviewAssignment();
-				// $row->setData($element);
-				// $row->initialize($request);
-				// foreach ($columns->value as $column) {
-				// 	$cellProvider = $column->getCellProvider();
-				// 	$renderedCells[] = $cellProvider->render($request, $row, $column);
-				// }
-				// $templateMgr = TemplateManager::getManager($request);
-				// $templateMgr->assign(array(
-				// 	'grid' => $row,
-				// 	'columns' => $columns,
-				// 	'cells' => $renderedCells,
-				// 	'row' => $row,
-				// ));
-				// $rows->value[] = $templateMgr->fetch($row->getTemplate());
+				$row = new ReviewerQueueGridRow();
+				$row->setData($data);
+				$row->initialize($request);
+				foreach ($columns->value as $column) {
+					$renderedCells[] = $row->renderCell($request, $row, $column);
+				}
+				$templateMgrRow = TemplateManager::getManager($request);
+				$templateMgrRow->assign('row', $row);
+				$templateMgrRow->assign('cells', $renderedCells);
+				$rows->value[] = $templateMgrRow->fetch($row->getTemplate());
 
-				$rows->value[] = $rows->value[2];
-				// $rows->value[] = json_encode($result->GetRowAssoc(0));
 				$result->MoveNext();
 			}
 			return false;
