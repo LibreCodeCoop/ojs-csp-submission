@@ -54,4 +54,7 @@
   <message key="grid.action.consultKfinder">Consult Kfinder</message>
   <message key="editor.submission.addReviewerSagas">Add reviewer</message>
   <message key="editor.review.reviewerId.emptyArray">Select a reviewer</message>
+  <message key="plugins.generic.CspSubmission.reviewer.inQueue">In queue</message>
+  <message key="plugins.generic.CspSubmission.reviewer.removeFromQueue">Remove from queue</message>
+  <message key="plugins.generic.CspSubmission.reviewer.removeFromQueueText">Do you really want to remove from the queue?</message>
 </locale>
