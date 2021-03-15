@@ -1177,7 +1177,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionAbstract = $submission->getLocalizedAbstract($locale);
 			$context = $request->getContext();
 			$contextName = $context->getLocalizedName();
-			$section = $submission->getSectionTitle();
 
 			$templateBody = str_replace(
 				[
