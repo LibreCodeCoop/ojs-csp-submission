@@ -1149,9 +1149,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/gridRow.tpl') {
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridRow.tpl'));
+			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
+				$columns = $templateMgr->getVariable('columns');
+				unset($columns->value['method']);
+			}
 
-			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($submissionId);
@@ -1184,6 +1186,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if($row->value->_data["submissionFile"]->_data["comentario"]){
 					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
 				}
+			}
+			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
+				if ($templateMgr->getVariable('column')->value->_title == 'common.type') {
+					return true;
+				};
 			}
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
