@@ -156,6 +156,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$row = $result->GetRowAssoc(false);
 		$user = $userDao->newDataObject(); /** @var User */
 		$user->setAllData($row);
+		$user->setGivenName($row['givenname'], $row['locales']);
 		$user->setPassword(\Validation::encryptCredentials(
 			$row['username'],
 			$request->getUserVar('password')
