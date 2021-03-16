@@ -250,7 +250,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	{
 		$reviewerForm = $args[0];
 		$reviewerIds = json_decode($reviewerForm->getData('reviewerId'), true);
-		$reviewRoundId = $reviewerForm->getData('reviewRoundId');
+		$reviewRoundId = (int)$reviewerForm->getData('reviewRoundId');
 
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$result = $reviewAssignmentDao->retrieve(
