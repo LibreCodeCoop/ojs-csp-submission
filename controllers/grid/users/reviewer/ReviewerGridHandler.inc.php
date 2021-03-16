@@ -30,6 +30,15 @@ class ReviewerGridHandler extends PKPReviewerGridHandler {
 	}
 
 	/**
+	 * @copydoc GridHandler::renderFilter()
+	 */
+	function renderFilter($request, $filterData = array()) {
+		return <<<SCRIPT
+		<script></script>
+		SCRIPT;
+	}
+
+	/**
 	 * Edit a reviewer
 	 * @param $args array
 	 * @param $request PKPRequest
