@@ -251,7 +251,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @return boolean
 	 */
 	public function templateManager_display($hookName, $args) {
-		if ($args[1] == "submission/form/index.tpl") {
+		if ($args[1] == "submission/form/index.tpl" || $args[1] == "workflow/workflow.tpl") {
 
 			$request =& Registry::get('request');
 			$templateManager =& $args[0];
@@ -268,20 +268,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateManager->addStyleSheet(
 				'coautor',
 				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
-				array(
-					'contexts' => 'backend',
-					'priority' => STYLE_SEQUENCE_LAST,
-				)
-			);
-		} elseif ($args[1] == "workflow/workflow.tpl") {
-
-			$request =& Registry::get('request');
-			$templateManager =& $args[0];
-
-			// Load JavaScript file
-			$templateManager->addJavaScript(
-				'teste',
-				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
 				array(
 					'contexts' => 'backend',
 					'priority' => STYLE_SEQUENCE_LAST,
@@ -1933,7 +1919,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$refReviewStageId->setAccessible( true );
 		$reviewStageId = $refReviewStageId->getValue($args[1]);
 
-		if (!$reviewStageId && strpos($_SERVER["HTTP_REFERER"], 'submission/wizard')  ){
+		if ($reviewStageId) {
+			return;
+		}
+		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') || strpos($_SERVER["HTTP_REFERER"], 'workflow/index')) {
 			$refObject   = new ReflectionObject($args[1]);
 			$refColumns = $refObject->getProperty('columns');
 			$refColumns->setAccessible( true );
