@@ -275,15 +275,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
 	}
 
-	private function addToQueue(int $reviewerId, int $reviewRoundId)
-	{
+	private function addToQueue(int $reviewerId, int $reviewRoundId) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		try {
+			$reviewAssignmentDao->update(
+				'INSERT INTO csp_reviewer_queue (user_id, review_round_id, created_at) VALUES (?, ?, ?)',
+				[
+					'user_id' => $reviewerId,
+					'review_round_id' => $reviewRoundId,
+					'date' => date('Y-m-d H:i:s')
+				]
+			);
+		} catch (\Throwable $th) {
+			//throw $th;
+		}
+	}
+
+	public function removeFromQueue($args, $request) {
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignmentDao->update(
-			'INSERT INTO csp_reviewer_queue (user_id, review_round_id, created_at) VALUES (?, ?, ?)',
+			'DELETE FROM csp_reviewer_queue WHERE user_id = ? AND review_round_id = ?',
 			[
-				'user_id' => $reviewerId,
-				'review_round_id' => $reviewRoundId,
-				'date' => date('Y-m-d H:i:s')
+				'user_id' => $args['userId'],
+				'review_round_id' => $args['reviewRoundId']
 			]
 		);
 	}
