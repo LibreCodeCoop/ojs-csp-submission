@@ -1034,6 +1034,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$row = new ReviewerQueueGridRow();
 				$row->setData($data);
 				$row->initialize($request);
+				$renderedCells = [];
 				foreach ($columns->value as $column) {
 					$renderedCells[] = $row->renderCell($request, $row, $column);
 				}
