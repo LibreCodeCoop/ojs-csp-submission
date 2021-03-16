@@ -1182,13 +1182,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'{$submissionIdCSP}',
 					'{$submissionTitle}',
 					'{$contextName}',
-					'{$submissionAbstract}'
+					'{$submissionAbstract}',
+					'{$editorialContactSignature}'
 				],
 				[
 					$submissionIdCSP,
 					$submissionTitle,
 					$contextName,
-					$submissionAbstract
+					$submissionAbstract,
+					$context->getData('contactName')
 				],
 				$templateBody
 			);
