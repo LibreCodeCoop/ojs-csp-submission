@@ -3,4 +3,3 @@
 		{fbvElement type="text" multilingual=true name="codigoTematico" id="codigoTematico" value=$codigoTematico maxlength="255" required=false}
 	{/fbvFormSection}
 {/fbvFormArea}
-

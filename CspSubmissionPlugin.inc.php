@@ -75,8 +75,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
 
-			HookRegistry::register('Template::Workflow::Publication', array($this, 'workflowFieldEdit'));
-
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 
 			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
@@ -92,8 +90,77 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Submission::delete', array($this, 'submissionDelete'));
 			// Updates status table when the submission is published
 			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
+			// Displays extra fields in the workflow metadata area
+			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
 		}
 		return $success;
+	}
+
+	public function formConfigAfter($hookName, $args) {
+		$templateManager =& $args[0];
+		if ($templateManager["id"] == "titleAbstract"){
+			array_splice($templateManager["fields"],0,1);
+		}
+		if ($templateManager["id"] == "metadata"){
+
+			$pathAction = explode('/', $templateManager["action"]);
+			$submissionId = end($pathAction);
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($submissionId);
+			array_push(
+						$templateManager["fields"],
+						["name" => "agradecimentos",
+						"component" => "field-text",
+						"label" => "Agradecimentos",
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('agradecimentos'),
+						"inputType" => "text",
+						"size" => "large"
+						],
+						["name" => "conflitoInteresse",
+						"component" => "field-text",
+						"label" => "Seu artigo possui conflito de interesse?",
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('conflitoInteresse'),
+						"inputType" => "text",
+						"size" => "large"
+						],
+						["name" => "codigoTematico",
+						"component" => "field-text",
+						"label" => "Código do fascículo temático",
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('codigoTematico'),
+						"inputType" => "text",
+						"size" => "large"
+						],
+						["name" => "tema",
+						"component" => "field-text",
+						"label" => "Tema",
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('tema'),
+						"inputType" => "text",
+						"size" => "large"
+						],
+						["name" => "codigoArtigoRelacionado",
+						"component" => "field-text",
+						"label" => "Código do artigo relacionado",
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('codigoArtigoRelacionado'),
+						"inputType" => "text",
+						"size" => "large"
+						]
+					);
+		}
 	}
 
 	public function userdao__getbyusername($hookName, $args) {
@@ -2119,14 +2186,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function getDescription() {
 		return __('plugins.generic.CspSubmission.description');
-	}
-
-
-	function workflowFieldEdit($hookName, $params) {
-		$smarty =& $params[1];
-		$output =& $params[2];
-		$output .= $smarty->fetch($this->getTemplateResource('ExclusaoPrefixo.tpl'));
-		return false;
 	}
 
 	/**
