@@ -305,17 +305,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 				]
 			);
 		} catch (\Throwable $th) {
-			//throw $th;
 		}
 	}
 
-	public function removeFromQueue($args, $request) {
+	public function removeFromQueue($userId, $reviewRoundId) {
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 		$reviewAssignmentDao->update(
 			'DELETE FROM csp_reviewer_queue WHERE user_id = ? AND review_round_id = ?',
 			[
-				'user_id' => $args['userId'],
-				'review_round_id' => $args['reviewRoundId']
+				'user_id' => $userId,
+				'review_round_id' => $reviewRoundId
 			]
 		);
 	}
