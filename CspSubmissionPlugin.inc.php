@@ -264,7 +264,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 			SQL,
 			[$reviewRoundId]
 		)->GetRowAssoc(false)['total'];
-		$result = $reviewAssignmentDao->retrieve(
+		$inQueue = $this->getReviewersInQueue($reviewRoundId);
+		$totalToAssingNow = 3 - $assigned - count($reviewerIds);
+		foreach ($inQueue as $reviewer) {
+			$this->removeFromQueue($reviewer['user_id'], $reviewer['review_round_id']);
+			$reviewerIds[] = $reviewer['user_id'];
+			$totalToAssingNow--;
+			if (!$totalToAssingNow) {
+				break;
+			}
+		}
+		$totalToAddInQueue = count($reviewerIds) - (3 - $assigned);
+		for ($i = 0; $i < $totalToAddInQueue; $i++) {
+			$this->addToQueue(array_shift($reviewerIds), $reviewRoundId);
+			$assigned++;
+		}
+		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
+	}
+
+	private function getReviewersInQueue(int $reviewRoundId) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		return $reviewAssignmentDao->retrieve(
 			<<<SQL
 			SELECT *
 			  FROM csp_reviewer_queue
@@ -272,25 +292,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			 ORDER BY created_at
 			SQL,
 			[$reviewRoundId]
-		);
-		$inQueue = $result->GetAssoc();
-		if ($assigned + count($reviewerIds) + count($inQueue) > 3) {
-			if ($inQueue)
-			if ($assigned + count($reviewerIds) < 3) {
-				$totalToAssingNow = 3 - $assigned;
-				for ($i = 0; $i < $totalToAssingNow; $i++) {
-					$this->removeFromQueue($inQueue[$i]['user_id'], $inQueue[$i]['review_round_id']);
-					$reviewerIds[] = $inQueue[$i]['user_id'];
-					$assigned++;
-				}
-			}
-			$totalToAssingNow = 3 - $assigned;
-			for ($i = 0; $i < $totalToAssingNow; $i++) {
-				$this->addToQueue(array_shift($reviewerIds), $reviewRoundId);
-				$assigned++;
-			}
-		}
-		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
+		)->GetAssoc();
 	}
 
 	private function addToQueue(int $reviewerId, int $reviewRoundId) {
