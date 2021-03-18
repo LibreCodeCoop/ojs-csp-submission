@@ -30,15 +30,6 @@ class ReviewerGridHandler extends PKPReviewerGridHandler {
 	}
 
 	/**
-	 * @copydoc GridHandler::renderFilter()
-	 */
-	function renderFilter($request, $filterData = array()) {
-		return <<<SCRIPT
-		<script></script>
-		SCRIPT;
-	}
-
-	/**
 	 * Edit a reviewer
 	 * @param $args array
 	 * @param $request PKPRequest
@@ -88,6 +79,8 @@ class ReviewerGridHandler extends PKPReviewerGridHandler {
 				'review_round_id' => $args['reviewRoundId']
 			]
 		);
-		return new JSONMessage(true, '');
+		$json = new JSONMessage(true, null);
+		$json->setEvent('dataChanged', null);
+		return $json;
 	}
 }
