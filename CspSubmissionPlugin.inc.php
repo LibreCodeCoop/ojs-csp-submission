@@ -30,6 +30,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($success) {
 			HookRegistry::register('userdao::_getbyusername', array($this, 'userdao__getbyusername'));
 
+			HookRegistry::register('advancedsearchreviewerform::validate', array($this, 'advancedsearchreviewerform_validate'));
+
 			// Insert new field into author metadata submission form (submission step 3) and metadata form
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
@@ -153,7 +155,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				sha1($request->getUserVar('password'))
 			]
 		);
-		if (!$result->RowCount()) {
+		if (!$result->RecordCount()) {
 			$args[0].= ' OR email = ?';
 			$args[1] = [$args[1][0], $args[1][0]];
 			return false;
@@ -242,6 +244,81 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$returner = &$args[3];
 		import('plugins.generic.cspSubmission.controllers.grid.feature.AddReviewerSagasFeature');
 		$returner[] = new AddReviewerSagasFeature();
+	}
+
+	public function advancedsearchreviewerform_validate($hookName, $args)
+	{
+		$reviewerForm = $args[0];
+		$reviewerIds = json_decode($reviewerForm->getData('reviewerId'), true);
+		$reviewRoundId = (int)$reviewerForm->getData('reviewRoundId');
+
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$assigned = (int)$reviewAssignmentDao->retrieve(
+			<<<SQL
+			SELECT count(*) AS total
+			  FROM review_assignments
+			 WHERE declined = 0
+			   AND cancelled = 0
+			   AND date_completed IS NULL
+			   AND review_round_id = ?
+			SQL,
+			[$reviewRoundId]
+		)->GetRowAssoc(false)['total'];
+		$inQueue = $this->getReviewersInQueue($reviewRoundId);
+		$totalToAssingNow = 3 - $assigned - count($reviewerIds);
+		foreach ($inQueue as $reviewer) {
+			$this->removeFromQueue($reviewer['user_id'], $reviewer['review_round_id']);
+			$reviewerIds[] = $reviewer['user_id'];
+			$totalToAssingNow--;
+			if (!$totalToAssingNow) {
+				break;
+			}
+		}
+		$totalToAddInQueue = count($reviewerIds) - (3 - $assigned);
+		for ($i = 0; $i < $totalToAddInQueue; $i++) {
+			$this->addToQueue(array_shift($reviewerIds), $reviewRoundId);
+			$assigned++;
+		}
+		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
+	}
+
+	private function getReviewersInQueue(int $reviewRoundId) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		return $reviewAssignmentDao->retrieve(
+			<<<SQL
+			SELECT *
+			  FROM csp_reviewer_queue
+			 WHERE review_round_id = ?
+			 ORDER BY created_at
+			SQL,
+			[$reviewRoundId]
+		)->GetAssoc();
+	}
+
+	private function addToQueue(int $reviewerId, int $reviewRoundId) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		try {
+			$reviewAssignmentDao->update(
+				'INSERT INTO csp_reviewer_queue (user_id, review_round_id, created_at) VALUES (?, ?, ?)',
+				[
+					'user_id' => $reviewerId,
+					'review_round_id' => $reviewRoundId,
+					'date' => date('Y-m-d H:i:s')
+				]
+			);
+		} catch (\Throwable $th) {
+		}
+	}
+
+	public function removeFromQueue($userId, $reviewRoundId) {
+		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+		$reviewAssignmentDao->update(
+			'DELETE FROM csp_reviewer_queue WHERE user_id = ? AND review_round_id = ?',
+			[
+				'user_id' => $userId,
+				'review_round_id' => $reviewRoundId
+			]
+		);
 	}
 
 	/**
@@ -428,6 +505,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$component =& $params[0];
 		$request = \Application::get()->getRequest();
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
+			return true;
+		}
+		if ($component == 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler') {
 			return true;
 		}
 		if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
@@ -943,7 +1023,49 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submissionId = $request->getUserVar('submissionId');
 		import('lib.pkp.classes.mail.MailTemplate');
 
-		if ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
+		if ($args[1] == 'controllers/grid/gridBodyPart.tpl') {
+			if (!strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
+				return false;
+			}
+			$rows = $templateMgr->getVariable('rows');
+
+			$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+			$result = $reviewAssignmentDao->retrieve(
+				<<<SQL
+				SELECT *
+				  FROM csp_reviewer_queue
+				 WHERE review_round_id = ?
+				 ORDER BY created_at
+				SQL,
+				[$request->getUserVar('reviewRoundId')]
+			);
+			if (!$result->RecordCount()) {
+				return;
+			}
+			$userDao = DAORegistry::getDAO('UserDAO');
+			import('plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerQueueGridRow');
+			$columns = $templateMgr->getVariable('columns');
+			while (!$result->EOF) {
+				$data = $result->GetRowAssoc(0);
+				$user = $userDao->getById($data['user_id']);
+				$data['user'] = $user;
+
+				$row = new ReviewerQueueGridRow();
+				$row->setData($data);
+				$row->initialize($request);
+				$renderedCells = [];
+				foreach ($columns->value as $column) {
+					$renderedCells[] = $row->renderCell($request, $row, $column);
+				}
+				$templateMgrRow = TemplateManager::getManager($request);
+				$templateMgrRow->assign('row', $row);
+				$templateMgrRow->assign('cells', $renderedCells);
+				$rows->value[] = $templateMgrRow->fetch($row->getTemplate());
+
+				$result->MoveNext();
+			}
+			return false;
+		} elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 			// Retrieve peer reviews.
 			$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
 			$submissionCommentDao = DAORegistry::getDAO('SubmissionCommentDAO'); /* @var $submissionCommentDao SubmissionCommentDAO */
@@ -1042,9 +1164,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/gridRow.tpl') {
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridRow.tpl'));
+			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
+				$columns = $templateMgr->getVariable('columns');
+				if (isset($columns->value['method'])) {
+					unset($columns->value['method']);
+				}
+			}
 
-			return true;
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($submissionId);
@@ -1072,15 +1198,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/submission/editor-submission-details-files-grid/fetch-grid" 
 			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/final/final-draft-files-grid/fetch-grid" 
 			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call\$$$/grid/files/review/editor-review-files-grid/fetch-grid"
-			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call$\$$/grid/files/production-ready/production-ready-files-grid/fetch-grid"){ //Busca comentários somente quando grid for de arquivos
+			OR $request->_requestPath == "/ojs/index.php/csp/$$\$call$\$$/grid/files/production-ready/production-ready-files-grid/fetch-grid") { //Busca comentários somente quando grid for de arquivos
 				$row = $templateMgr->getVariable('row');
 				if($row->value->_data["submissionFile"]->_data["comentario"]){
 					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
 				}
+				$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
+				return true;
 			}
-
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
-			return true;
+			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
+				if ($templateMgr->getVariable('column')->value->_title == 'common.type') {
+					return true;
+				};
+			}
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadConfirmationForm.tpl'));
 
@@ -1152,6 +1282,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selected'] = [];
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
+
+			$inQueue = $this->getReviewersInQueue(
+				$request->getUserVar('reviewRoundId')
+			);
+			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['currentlyAssigned'] = array_merge(
+				$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['currentlyAssigned'],
+				array_keys($inQueue)
+			);
 
 			$submissionIdCSP = $submission->getData('codigoArtigo');
 			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');

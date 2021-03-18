@@ -72,4 +72,7 @@
   <message key="grid.action.addReviewerSagas">Adicionar avaliador</message>
   <message key="editor.review.reviewerId.emptyArray">Selecione ao menos um revisor</message>
   <message key="plugins.generic.CspSubmission.unconsider">Deconsiderar avaliação</message>
+  <message key="plugins.generic.CspSubmission.reviewer.inQueue">Na fila</message>
+  <message key="plugins.generic.CspSubmission.reviewer.removeFromQueue">Remover da fila</message>
+  <message key="plugins.generic.CspSubmission.reviewer.removeFromQueueText">Deseja realmente remover da fila?</message>
 </locale>
