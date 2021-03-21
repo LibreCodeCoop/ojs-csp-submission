@@ -9,6 +9,8 @@
 	{csrf}
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="authorFormNotification"}
 
+	<input type="hidden" name="submissionId" value="{$submissionId|escape}" />
+	<input type="hidden" name="publicationId" value="{$publicationId|escape}" />
 	{assign var="uuid" value=""|uniqid|escape}
 	<div id="coautor-list-panel-{$uuid}">
 		<coautor-list-panel
