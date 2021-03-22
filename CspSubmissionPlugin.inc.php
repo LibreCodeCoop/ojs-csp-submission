@@ -92,6 +92,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
 			// Displays extra fields in the workflow metadata area
 			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
+			
+			HookRegistry::register('schemadao::_updateobject', array($this, 'updateObject'));
 		}
 		return $success;
 	}
@@ -107,6 +109,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionId = end($pathAction);
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
 			array_push(
 						$templateManager["fields"],
 						["name" => "agradecimentos",
@@ -128,38 +131,43 @@ class CspSubmissionPlugin extends GenericPlugin {
 						"value" => $submission->getData('conflitoInteresse'),
 						"inputType" => "text",
 						"size" => "large"
-						],
-						["name" => "codigoTematico",
-						"component" => "field-text",
-						"label" => "Código do fascículo temático",
-						"groupId" => "default",
-						"isRequired" => false,
-						"isMultilingual" => true,
-						"value" => $submission->getData('codigoTematico'),
-						"inputType" => "text",
-						"size" => "large"
-						],
-						["name" => "tema",
-						"component" => "field-text",
-						"label" => "Tema",
-						"groupId" => "default",
-						"isRequired" => false,
-						"isMultilingual" => true,
-						"value" => $submission->getData('tema'),
-						"inputType" => "text",
-						"size" => "large"
-						],
-						["name" => "codigoArtigoRelacionado",
-						"component" => "field-text",
-						"label" => "Código do artigo relacionado",
-						"groupId" => "default",
-						"isRequired" => false,
-						"isMultilingual" => true,
-						"value" => $submission->getData('codigoArtigoRelacionado'),
-						"inputType" => "text",
-						"size" => "large"
 						]
 					);
+			if($publication->getData('sectionId') == 4){
+				array_push(
+					$templateManager["fields"],
+					["name" => "codigoTematico",
+					"component" => "field-text",
+					"label" => "Código do fascículo temático",
+					"groupId" => "default",
+					"isRequired" => false,
+					"isMultilingual" => true,
+					"value" => $submission->getData('codigoTematico'),
+					"inputType" => "text",
+					"size" => "large"
+					],
+					["name" => "tema",
+					"component" => "field-text",
+					"label" => "Tema",
+					"groupId" => "default",
+					"isRequired" => false,
+					"isMultilingual" => true,
+					"value" => $submission->getData('tema'),
+					"inputType" => "text",
+					"size" => "large"
+					],
+					["name" => "codigoArtigoRelacionado",
+					"component" => "field-text",
+					"label" => "Código do artigo relacionado",
+					"groupId" => "default",
+					"isRequired" => false,
+					"isMultilingual" => true,
+					"value" => $submission->getData('codigoArtigoRelacionado'),
+					"inputType" => "text",
+					"size" => "large"
+					]
+				);				
+			}
 		}
 	}
 
@@ -2325,6 +2333,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
+	function updateObject($hookName, $args){
+		$x = 1;
+	}
 	function publicationEdit($hookName, $params) {
 		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 		$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
