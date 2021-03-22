@@ -16,6 +16,10 @@
 	{rdelim});
 </script>
 
+{capture assign="additionalFormFields"}
+	{include file="reviewer/review/reviewerRecommendations.tpl"}
+{/capture}
+
 <form class="pkp_form" id="reviewStep3Form" method="post" action="{url op="saveStep" path=$submission->getId() step="3"}">
 	{csrf}
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="reviewStep3FormNotification"}
@@ -55,10 +59,10 @@
 	{capture assign="queriesGridUrl"}{url router=$smarty.const.ROUTE_COMPONENT component="grid.queries.QueriesGridHandler" op="fetchGrid" submissionId=$submission->getId() stageId=$smarty.const.WORKFLOW_STAGE_ID_EXTERNAL_REVIEW escape=false}{/capture}
 	{load_url_in_div id="queriesGrid" url=$queriesGridUrl}	
 
-	{$additionalFormFields}	
+	{$additionalFormFields}
 
 	{capture assign="cancelUrl"}{url page="reviewer" op="submission" path=$submission->getId() step=2 escape=false}{/capture}
-	{fbvFormButtons submitText="reviewer.submission.submitReview" confirmSubmit="reviewer.confirmSubmit" cancelText="navigation.goBack" cancelUrl=$cancelUrl cancelUrlTarget="_self" submitDisabled=$reviewIsClosed}
+	{fbvFormButtons submitText="reviewer.submission.submitReview" confirmSubmit="reviewer.confirmSubmit" saveText="reviewer.submission.saveReviewForLater" saveValue="1" cancelText="navigation.goBack" cancelUrl=$cancelUrl cancelUrlTarget="_self" submitDisabled=$reviewIsClosed}
 {/fbvFormArea}
 
 <p><span class="formRequired">{translate key="common.requiredField"}</span></p>
