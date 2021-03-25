@@ -222,25 +222,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 				sha1($request->getUserVar('password'))
 			]
 		);
-		if (!$result->RecordCount()) {
+		$row = $result->current();
+		if (!$row) {
 			$args[0].= ' OR email = ?';
 			$args[1] = [$args[1][0], $args[1][0]];
 			return false;
 		}
-		$row = $result->GetRowAssoc(false);
 		$user = $userDao->newDataObject(); /** @var User */
 		$user->setAllData($row);
-		$user->setGivenName($row['givenname'], $row['locales']);
-		$user->setLocales([$row['locales']]);
+		$user->setGivenName($row->givenname, $row->locales);
+		$user->setLocales([$row->locales]);
 		$user->setPassword(\Validation::encryptCredentials(
-			$row['username'],
+			$row->username,
 			$request->getUserVar('password')
 		));
 		$userDao->insertObject($user);
 
 		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
-		$userGroupDao->assignUserToGroup($user->getId(), $row['group']);
-		$args[2] = $userDao->retrieve($args[0], [$row['username']]);
+		$userGroupDao->assignUserToGroup($user->getId(), $row->group);
+		$args[2] = $userDao->retrieve($args[0], [$row->username]);
 		return true;
 	}
 
@@ -248,8 +248,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = $userDao->retrieve('SELECT COUNT(*) AS CONTADOR FROM status_csp WHERE status = ? and date_status <= ?', array((string) $status,(string) $date));
-		$count = $result->GetRowAssoc(false);
-		return $count["contador"];
+		$count = $result->current();
+		return $count->CONTADOR;
 
 	}
 
@@ -330,7 +330,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			   AND review_round_id = ?
 			SQL,
 			[$reviewRoundId]
-		)->GetRowAssoc(false)['total'];
+		)->current()->total;
 		$inQueue = $this->getReviewersInQueue($reviewRoundId);
 		$totalToAssingNow = 3 - $assigned - count($reviewerIds);
 		foreach ($inQueue as $reviewer) {
@@ -359,7 +359,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			 ORDER BY created_at
 			SQL,
 			[$reviewRoundId]
-		)->GetAssoc();
+		)->current();
 	}
 
 	private function addToQueue(int $reviewerId, int $reviewRoundId) {
@@ -427,8 +427,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$templateManager =& $args[0];
 
-				$containerData = $templateManager->get_template_vars('containerData');
-				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][0];
+				$components = $templateManager->getState('components');
+				$stages[] = $components['myQueue']['filters'][1]['filters'][0];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 'pre_aguardando_secretaria',
@@ -444,7 +444,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'value' => 'pre_aguardando_editor_chefe',
 					'title' => "--- Aguardando editor chefe (" .$this->countStatus('pre_aguardando_editor_chefe',date('Y-m-d H:i:s')).")"
 				];
-				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][1];
+				$stages[] = $components['myQueue']['filters'][1]['filters'][1];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 'ava_com_editor_associado',
@@ -475,7 +475,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'value' => 'ava_consulta_editor_chefe',
 					'title' => "--- Consulta ao editor chefe (" .$this->countStatus('ava_consulta_editor_chefe',date('Y-m-d H:i:s')).")"
 				];
-				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][2];
+				$stages[] = $components['myQueue']['filters'][1]['filters'][2];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 'ed_text_em_avaliacao_ilustracao',
@@ -501,7 +501,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'value' => 'ed_texto_traducao_metadados',
 					'title' => "--- Tradução de metadados (" .$this->countStatus('ed_texto_traducao_metadados',date('Y-m-d H:i:s')).")"
 				];
-				$stages[] = $containerData['components']['myQueue']['filters'][1]['filters'][3];
+				$stages[] = $components['myQueue']['filters'][1]['filters'][3];
 				$stages[] = [
 					'param' => 'substage',
 					'value' => 'edit_aguardando_padronizador',
@@ -532,9 +532,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'value' => 19,
 					'title' => '--- Aguardando publicação'
 				];
-				$containerData['components']['myQueue']['filters'][1]['filters'] = $stages;
-				$templateManager->assign('containerData', $containerData);
-				$args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
+				$components['myQueue']['filters'][1]['filters'] = $stages;
+				$templateManager->setState(['components' => $components]);
+				// $args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
 				return true;
 			}
 		}
@@ -638,7 +638,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					if (in_array(10, $genreIds)) { // Se houverem figuras, revisores de figura são designados e conversa é iniciada com autor
 
-						$userDao = DAORegistry::getDAO('UserDAO');
 						$result = $userDao->retrieve(
 							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
 							FROM user_user_groups g
@@ -651,12 +650,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 						import('lib.pkp.classes.mail.MailTemplate');
 
-						while (!$result->EOF) {
+						foreach ($result as $row) {
 
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
+							if($row->assigned == NULL){
 
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
+								$userGroupId = $row->user_group_id;
+								$userId = $row->user_id;
 								$users[] = $userId;
 
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
@@ -679,7 +678,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 								import('lib.pkp.classes.log.SubmissionLog');
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 							}
-							$result->MoveNext();
 						}
 
 						$submissionDAO = Application::getSubmissionDAO();
@@ -783,23 +781,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 
 					import('lib.pkp.classes.mail.MailTemplate');
-					while (!$result->EOF) {
+					foreach ($result as $row) {
 						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
-						$mail->addRecipient($result->GetRowAssoc(0)['email']);
+						$mail->addRecipient($row->email);
 						$indexUrl = $request->getIndexUrl();
 						$contextPath = $request->getRequestedContextPath();
 						$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 													"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 													"submissionId=$submissionId".
 													"&userGroupId=$userGroupPadronizador".
-													"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+													"&userIdSelected=".$row->user_id.
 													"&stageId=5&accept=1";
 						if (!$mail->send()) {
 							import('classes.notification.NotificationManager');
 							$notificationMgr = new NotificationManager();
 							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 						}
-						$result->MoveNext();
 					}
 				}
 			}
@@ -1106,19 +1103,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 				SQL,
 				[$request->getUserVar('reviewRoundId')]
 			);
-			if (!$result->RecordCount()) {
+			if (!count($result)) {
 				return;
 			}
 			$userDao = DAORegistry::getDAO('UserDAO');
 			import('plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerQueueGridRow');
 			$columns = $templateMgr->getVariable('columns');
-			while (!$result->EOF) {
-				$data = $result->GetRowAssoc(0);
-				$user = $userDao->getById($data['user_id']);
-				$data['user'] = $user;
+			foreach ($result as $data) {
+				$user = $userDao->getById($data->user_id);
+				$data->user = $user;
 
 				$row = new ReviewerQueueGridRow();
-				$row->setData($data);
+				$row->setData((array)$data);
 				$row->initialize($request);
 				$renderedCells = [];
 				foreach ($columns->value as $column) {
@@ -1472,13 +1468,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					WHERE t.enabled = 1 AND t.email_key LIKE 'LAYOUT%'
 					QUERY
 				);
-				$i = 0;
-				while (!$result->EOF) {
-					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
-
-					$result->MoveNext();
+				foreach ($result as $row) {
+					$templateSubject[$row->email_key] = $row->subject;
+					$templateBody[$row->email_key] = $row->body;
 				}
 			}
 
@@ -1512,12 +1504,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 							WHERE s.setting_value = ?',
 							array((int)$submissionId, (string)'Assistente editorial')
 						);
-						while (!$result->EOF) {
+						foreach ($result as $row) {
 
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
+							if($row->assigned == NULL){
 
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
+								$userGroupId = $row->user_group_id;
+								$userId = $row->user_id;
 
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
@@ -1540,8 +1532,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 
 							}
-
-							$result->MoveNext();
 						}
 				}
 
@@ -1696,7 +1686,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					WHERE genre_id = ? AND locale = ?',
 					array((int)$genreId, (string)$locale)
 				);
-				$genreName = $result->GetRowAssoc(false)['setting_value'];
+				$genreName = $result->current()->setting_value;
 				$genreName = str_replace(" ","_",$genreName);
 
 				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
@@ -1776,10 +1766,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				WHERE locale = ? AND entry_key = ?',
 				array((string)$locale, (string)'SUBMISSAO_PDF')
 			);
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1796,10 +1784,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'AVAL_SECRETARIA%')
 			);
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1817,10 +1803,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'AVAL_AVALIADOR%')
 			);
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1836,8 +1820,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				array((int)$userId)
 			);
 
-			while (!$result->EOF) {
-				if($result->GetRowAssoc(0)['user_group_id'] == 19){ // PERFIL REVISOR DE FIGURA
+			foreach ($result as $row) {
+				if($row->user_group_id == 19){ // PERFIL REVISOR DE FIGURA
 					$result_genre = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
 						FROM genre_settings A
@@ -1846,18 +1830,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'EDICAO_TEXTO_FIG_ALT%')
 					);
-				break;
+					break;
 				}
-
-				$result->MoveNext();
 			}
 
 			if(isset($result_genre)){
 
-				while (!$result_genre->EOF) {
-					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-
-					$result_genre->MoveNext();
+				foreach ($result_genre as $genre) {
+					$genreList[$genre->genre_id] = $genre->setting_value;
 				}
 
 				$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1896,10 +1876,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 			}
 
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1915,10 +1893,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				array((string)$locale, (string)'EDITORACAO_DIAGRM%')
 			);
 
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1955,9 +1931,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			if(isset($result_genre)){
 
-				while (!$result_genre->EOF) {
-					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-					$result_genre->MoveNext();
+				foreach ($result_genre as $genre) {
+					$genreList[$genre->genre_id] = $genre->setting_value;
 				}
 
 				$templateMgr->setData('submissionFileGenres', $genreList);
@@ -1976,8 +1951,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				array((int)$userId)
 			);
 
-			while (!$result->EOF) {
-				if($result->GetRowAssoc(0)['user_group_id'] == 23){ // SECRETARIA
+			foreach ($result as $row) {
+				if($row->user_group_id == 23){ // SECRETARIA
 					$result_genre = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
 						FROM genre_settings A
@@ -1986,8 +1961,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
 					);
-				break;
-				}elseif($result->GetRowAssoc(0)['user_group_id'] == 14){ // AUTOR
+					break;
+				}elseif($row->user_group_id == 14){ // AUTOR
 					$result_genre = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
 						FROM genre_settings A
@@ -1996,18 +1971,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale, (string)'AVAL_AUTOR%')
 					);
-				break;
+					break;
 				}
-
-				$result->MoveNext();
 			}
 
 			if(isset($result_genre)){
 
-				while (!$result_genre->EOF) {
-					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-
-					$result_genre->MoveNext();
+				foreach ($result_genre as $genre) {
+					$genreList[$genre->genre_id] = $genre->setting_value;
 				}
 
 				$templateMgr->setData('submissionFileGenres', $genreList);
@@ -2041,7 +2012,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					array((int)24, (int)$userId)
 				);
 
-				if($autor->_numOfRows > 0){
+				if(count($autor)){
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
 						FROM genre_settings A
@@ -2051,14 +2022,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 						array((string)$locale, (string)'EDITORACAO_AUTOR%')
 					);
 
-					while (!$result->EOF) {
-						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-						$result->MoveNext();
+					foreach ($result as $row) {
+						$genreList[$row->genre_id] = $row->setting_value;
 					}
 
 					$templateMgr->setData('submissionFileGenres', $genreList);
-				}elseif($editor_assistente->_numOfRows > 0) {
+				}elseif(count($editor_assistente)) {
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
 						FROM genre_settings A
@@ -2068,10 +2037,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 						array((string)$locale,(string)'EDITORACAO_ASSIST_ED%')
 					);
 
-					while (!$result->EOF) {
-						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-						$result->MoveNext();
+					foreach ($result as $row) {
+						$genreList[$row->genre_id] = $row->setting_value;
 					}
 
 					$templateMgr->setData('submissionFileGenres', $genreList);
@@ -2100,10 +2067,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale,(string)'PEND_TEC_%')
 					);
-					while (!$result->EOF) {
-						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-						$result->MoveNext();
+					foreach ($result as $row) {
+						$genreList[$row->genre_id] = $row->setting_value;
 					}
 
 					$templateMgr->setData('submissionFileGenres', $genreList);
@@ -2191,9 +2156,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 					AND TABLE_NAME = ?',
 					array((string)'ojs', (string)'users')
 				);
-				while (!$result->EOF) {
-					$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
-					$result->MoveNext();
+				foreach ($result as $row) {
+					$columnsNames[$row->column_name] = 'null';
 				}
 				// assign custom values to columns
 				$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";
@@ -2296,12 +2260,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					WHERE p.idPessoa = ?
 				QUERY,
 				[(int) $request->getUserVar('userId')]
-			)->GetRowAssoc(0);
-			$form->setData('givenName', [$locale => $userCsp['given_name']]);
-			$form->setData('familyName', [$locale => $userCsp['family_name']]);
-			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
-			$form->setData('email', $userCsp['email']);
-			$form->setData('orcid', $userCsp['orcid']);
+			)->current();
+			$form->setData('givenName', [$locale => $userCsp->given_name]);
+			$form->setData('familyName', [$locale => $userCsp->family_name]);
+			$form->setData('affiliation', [$locale => $userCsp->affiliation]);
+			$form->setData('email', $userCsp->email);
+			$form->setData('orcid', $userCsp->orcid);
 		}elseif($form->getAuthor() != null){
 			$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
 			$author = $form->_author;
@@ -2424,7 +2388,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			WHERE YEAR(date_submitted) = YEAR(now())
 			QUERY
 		);
-		$article->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
+		$article->setData('codigoArtigo', $result->current()->code);
 
 		$now = date('Y-m-d H:i:s');
 		$submissionId = $article->getData('id');
@@ -2684,12 +2648,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 							WHERE s.setting_value = ?',
 							array((int)$submissionId,(string)'Editor da revista')
 						);
-						while (!$result->EOF) {
+						foreach ($result as $row) {
 
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
+							if($row->assigned == NULL){
 
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
+								$userGroupId = $row->user_group_id;
+								$userId = $row->user_id;
 
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
@@ -2712,8 +2676,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 
 							}
-
-							$result->MoveNext();
 						}
 						$now = date('Y-m-d H:i:s');
 						$userDao->retrieve(
@@ -2721,15 +2683,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 							array((string)'pre_aguardando_editor_chefe',(string)$now,(int)$submissionId)
 						);
 					}
-					if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
+					if($genreId == 30) { // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
 						$stageId = $request->getUserVar('stageId');
 						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
 
 						import('lib.pkp.classes.mail.MailTemplate');
 
-						while ($user = $users->next()) {
-
+						foreach ($users as $user) {
 							$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
 							$mail->addRecipient($user->getEmail(), $user->getFullName());
 
@@ -2741,7 +2702,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}
 					}
 				}
-			break;
+				break;
 			// Quando revisor/tradutor faz upload de arquivo no box de arquivo para edição de texto, editores assistentes são notificados
 			case '48': // DE rev-trad corpo PT
 			case '49': // DE rev-trad corpo  EN
@@ -2838,23 +2799,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 
 				import('lib.pkp.classes.mail.MailTemplate');
-				while (!$result->EOF) {
+				foreach ($result as $row) {
 					$mail = new MailTemplate('PRODUCAO_XML');
-					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->addRecipient($row->email);
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
 					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 												"submissionId=$submissionId".
 												"&userGroupId=$userGroupEditorXML".
-												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&userIdSelected=".$row->user_id.
 												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
-					$result->MoveNext();
 				}
 			break;        
 			case '60': // Template PT
@@ -2875,23 +2835,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 
 				import('lib.pkp.classes.mail.MailTemplate');
-				while (!$result->EOF) {
+				foreach ($result as $row) {
 					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
-					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->addRecipient($row->email);
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
 					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 												"submissionId=$submissionId".
 												"&userGroupId=$userGroupDiagramador".
-												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&userIdSelected=".$row->user_id.
 												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
-					$result->MoveNext();
 				}
 			break;        
 			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
@@ -2905,8 +2864,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-				while ($user = $users->next()) {
-
+				foreach ($users as $user) {
 					$mail = new MailTemplate('EDITORACAO_FIG_FORMATADA');
 					$mail->addRecipient($user->getEmail(), $user->getFullName());
 
@@ -2941,23 +2899,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 
 				import('lib.pkp.classes.mail.MailTemplate');
-				while (!$result->EOF) {
+				foreach ($result as $row) {
 					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
-					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->addRecipient($row->email);
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
 					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 												"submissionId=$submissionId".
 												"&userGroupId=$userGroupEditorFigura".
-												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&userIdSelected=".$row->user_id.
 												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
-					$result->MoveNext();
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$request = \Application::get()->getRequest();
@@ -3016,7 +2973,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-					while ($user = $users->next()) {
+					foreach ($users as $user) {
 
 						$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
 						$mail->addRecipient($user->getEmail(), $user->getFullName());
@@ -3101,8 +3058,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 					QUERY,
 					[$matches['id']]
 				);
-				$a = $result->GetRowAssoc(false);
-				$fileName = $a['codigo_artigo'].'_'.$fileName;
+				$a = $result->current();
+				$fileName = $a->codigo_artigo.'_'.$fileName;
 			}
 			// Stream the file to the end user.
 			header("Content-Type: $mediaType");
