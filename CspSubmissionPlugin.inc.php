@@ -94,6 +94,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
 			// Displays extra fields in the workflow metadata area
 			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
+			
+			HookRegistry::register('schemadao::_updateobject', array($this, 'updateObject'));
 		}
 		return $success;
 	}
@@ -109,6 +111,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionId = end($pathAction);
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
 			array_push(
 						$templateManager["fields"],
 						["name" => "agradecimentos",
@@ -130,38 +133,48 @@ class CspSubmissionPlugin extends GenericPlugin {
 						"value" => $submission->getData('conflitoInteresse'),
 						"inputType" => "text",
 						"size" => "large"
-						],
-						["name" => "codigoTematico",
-						"component" => "field-text",
-						"label" => "Código do fascículo temático",
-						"groupId" => "default",
-						"isRequired" => false,
-						"isMultilingual" => true,
-						"value" => $submission->getData('codigoTematico'),
-						"inputType" => "text",
-						"size" => "large"
-						],
-						["name" => "tema",
-						"component" => "field-text",
-						"label" => "Tema",
-						"groupId" => "default",
-						"isRequired" => false,
-						"isMultilingual" => true,
-						"value" => $submission->getData('tema'),
-						"inputType" => "text",
-						"size" => "large"
-						],
-						["name" => "codigoArtigoRelacionado",
-						"component" => "field-text",
-						"label" => "Código do artigo relacionado",
-						"groupId" => "default",
-						"isRequired" => false,
-						"isMultilingual" => true,
-						"value" => $submission->getData('codigoArtigoRelacionado'),
-						"inputType" => "text",
-						"size" => "large"
 						]
 					);
+			if($publication->getData('sectionId') == 5){
+				array_push(
+					$templateManager["fields"],
+					["name" => "codigoTematico",
+					"component" => "field-text",
+					"label" => "Código do fascículo temático",
+					"groupId" => "default",
+					"isRequired" => false,
+					"isMultilingual" => true,
+					"value" => $submission->getData('codigoTematico'),
+					"inputType" => "text",
+					"size" => "large"
+					],
+					["name" => "tema",
+					"component" => "field-text",
+					"label" => "Tema",
+					"groupId" => "default",
+					"isRequired" => false,
+					"isMultilingual" => true,
+					"value" => $submission->getData('tema'),
+					"inputType" => "text",
+					"size" => "large"
+					],
+				);
+			}
+			if($publication->getData('sectionId') == 15){
+				array_push(
+					$templateManager["fields"],
+					["name" => "codigoArtigoRelacionado",
+					"component" => "field-text",
+					"label" => "Código do artigo relacionado",
+					"groupId" => "default",
+					"isRequired" => false,
+					"isMultilingual" => true,
+					"value" => $submission->getData('codigoArtigoRelacionado'),
+					"inputType" => "text",
+					"size" => "large"
+					]
+				);
+			}
 		}
 	}
 
@@ -2341,13 +2354,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$smarty =& $params[1];
 		$output =& $params[2];
 
-		if($sectionId == 5){
+		if($sectionId == 5){ // Espaço temático
+			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
+		}
+
+		if($sectionId == 6){ // Revisão
 			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
 		}
 
-		if($sectionId == 4){
-			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
-			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
+		if($sectionId == 15){ // Comentários
 			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
 		}
 
@@ -2464,22 +2480,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function publicationEdit($hookName, $params) {
-		$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
-		$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
-		$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
-		$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
-		$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
-		$params[2]["codigoTematico"] = $params[3]->_requestVars["codigoTematico"];
-		$params[0]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
-		$params[1]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
-		$params[2]["codigoArtigoRelacionado"] = $params[3]->_requestVars["codigoArtigoRelacionado"];
-		$params[0]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
-		$params[1]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
-		$params[2]["conflitoInteresse"] = $params[3]->_requestVars["conflitoInteresse"];
-		$params[0]->setData('tema', $params[3]->_requestVars["tema"]);
-		$params[1]->setData('tema', $params[3]->_requestVars["tema"]);
-		$params[2]["tema"] = $params[3]->_requestVars["tema"];
-
+		$router = $params[3]->getRouter();
+		if($router->_page == 'submission'){
+			$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
+			$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
+			$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
+			$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
+			$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
+			$params[2]["codigoTematico"] = $params[3]->_requestVars["codigoTematico"];
+			$params[0]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
+			$params[1]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
+			$params[2]["codigoArtigoRelacionado"] = $params[3]->_requestVars["codigoArtigoRelacionado"];
+			$params[0]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
+			$params[1]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
+			$params[2]["conflitoInteresse"] = $params[3]->_requestVars["conflitoInteresse"];
+			$params[0]->setData('tema', $params[3]->_requestVars["tema"]);
+			$params[1]->setData('tema', $params[3]->_requestVars["tema"]);
+			$params[2]["tema"] = $params[3]->_requestVars["tema"];
+		}
 		return false;
 	}
 	/**
