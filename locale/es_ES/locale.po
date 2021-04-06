@@ -1,0 +1,163 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+
+msgid "plugins.generic.CspSubmission.displayName"
+msgstr "cspSubmission"
+
+msgid "plugins.generic.CspSubmission.description"
+msgstr "O plugin cspSubmission inclui campos extras aos metadados do artigo possibilitando associar campos a sessões."
+
+msgid "plugins.generic.CspSubmission.Tema"
+msgstr "Tema"
+
+msgid "plugins.generic.CspSubmission.Tema.Valid"
+msgstr "Necessário informar o tema."
+
+msgid "plugins.generic.CspSubmission.conflitoInteresse"
+msgstr "Seu artigo possui conflito de interesse?"
+
+msgid "plugins.generic.CspSubmission.codigoTematico"
+msgstr "Código do fascículo temático"
+
+msgid "plugins.generic.CspSubmission.codigoTematico.description"
+msgstr "(Solicite o código ao editor convidado)"
+
+msgid "plugins.generic.CspSubmission.codigoTematico.Valid"
+msgstr "Necessário informar o código do fascículo temático"
+
+msgid "plugins.generic.CspSubmission.agradecimentos"
+msgstr "Agradecimentos"
+
+msgid "plugins.generic.CspSubmission.agradecimentos.description"
+msgstr "Deixe aqui seus agradecimentos"
+
+msgid "plugins.generic.CspSubmission.Revisao"
+msgstr "As revisões sistemáticas só serão encaminhadas se submetidas em inglês."
+
+msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado"
+msgstr "Código"
+
+msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid"
+msgstr "Necessário informar o código do artigo."
+
+msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado.Description"
+msgstr "Código do artigo ou do debate comentado."
+
+msgid "plugins.generic.CspSubmission.Metadados.Notification"
+msgstr "Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito."
+
+msgid "plugins.generic.CspSubmission.File.Title"
+msgstr "Especifique o tipo de arquivo e a ordem que você quer que apareça no artigo"
+
+msgid "plugins.generic.CspSubmission.File.Description"
+msgstr "Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2"
+
+msgid "plugins.generic.CspSubmission.artworkFile.Title"
+msgstr "Título"
+
+msgid "plugins.generic.CspSubmission.artworkFile.Comment"
+msgstr "Comentário"
+
+msgid "plugins.generic.CspSubmission.commentsToEditor.Description"
+msgstr "Considerando que parte da demora na avaliação do artigo se deve à busca de consultores, agradecemos a indicação de ao menos dois nomes"
+
+msgid "plugins.generic.CspSubmission.Subtitle"
+msgstr "Título curto"
+
+msgid "plugins.generic.CspSubmission.Subtitle.Description"
+msgstr "Até 70 caracteres"
+
+msgid "plugins.generic.CspSubmission.InclusaoAutores.Description"
+msgstr "A ordenação dos nomes dos autores deve ser a mesma que será utilizada na publicação (utilize as setas verdes que aparecem quando há mais de um autor cadastrado para trocar a ordem dos autores). Você já foi inserido como autor do artigo, de acordo com os seus dados cadastrais. Caso esteja faltando alguma informação relevante para a publicação uma mensagem irá lhe alertar a respeito. Para editar as informações clique em cima do nome do autor e depois em “editar dados” (use esta mesma ação para inserir sua colaboração, obrigatória caso o artigo tenha mais de um autor). Em caso de dificuldades com o processo, entre em contado com o suporte do SAGAS através do e-mail csp-artigos@ensp.fiocruz.br"
+
+msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
+msgstr "A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx ou .odt"
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Image"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .png, .jpeg, .bmp ou .tiff"
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Fluxograma"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx, .odt, .eps, .svg ou .wmf"
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Gráfico"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .xls, .xlsx, .ods, .eps, .svg ou .wmf"
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Mapa"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .eps, .svg ou .wmf"
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Fotografia"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .bmp ou .tiff"
+
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF"
+msgstr "Formato de arquivo inválido! Este arquivo deve estar no formato PDF."
+
+msgid "plugins.generic.CspSubmission.doi"
+msgstr "Caso tenha sido colocado em algum local como preprint, favor informar o acesso (DOI)"
+
+msgid "plugins.generic.CspSubmission.doi.Valid"
+msgstr "DOI inválido"
+
+msgid "plugins.generic.CspSubmission.searchForAuthor"
+msgstr "Informe o nome do coautor"
+
+msgid "author.list.count"
+msgstr "{$count} autores"
+
+msgid "author.list.itemsOfTotal"
+msgstr "{$count} de {$total} autores"
+
+msgid "plugins.generic.CspSubmission.authorNotFoundCreate"
+msgstr "Autor não encontrado, cadastrar"
+
+msgid "plugins.generic.CspSubmission.informAName"
+msgstr "Informe um nome"
+
+msgid "plugins.generic.CspSubmission.smallTitle"
+msgstr "Título curto"
+
+msgid "plugins.generic.CspSubmission.keywords.tip"
+msgstr "Mínimo 3 e máximo 5 palavras (separadas pela tecla Enter)"
+
+msgid "plugins.generic.CspSubmission.supportingAgencies.tip"
+msgstr "Caso possível, informe o código de financiamento"
+
+msgid "plugins.generic.CspSubmission.AuthorContribution"
+msgstr "Contribuição do autor no trabalho"
+
+msgid "editor.submission.consultKfinder"
+msgstr "Consultar Kfinder"
+
+msgid "grid.action.consultKfinder"
+msgstr "Consultar Kfinder"
+
+msgid "editor.submission.addReviewerSagas"
+msgstr "Adicionar avaliador"
+
+msgid "grid.action.addReviewerSagas"
+msgstr "Adicionar avaliador"
+
+msgid "editor.review.reviewerId.emptyArray"
+msgstr "Selecione ao menos um revisor"
+
+msgid "plugins.generic.CspSubmission.unconsider"
+msgstr "Deconsiderar avaliação"
+
+msgid "plugins.generic.CspSubmission.reviewer.inQueue"
+msgstr "Na fila"
+
+msgid "plugins.generic.CspSubmission.reviewer.removeFromQueue"
+msgstr "Remover da fila"
+
+msgid "plugins.generic.CspSubmission.reviewer.removeFromQueueText"
+msgstr "Deseja realmente remover da fila?"
