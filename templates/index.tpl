@@ -34,19 +34,26 @@
 	{else}
 		<tabs>
 			<tab label="{translate key="dashboard.myQueue"}">
-				<div class="pkpFormField pkpFormField--select">
-					<div class="pkpFormField__heading">
-						<label for="theme-themePluginPath-control" class="pkpFormFieldLabel"> Papel</label>
+			<div class="pkp_form">
+				<fieldset id="userFormCompactLeft">
+					<div class="section ">
+					<label> Papel</label>
+						<div class="inline pkp_helpers_half">
+							<div class="pkpFormField__control">
+								<select name="requestRoleAbbrev" class="pkpFormField__input pkpFormField--select__input"
+								onchange="document.location.href='?requestRoleAbbrev='+this.value">
+									{foreach from=$userGroupsAbbrev key=key item=name }
+										<option value="{$name}" {if $requestRoleAbbrev == $name} selected="selected"{/if}>{$name}</option>
+									{/foreach}
+								</select>
+							</div>
+						</div>
+						<div class="inline pkp_helpers_half" style="text-align:right">
+							<a href="submission/wizard" class="pkpButton">{translate key="plugins.generic.CspSubmission.newSubmission"}</a>
+						</div>
 					</div>
-					<div class="pkpFormField__control">
-						<select name="requestRoleAbbrev" class="pkpFormField__input pkpFormField--select__input"
-						onchange="document.location.href='?requestRoleAbbrev='+this.value">
-							{foreach from=$userGroupsAbbrev key=key item=name }
-								<option value="{$name}" {if $requestRoleAbbrev == $name} selected="selected"{/if}>{$name}</option>
-							{/foreach}
-						</select>
-					</div>
-				</div>
+			</fieldset>
+			</div>
 				{foreach from=$stages key=stage item=array_status}
 					<fieldset class="pkpFormField pkpFormField--options">
 						<legend class="pkpFormField--options__legend">
