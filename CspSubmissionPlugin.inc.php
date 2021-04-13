@@ -490,6 +490,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'substage' => $request->getUserVar('substage'),
 					'requestRoleAbbrev' => $request->getUserVar('requestRoleAbbrev')
 				));
+
+				$templateManager->assign('basejs', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js');
+				$templateManager->assign('basecss', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css');
+
+				$args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
+				return true;
+			}else{
+				$templateManager =& $args[0];
+
+				// // Load JavaScript file
+				$templateManager->addJavaScript(
+					'csp',
+					$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+					array(
+						'contexts' => 'backend',
+						'priority' => STYLE_SEQUENCE_LAST,
+					)
+				);
+				$templateManager->addStyleSheet(
+					'csp',
+					$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
+					array(
+						'contexts' => 'backend',
+						'priority' => STYLE_SEQUENCE_LAST,
+					)
+				);
+
 				$args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
 				return true;
 			}
