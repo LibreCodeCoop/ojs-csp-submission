@@ -732,7 +732,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						);
 					}else{ // Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação"
 						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $request->getUserVar('stageId'), 24);
+						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $request->getUserVar('stageId'), 4);
 						import('lib.pkp.classes.mail.MailTemplate');
 						$mail = new MailTemplate('EDITOR_DECISION_ACCEPT');
 						while ($user = $users->next()) {
@@ -1485,51 +1485,38 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if ($stageId == 3 or $stageId == 1){
 				if($decision == 1){ // Quando submissão é aceita, editores assistentes são designados
 
-						$request = \Application::get()->getRequest();
-						$submissionId = $request->getUserVar('submissionId');
+					$context = $request->getContext();
+					$submissionId = $request->getUserVar('submissionId');
+					$stageId = $request->getUserVar('stageId');
+					$userGroupId = 4; /// Editor assistente
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 
-						$userDao = DAORegistry::getDAO('UserDAO');
-						$result = $userDao->retrieve(
-							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM user_user_groups g
-							LEFT JOIN user_group_settings s
-							ON s.user_group_id = g.user_group_id
-							LEFT JOIN stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = ?
-							WHERE s.setting_value = ?',
-							array((int)$submissionId, (string)'Assistente editorial')
-						);
-						while (!$result->EOF) {
+					while ($user = $users->next()) {
+						$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+						$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $user->getData('id'), $stageId);
+						$userId = $user->getData('id');
+						if (!$assigned->records){
+							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+							$stageAssignment = $stageAssignmentDao->newDataObject();
+							$stageAssignment->setSubmissionId($submissionId);
+							$stageAssignment->setUserGroupId($userGroupId);
+							$stageAssignment->setUserId($userId);
+							$stageAssignment->setRecommendOnly(1);
+							$stageAssignment->setCanChangeMetadata(1);
+							$stageAssignmentDao->insertObject($stageAssignment);
 
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
+							$submissionDAO = Application::getSubmissionDAO();
+							$submission = $submissionDAO->getById($submissionId);
+							$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+							$assignedUser = $userDao->getById($userId);
+							$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+							$userGroup = $userGroupDao->getById($userGroupId);
 
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
-
-								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-								$stageAssignment = $stageAssignmentDao->newDataObject();
-								$stageAssignment->setSubmissionId($submissionId);
-								$stageAssignment->setUserGroupId($userGroupId);
-								$stageAssignment->setUserId($userId);
-								$stageAssignment->setRecommendOnly(1);
-								$stageAssignment->setCanChangeMetadata(1);
-								$stageAssignmentDao->insertObject($stageAssignment);
-
-								$submissionDAO = Application::getSubmissionDAO();
-								$submission = $submissionDAO->getById($submissionId);
-
-								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-								$assignedUser = $userDao->getById($userId);
-								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-								$userGroup = $userGroupDao->getById($userGroupId);
-
-								import('lib.pkp.classes.log.SubmissionLog');
-								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
-
-							}
-
-							$result->MoveNext();
+							import('lib.pkp.classes.log.SubmissionLog');
+							SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 						}
+					}
 				}
 
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage1And3.tpl'));
