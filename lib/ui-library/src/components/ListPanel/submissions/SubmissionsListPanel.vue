@@ -22,7 +22,7 @@
 		</pkp-header>
 		<!-- Body of the panel, including items and sidebar -->
 		<div class="pkpListPanel__body -pkpClearfix">
-				<div class="pkp_controllers_grid" style="margin-bottom:0px">
+				<div class="pkp_controllers_grid">
 					<table>
 						<thead>
 							<tr>

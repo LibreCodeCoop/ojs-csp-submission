@@ -1011,7 +1011,7 @@ export default {
 	box-shadow: unset !important;
 	border-radius: unset !important;
 }
-.pkp_controllers_grid{
+#myQueue .pkp_controllers_grid{
 	margin-bottom: unset !important;
 }
 </style>
