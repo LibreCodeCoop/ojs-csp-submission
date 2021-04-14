@@ -799,6 +799,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 					QUERY
 				);
 			}
+			if($request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_editor_chefe', (string)$now, (int)$submissionId)
+				);
+			}
 		}
 		if ($component == 'api.file.ManageFileApiHandler') {
 			$locale = AppLocale::getLocale();
@@ -890,14 +899,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ava_aguardando_autor', (string)$now, (int)$submissionId)
-				);
-			}
-
-			if($request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_aguardando_editor_chefe', (string)$now, (int)$submissionId)
 				);
 			}
 		}
