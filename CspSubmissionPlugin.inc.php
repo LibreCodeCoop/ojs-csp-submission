@@ -2663,37 +2663,31 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 					);
 				}else{
-					if($genreId == '46'){ // QUANDO SECRETARIA SOBRE UM PDF NO ESTÁGIO DE SUBMISSÃO, A SUBMISSÃO É DESIGNADA PARA TODOS OS EDITORES DA REVISTA
+					if($genreId == '46'){ // Quando a secretaria sobre um PDF no estágio de pré-avaliaçao, a submissão é designada para os editores chefe da revista
 
-						$result = $userDao->retrieve(
-							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM user_user_groups g
-							LEFT JOIN user_group_settings s
-							ON s.user_group_id = g.user_group_id
-							LEFT JOIN stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = ?
-							WHERE s.setting_value = ?',
-							array((int)$submissionId,(string)'Editor da revista')
-						);
-						while (!$result->EOF) {
+						$context = $request->getContext();
+						$submissionId = $request->getUserVar('submissionId');
+						$stageId = $request->getUserVar('stageId');
+						$userGroupId = 3; /// Editor chefe
+						$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+						$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
-
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
-
+						while ($user = $users->next()) {
+							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+							$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $user->getData('id'), $stageId);
+							$userId = $user->getData('id');
+							if (!$assigned->records){
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
 								$stageAssignment->setSubmissionId($submissionId);
 								$stageAssignment->setUserGroupId($userGroupId);
 								$stageAssignment->setUserId($userId);
-								$stageAssignment->setRecommendOnly(0);
+								$stageAssignment->setRecommendOnly(1);
 								$stageAssignment->setCanChangeMetadata(1);
 								$stageAssignmentDao->insertObject($stageAssignment);
 
 								$submissionDAO = Application::getSubmissionDAO();
 								$submission = $submissionDAO->getById($submissionId);
-
 								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 								$assignedUser = $userDao->getById($userId);
 								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
@@ -2701,10 +2695,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 								import('lib.pkp.classes.log.SubmissionLog');
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
-
 							}
-
-							$result->MoveNext();
 						}
 						$now = date('Y-m-d H:i:s');
 						$userDao->retrieve(
