@@ -2084,12 +2084,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function pkp_services_pkpuserservice_getmany($hookName, $args)
 	{
+		$request = \Application::get()->getRequest();
 		$refObject   = new ReflectionObject($args[1]);
 		$refReviewStageId = $refObject->getProperty('reviewStageId');
 		$refReviewStageId->setAccessible( true );
 		$reviewStageId = $refReviewStageId->getValue($args[1]);
-
-		if ($reviewStageId) {
+		if ($reviewStageId or $request->_router->_op == "addQuery") {
 			return;
 		}
 		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') || strpos($_SERVER["HTTP_REFERER"], 'workflow/index')) {
