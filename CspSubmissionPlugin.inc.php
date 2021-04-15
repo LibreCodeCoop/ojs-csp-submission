@@ -630,10 +630,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$userGroupId = 10; /// Revisor de figura
 						$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 						$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
-
+						$messageParticipants = array();
 						while ($user = $users->next()) {
 							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 							$userId = $user->getData('id');
+							$messageParticipants[] = $userId;
 							$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $userId, $stageId);
 							if ($assigned->wasEmpty()){
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
@@ -664,34 +665,32 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$authorDao = DAORegistry::getDAO('AuthorDAO');
 						$author = $authorDao->getById($publication->getData('primaryContactId'));
 						$author = $userDao->getUserByEmail($author->getData('email'));
-						$users = array();
-						$users[] = (int) $author->getData('id');
+						$messageParticipants[] = $author->getData('id');
 
 						import('lib.pkp.controllers.grid.queries.form.QueryForm');
 
-						$assocType = 1048585;
-						$getAssocId = $submissionId;
+						$assocType = ASSOC_TYPE_SUBMISSION;
+						$assocId = $submissionId;
 						$stageId = 4;
 
 						$queryForm = new QueryForm(
 							$request,
 							$assocType,
-							$getAssocId,
+							$assocId,
 							$stageId
 						);
 						$queryForm->initData();
-
-						$request->_requestVars["users"] = $users;
 
 						import('lib.pkp.classes.mail.MailTemplate');
 						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
 						$request->_requestVars["subject"] = $mail->getData('subject');
 						$request->_requestVars["comment"] = $mail->getData('body');
+						$request->_requestVars["users"] = $messageParticipants;
 
 						$queryForm = new QueryForm(
 							$request,
 							$assocType,
-							$getAssocId,
+							$assocId,
 							$stageId,
 							$queryForm->_query->_data["id"]
 						);
@@ -712,7 +711,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 									),
 									null,
 									ASSOC_TYPE_SUBMISSION,
-									$getAssocId
+									$assocId
 								);
 						}
 
