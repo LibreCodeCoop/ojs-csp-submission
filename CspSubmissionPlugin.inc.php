@@ -624,27 +624,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 					if (in_array(10, $genreIds)) { // Se houverem figuras, revisores de figura são designados e conversa é iniciada com autor
 
-						$userDao = DAORegistry::getDAO('UserDAO');
-						$result = $userDao->retrieve(
-							'SELECT s.user_group_id , g.user_id, a.user_id as assigned
-							FROM user_user_groups g
-							LEFT JOIN user_group_settings s
-							ON s.user_group_id = g.user_group_id
-							LEFT JOIN stage_assignments a
-							ON g.user_id = a.user_id AND a.submission_id = ?
-							WHERE s.setting_value = ?',array((int) $submissionId, (string) 'Revisor de figura')
-						);
+						$context = $request->getContext();
+						$submissionId = $request->getUserVar('submissionId');
+						$stageId = 4;
+						$userGroupId = 10; /// Revisor de figura
+						$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+						$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 
-						import('lib.pkp.classes.mail.MailTemplate');
-
-						while (!$result->EOF) {
-
-							if($result->GetRowAssoc(0)['assigned'] == NULL){
-
-								$userGroupId = $result->GetRowAssoc(0)['user_group_id'];
-								$userId = $result->GetRowAssoc(0)['user_id'];
-								$users[] = $userId;
-
+						while ($user = $users->next()) {
+							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
+							$userId = $user->getData('id');
+							$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $userId, $stageId);
+							if ($assigned->wasEmpty()){
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
 								$stageAssignment->setSubmissionId($submissionId);
@@ -656,7 +647,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 								$submissionDAO = Application::getSubmissionDAO();
 								$submission = $submissionDAO->getById($submissionId);
-
 								$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 								$assignedUser = $userDao->getById($userId);
 								$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
@@ -665,7 +655,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 								import('lib.pkp.classes.log.SubmissionLog');
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 							}
-							$result->MoveNext();
 						}
 
 						$submissionDAO = Application::getSubmissionDAO();
@@ -675,7 +664,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$authorDao = DAORegistry::getDAO('AuthorDAO');
 						$author = $authorDao->getById($publication->getData('primaryContactId'));
 						$author = $userDao->getUserByEmail($author->getData('email'));
-						$users[] = $author->getData('id');
+						$users = array();
+						$users[] = (int) $author->getData('id');
 
 						import('lib.pkp.controllers.grid.queries.form.QueryForm');
 
@@ -691,9 +681,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 						);
 						$queryForm->initData();
 
-						//$request->_requestVars["queryId"] = 690;
 						$request->_requestVars["users"] = $users;
 
+						import('lib.pkp.classes.mail.MailTemplate');
 						$mail = new MailTemplate('EDICAO_TEXTO_PENDENC_TEC');
 						$request->_requestVars["subject"] = $mail->getData('subject');
 						$request->_requestVars["comment"] = $mail->getData('body');
@@ -2670,7 +2660,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 								$stageAssignment->setSubmissionId($submissionId);
 								$stageAssignment->setUserGroupId($userGroupId);
 								$stageAssignment->setUserId($userId);
-								$stageAssignment->setRecommendOnly(1);
+								$stageAssignment->setRecommendOnly(0);
 								$stageAssignment->setCanChangeMetadata(1);
 								$stageAssignmentDao->insertObject($stageAssignment);
 
