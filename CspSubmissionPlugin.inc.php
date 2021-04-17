@@ -1485,7 +1485,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 						$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $user->getData('id'), $stageId);
 						$userId = $user->getData('id');
-						if (!$assigned->records){
+						if (!$assigned->wasEmpty()){
 							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 							$stageAssignment = $stageAssignmentDao->newDataObject();
 							$stageAssignment->setSubmissionId($submissionId);
@@ -2653,7 +2653,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 							$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $user->getData('id'), $stageId);
 							$userId = $user->getData('id');
-							if (!$assigned->records){
+							if (!$assigned->wasEmpty()){
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
 								$stageAssignment->setSubmissionId($submissionId);
