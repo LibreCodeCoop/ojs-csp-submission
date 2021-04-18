@@ -872,8 +872,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 			$recipient = $userDao->getUserByEmail($args[0]->_data["recipients"][0]["email"]);
-			$context = $request->getContext();
-			$isManager = $recipient->hasRole(array(ROLE_ID_MANAGER), $context->getId());
+			if($recipient){
+				$context = $request->getContext();
+				$isManager = $recipient->hasRole(array(ROLE_ID_MANAGER), $context->getId());
 				if($isManager){ // Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe"
 					$now = date('Y-m-d H:i:s');
 					$userDao->retrieve(
@@ -882,6 +883,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						QUERY
 					);
 				}
+			}
 
 			if($decision == 2){  // Ao solicitar modificações ao autor, o status é alterado
 				$now = date('Y-m-d H:i:s');
