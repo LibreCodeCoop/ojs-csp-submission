@@ -1854,44 +1854,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileGenres', $genreList);
 		}
 		if ($fileStage == 11) { // Upload de arquivo em box "Arquivos prontos para layout"
-
 			$userGroupAssignmentDao = DAORegistry::getDAO('UserGroupAssignmentDAO'); /* @var $userGroupAssignmentDao UserGroupAssignmentDAO */
 			$userGroupAssignments = $userGroupAssignmentDao->getByUserId($request->getUser()->getId());
-
 			while ($assignment = $userGroupAssignments->next()) {
 				$userGroupIds[] = $assignment->getUserGroupId();
 			}
-
-			if(!empty(array_intersect($userGroupIds, ['24']))){ // Ed. Assistente
-				$result_genre = $userDao->retrieve(
-					'SELECT A.genre_id, setting_value
-					FROM genre_settings A
-					LEFT JOIN genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = ? AND (entry_key LIKE ? OR entry_key = ?)',
-					array((string)$locale, (string)'EDITORACAO_ASSIS_ED_TEMPLT%', (string)'EDITORACAO_FIG_P_FORMATAR')
-				);
+			if(!empty(array_intersect($userGroupIds, ['4']))){ // Ed. Assistente
+				$genreDao = \DAORegistry::getDAO('GenreDAO');
+				$context = $request->getContext();
+				$genres = array();
+				$genre = $genreDao->getByKey('EDITORACAO_FIG_FORMATAR', $context->getId());
+				$genres[$genre->getData('id')] = $genre->getLocalizedName();
+				$genre = $genreDao->getByKey('EDITORACAO_PARA_DIAGRAM_PT', $context->getId());
+				$genres[$genre->getData('id')] = $genre->getLocalizedName();
+				$genre = $genreDao->getByKey('EDITORACAO_PARA_DIAGRAM_ES', $context->getId());
+				$genres[$genre->getData('id')] = $genre->getLocalizedName();
+				$genre = $genreDao->getByKey('EDITORACAO_PARA_DIAGRAM_EN', $context->getId());
+				$genres[$genre->getData('id')] = $genre->getLocalizedName();
 			}
-			if(!empty(array_intersect($userGroupIds, ['21','12']))){ // Editor de figura ou diagramador
-				$result_genre = $userDao->retrieve(
-					'SELECT A.genre_id, setting_value
-					FROM genre_settings A
-					LEFT JOIN genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = ? AND entry_key = ? OR entry_key = ?',
-					array((string)$locale, (string)'EDITORACAO_FIG_FORMATAD', (string)'EDITORACAO_PDF_DIAGRAMADO')
-				);
+			if(!empty(array_intersect($userGroupIds, ['11','12']))){ // Editor de figura ou diagramador
+				$genreDao = \DAORegistry::getDAO('GenreDAO');
+				$context = $request->getContext();
+				$genres = array();
+				$genre = $genreDao->getByKey('EDITORACAO_FIG_FORMATAD', $context->getId());
+				$genres[$genre->getData('id')] = $genre->getLocalizedName();
+				$genre = $genreDao->getByKey('EDITORACAO_PDF_DIAGRAMADO', $context->getId());
+				$genres[$genre->getData('id')] = $genre->getLocalizedName();
 			}
-
-			if(isset($result_genre)){
-
-				while (!$result_genre->EOF) {
-					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-					$result_genre->MoveNext();
-				}
-
-				$templateMgr->setData('submissionFileGenres', $genreList);
-
+			if(!empty($userGroupIds)){
+				$templateMgr->setData('submissionFileGenres', $genres);
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
