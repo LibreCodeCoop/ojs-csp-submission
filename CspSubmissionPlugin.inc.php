@@ -571,11 +571,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if ($component == 'grid.users.stageParticipant.stageParticipantGrid.SaveParticipantHandler') {
 			if($request->getUserVar('accept')){
-
 				$submissionId = $request->getUserVar('submissionId');
 				$userGroupId = $request->getUserVar('userGroupId');
 				$userId = $request->getUserVar('userIdSelected');
-
 				$stageId = $request->getUserVar('stageId');
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
@@ -591,19 +589,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$stageAssignment->setRecommendOnly(1);
 					$stageAssignment->setCanChangeMetadata(1);
 					$stageAssignmentDao->insertObject($stageAssignment);
-
 					$submissionDAO = Application::getSubmissionDAO();
 					$submission = $submissionDAO->getById($submissionId);
-
 					$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 					$assignedUser = $userDao->getById($userId);
 					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 					$userGroup = $userGroupDao->getById($userGroupId);
-
 					import('lib.pkp.classes.log.SubmissionLog');
 					SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 				}
-
+				switch ($userGroupId) {
+					case '12': // Diagramador
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$now = date('Y-m-d H:i:s');
+						$submissionId = $request->getUserVar('submissionId');
+						$userDao->retrieve(
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							array((string)'edit_em_diagramacao', (string)$now, (int)$submissionId)
+						);
+					break;
+				return true;
+				}
 				$context = $request->getContext();
 				$request->redirect($context->getPath(), 'workflow', null, array('submissionId' => $submissionId, 'stageId' => $stageId));
 				return true;
@@ -829,15 +835,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ed_text_em_revisao_traducao', (string)$now, (int)$submissionId)
-			);
-		}
-		if($request->getUserVar("userGroupId") == 22){ // Quando designa diagramador status é alterado para "Em diagramação"
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$now = date('Y-m-d H:i:s');
-			$submissionId = $request->getUserVar('submissionId');
-			$userDao->retrieve(
-				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'edit_em_diagramacao', (string)$now, (int)$submissionId)
 			);
 		}
 	}
@@ -2866,22 +2863,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$stageId = $request->getUserVar('stageId');
-
-					import('lib.pkp.classes.mail.MailTemplate');
-
-					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-					while ($user = $users->next()) {
-
-						$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
-						$mail->addRecipient($user->getEmail(), $user->getFullName());
-
-						if (!$mail->send()) {
-							import('classes.notification.NotificationManager');
-							$notificationMgr = new NotificationManager();
-							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-						}
+				$groupId = 4; // Editores assistentes
+				import('lib.pkp.classes.mail.MailTemplate');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $groupId);
+				while ($user = $users->next()) {
+					$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
+					$mail->addRecipient($user->getEmail(), $user->getFullName());
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
+				}
 			break;
 		return true;
 		}
