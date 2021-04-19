@@ -1865,11 +1865,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$genres = array();
 				$genre = $genreDao->getByKey('EDITORACAO_FIG_FORMATAR', $context->getId());
 				$genres[$genre->getData('id')] = $genre->getLocalizedName();
-				$genre = $genreDao->getByKey('EDITORACAO_PARA_DIAGRAM_PT', $context->getId());
+				$genre = $genreDao->getByKey('EDITORACAO_TEMPLT_PT', $context->getId());
 				$genres[$genre->getData('id')] = $genre->getLocalizedName();
-				$genre = $genreDao->getByKey('EDITORACAO_PARA_DIAGRAM_ES', $context->getId());
+				$genre = $genreDao->getByKey('EDITORACAO_TEMPLT_EN', $context->getId());
 				$genres[$genre->getData('id')] = $genre->getLocalizedName();
-				$genre = $genreDao->getByKey('EDITORACAO_PARA_DIAGRAM_EN', $context->getId());
+				$genre = $genreDao->getByKey('EDITORACAO_TEMPLT_ES', $context->getId());
 				$genres[$genre->getData('id')] = $genre->getLocalizedName();
 			}
 			if(!empty(array_intersect($userGroupIds, ['11','12']))){ // Editor de figura ou diagramador
@@ -2738,55 +2738,44 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case '61': // Template ES
 			case '62': // Template EN
 				// Quando é feito upload de template, diagramadores recebem email de convite para produzir PDF
-				$userGroupDiagramador = 12;
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					'SELECT u.email, u.user_id
-					FROM users u
-					LEFT JOIN user_user_groups g
-					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = ?',
-					array((int)$userGroupDiagramador)
-				);
-
+				$context = $request->getContext();
+				$userGroupId = 12; // Diagrmador
+				$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 				import('lib.pkp.classes.mail.MailTemplate');
-				while (!$result->EOF) {
+				while ($user = $users->next()) {
 					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
-					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->addRecipient($user->getData('email'));
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
 					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 												"submissionId=$submissionId".
-												"&userGroupId=$userGroupDiagramador".
-												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&userGroupId=$userGroupId".
+												"&userIdSelected=".$user->getData('id').
 												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
-					$result->MoveNext();
 				}
 			break;        
-			// Quando revisor de figura faz upload de figura formatada no box arquivos para edição de texto
+			// Quando editor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$stageId = $request->getUserVar('stageId');
 				$locale = AppLocale::getLocale();
-
+				$userGroupId = 13; // Padronizador
 				import('lib.pkp.classes.mail.MailTemplate');
-
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
 				while ($user = $users->next()) {
-
 					$mail = new MailTemplate('EDITORACAO_FIG_FORMATADA');
 					$mail->addRecipient($user->getEmail(), $user->getFullName());
-
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
@@ -2802,43 +2791,32 @@ class CspSubmissionPlugin extends GenericPlugin {
 			break;
 			case '65': // Figura para formatar
 				// Quando é feito upload de figura para formatar, editores de figura recebem email de convite para formatar figura
-				$userGroupEditorFigura = 21;
 				$request = \Application::get()->getRequest();
-				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$site = $request->getSite();
+				$userGroupId = 11; // Editor de figura
+				$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 				$context = $request->getContext();
-				$result = $userDao->retrieve(
-					'SELECT u.email, u.user_id
-					FROM users u
-					LEFT JOIN user_user_groups g
-					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = ?',
-					array((int)$userGroupEditorFigura)
-				);
-
+				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
+				$submissionId = $request->getUserVar('submissionId');
 				import('lib.pkp.classes.mail.MailTemplate');
-				while (!$result->EOF) {
+				while ($user = $users->next()) {
 					$mail = new MailTemplate('LAYOUT_REQUEST_PICTURE');
-					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->addRecipient($user->getData('email'));
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
 					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 												"submissionId=$submissionId".
-												"&userGroupId=$userGroupEditorFigura".
-												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&userGroupId=$userGroupId".
+												"&userIdSelected=".$user->getData('id').
 												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
-					$result->MoveNext();
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$request = \Application::get()->getRequest();
-				$submissionId = $request->getUserVar('submissionId');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
