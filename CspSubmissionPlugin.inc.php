@@ -468,11 +468,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$stages['Avaliação']['ava_aguardando_autor_mais_60_dias'] = "Há mais de 60 dias com o autor (" .$this->countStatus('ava_aguardando_autor',date('Y-m-d H:i:s', strtotime('-2 months'))).")";
 					$stages['Avaliação']['ava_aguardando_secretaria'] = "Aguardando secretaria (" .$this->countStatus('ava_aguardando_secretaria',date('Y-m-d H:i:s')) .")";
 				}
-				if (array_intersect(array('Assistente editorial','Gerente'), $userGroups)) {
+				if (array_intersect(array('Ed. assistente','Gerente', 'Revisor - Tradutor'), $userGroups)) {
 					$stages['Edição de texto']['ed_text_envio_carta_aprovacao'] = "Envio de Carta de aprovação (" .$this->countStatus('ed_text_envio_carta_aprovacao',date('Y-m-d H:i:s')).")";
 					$stages['Edição de texto']['ed_text_para_revisao_traducao'] = "Para revisão/Tradução (" .$this->countStatus('ed_text_para_revisao_traducao',date('Y-m-d H:i:s')).")";
 					$stages['Edição de texto']['ed_text_em_revisao_traducao'] = "Em revisão/Tradução (" .$this->countStatus('ed_text_em_revisao_traducao',date('Y-m-d H:i:s')).")";
 					$stages['Edição de texto']['ed_texto_traducao_metadados'] = "Tradução de metadados (" .$this->countStatus('ed_texto_traducao_metadados',date('Y-m-d H:i:s')).")";
+				}
+				if (array_intersect(array('Ed. assistente','Gerente'), $userGroups)) {
 					$stages['Editoração']['edit_aguardando_padronizador'] = "Aguardando padronizador (" .$this->countStatus('edit_aguardando_padronizador',date('Y-m-d H:i:s')).")";
 					$stages['Editoração']['edit_pdf_padronizado'] = "PDF padronizado (" .$this->countStatus('edit_pdf_padronizado',date('Y-m-d H:i:s')).")";
 					$stages['Editoração']['edit_em_prova_prelo'] = "Em prova de prelo (" .$this->countStatus('edit_em_prova_prelo',date('Y-m-d H:i:s')).")";
@@ -740,42 +742,40 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 			}
-			if($request->getUserVar('decision') == 7){
-				// Quando submissão é enviada para editoração, padronizadores recebem email com convite para assumir padronização
+			if($request->getUserVar('decision') == 7){ // Quando submissão é enviada para editoração, padronizadores recebem email com convite para assumir padronização e status é alterado para Aguardando padronizador
 				if($params[1] == "savePromote"){
-					$userGroupPadronizador = 20;
+					$userGroupId = 13; // Padronizador
 					$request = \Application::get()->getRequest();
 					$submissionId = $request->getUserVar('submissionId');
-					$userDao = DAORegistry::getDAO('UserDAO');
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 					$context = $request->getContext();
-					$result = $userDao->retrieve(
-						'SELECT u.email, u.user_id
-						FROM users u
-						LEFT JOIN user_user_groups g
-						ON u.user_id = g.user_id
-						WHERE  g.user_group_id = ?',
-						array((int)$userGroupPadronizador)
-					);
+					$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 
 					import('lib.pkp.classes.mail.MailTemplate');
-					while (!$result->EOF) {
+					while ($user = $users->next()) {
 						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
-						$mail->addRecipient($result->GetRowAssoc(0)['email']);
+						$mail->addRecipient($user->getData('email'));
 						$indexUrl = $request->getIndexUrl();
 						$contextPath = $request->getRequestedContextPath();
 						$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 													"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 													"submissionId=$submissionId".
-													"&userGroupId=$userGroupPadronizador".
-													"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+													"&userGroupId=$userGroupId".
+													"&userIdSelected=".$user->getData('id').
 													"&stageId=5&accept=1";
 						if (!$mail->send()) {
 							import('classes.notification.NotificationManager');
 							$notificationMgr = new NotificationManager();
 							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 						}
-						$result->MoveNext();
 					}
+					// Quando submissão é enviada para editoração, o status é alterado para "Aguardando padronizador"
+					$userDao = DAORegistry::getDAO('UserDAO');
+					$now = date('Y-m-d H:i:s');
+					$userDao->retrieve(
+						'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+						array((string)'edit_aguardando_padronizador', (string)$now, (int)$submissionId)
+					);
 				}
 			}
 			if($request->getUserVar('decision') == 9){
@@ -1487,7 +1487,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 						$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $user->getData('id'), $stageId);
 						$userId = $user->getData('id');
-						if (!$assigned->wasEmpty()){
+						if ($assigned->wasEmpty()){
 							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 							$stageAssignment = $stageAssignmentDao->newDataObject();
 							$stageAssignment->setSubmissionId($submissionId);
@@ -1514,18 +1514,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 				return true;
 
-			}elseif ($stageId == 4){ // Quando submissão é enviada para editoração, o status é alterado para "Aguardando padronizador"
+			}elseif ($stageId == 4){
 				$templateMgr->assign('skipEmail',1); // Passa variável para não enviar email para o autor
-
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_aguardando_padronizador', (string)$now, (int)$submissionId)
-				);
-
 				$args[4] = $templateMgr->fetch($this->getTemplateResource('promoteFormStage4.tpl'));
-
 				return true;
 			}
 
@@ -1871,7 +1862,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userGroupIds[] = $assignment->getUserGroupId();
 			}
 
-			if(!empty(array_intersect($userGroupIds, ['24']))){ // Assistente editorial
+			if(!empty(array_intersect($userGroupIds, ['24']))){ // Ed. Assistente
 				$result_genre = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
 					FROM genre_settings A
@@ -2589,7 +2580,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 							$assigned = $stageAssignmentDao->getBySubmissionAndUserIdAndStageId($submissionId, $user->getData('id'), $stageId);
 							$userId = $user->getData('id');
-							if (!$assigned->wasEmpty()){
+							if ($assigned->wasEmpty()){
 								$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 								$stageAssignment = $stageAssignmentDao->newDataObject();
 								$stageAssignment->setSubmissionId($submissionId);
