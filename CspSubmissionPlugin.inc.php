@@ -1212,6 +1212,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 					unset($columns->value['method']);
 				}
 			}
+			if ($request->_requestPath == '/ojs/index.php/csp/$$$call$$$/grid/users/user-select/user-select-grid/fetch-grid'){
+				$templateMgr = TemplateManager::getManager($request);
+				$columns = $templateMgr->getVariable('columns');
+				$cells = $templateMgr->getVariable('cells');
+				$row = $templateMgr->getVariable('row');
+				$cells->value[] = $row->value->_data->_data["assigns"];
+				$columns->value['assigns'] = clone $columns->value["name"];
+				$columns->value["assigns"]->_title = "author.users.contributor.assign";
+			}
 
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$submissionDAO = Application::getSubmissionDAO();
@@ -1690,15 +1699,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('recommendationForm.tpl'));
 			return true;
-
-		} elseif ($args[1] == 'controllers/grid/gridRow.tpl' && $request->_requestPath == '/ojs/index.php/csp/$$$call$$$/grid/users/user-select/user-select-grid/fetch-grid'){
-			$templateMgr = TemplateManager::getManager($request);
-			$columns = $templateMgr->getVariable('columns');
-			$cells = $templateMgr->getVariable('cells');
-			$row = $templateMgr->getVariable('row');
-			$cells->value[] = $row->value->_data->_data["assigns"];
-			$columns->value['assigns'] = clone $columns->value["name"];
-			$columns->value["assigns"]->_title = "author.users.contributor.assign";
 
 		}
 		return false;
