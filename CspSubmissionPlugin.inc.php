@@ -2004,7 +2004,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$refReviewStageId = $refObject->getProperty('reviewStageId');
 		$refReviewStageId->setAccessible( true );
 		$reviewStageId = $refReviewStageId->getValue($args[1]);
-		if ($reviewStageId or $request->_router->_op == "addQuery") {
+		if ($reviewStageId or $request->_router->_op == "addQuery" or $request->_router->_op == "editQuery") {
 			return;
 		}
 		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') || strpos($_SERVER["HTTP_REFERER"], 'workflow/index')) {
