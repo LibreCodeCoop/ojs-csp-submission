@@ -1246,10 +1246,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
-			if(strpos($request->_requestPath, 'files/submission/editor-submission-details-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'files/final/final-draft-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'files/review/editor-review-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'files/production-ready/production-ready-files-grid/fetch-grid')){ //Busca comentários somente quando grid for de arquivos
+			if(strpos($request->_requestPath, 'editor-submission-details-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'final-draft-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'editor-review-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'production-ready-files-grid/fetch-grid')){ //Busca comentários somente quando grid for de arquivos
 				$row = $templateMgr->getVariable('row');
 				if($row->value->_data["submissionFile"]->_data["comentario"]){
 					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
