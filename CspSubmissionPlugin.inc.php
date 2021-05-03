@@ -879,6 +879,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						UPDATE status_csp SET status = 'ava_consulta_editor_chefe', date_status = '$now' WHERE submission_id = $submissionId
 						QUERY
 					);
+				$args[0]->_data["recipients"][0]["email"] = "noreply@fiocruz.br";
 				}
 			}
 
