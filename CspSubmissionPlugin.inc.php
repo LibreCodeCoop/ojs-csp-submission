@@ -410,7 +410,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @return boolean
 	 */
 	public function templateManager_display($hookName, $args) {
-		if ($args[1] == "submission/form/index.tpl" || $args[1] == "workflow/workflow.tpl") {
+		if ($args[1] == "submission/form/index.tpl") {
 
 			$request =& Registry::get('request');
 			$templateManager =& $args[0];
@@ -432,7 +432,25 @@ class CspSubmissionPlugin extends GenericPlugin {
 					'priority' => STYLE_SEQUENCE_LAST,
 				)
 			);
-		} elseif ($args[1] == "dashboard/index.tpl") {
+		}
+		if ($args[1] == "workflow/workflow.tpl") {
+			$request =& Registry::get('request');
+			$templateManager =& $args[0];
+			$path = $request->getRequestPath();
+			$pathItens = explode('/', $path);
+			$submissionId = $pathItens[6];
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($submissionId);
+			$publication = $submission->getCurrentPublication();
+			$sectionId = $publication->getData('sectionId');
+			$sectionDao = DAORegistry::getDAO('SectionDAO'); /* @var $sectionDao SectionDAO */
+			$section = $sectionDao->getById($sectionId);
+			$sectionLocalizedTitle = $section->getLocalizedTitle();
+			$templateManager->assign('sectionLocalizedTitle', $sectionLocalizedTitle);
+			$args[2] = $templateManager->fetch($this->getTemplateResource('workflow.tpl'));
+			return true;
+		}
+		if ($args[1] == "dashboard/index.tpl") {
 			$request = \Application::get()->getRequest();
 			if(!$request->getUserVar('substage')){
 				$currentUser = $request->getUser();
