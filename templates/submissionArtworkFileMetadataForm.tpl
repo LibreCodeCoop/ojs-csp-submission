@@ -33,8 +33,8 @@
 			{include file="../plugins/generic/cspSubmission/templates/uploadedFileSummary.tpl" submissionFile=$submissionFile}
 			
 		{/fbvFormSection}
-		{fbvFormSection title="plugins.generic.CspSubmission.artworkFile.Title" inline=true size=$fbvStyles.size.MEDIUM}
-			{fbvElement type="textarea" id="artworkCaption" height=$fbvStyles.height.SHORT value=$submissionFile->getCaption()}
+		{fbvFormSection title="plugins.generic.CspSubmission.artworkFile.Title" inline=true size=$fbvStyles.size.MEDIUM required="true"}
+			{fbvElement type="textarea" id="artworkCaption" height=$fbvStyles.height.SHORT value=$submissionFile->getCaption() required="true"}
 		{/fbvFormSection}
 		{fbvFormSection title="grid.artworkFile.credit" inline=true size=$fbvStyles.size.MEDIUM}
 			{fbvElement type="textarea" id="artworkCredit" height=$fbvStyles.height.SHORT value=$submissionFile->getCredit()}
