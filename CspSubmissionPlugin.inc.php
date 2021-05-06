@@ -1257,6 +1257,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($sectionId == 5){ // Espaço Temático
 				$templateMgr->assign('keywordsRequired', false);
 			}
+			if($sectionId == 6){ // Revisão
+				$templateMgr->assign('notification', 'plugins.generic.CspSubmission.Revisao.Notificacao');
+			}
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
@@ -2241,10 +2244,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($sectionId == 5){ // Espaço temático
 			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
-		}
-
-		if($sectionId == 6){ // Revisão
-			$output .= $smarty->fetch($this->getTemplateResource('Revisao.tpl'));
 		}
 
 		if($sectionId == 15){ // Comentários

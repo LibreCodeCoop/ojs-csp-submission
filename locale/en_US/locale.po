@@ -164,3 +164,6 @@ msgstr "Deseja realmente remover da fila?"
 
 msgid "plugins.generic.CspSubmission.newSubmission"
 msgstr "New submission"
+
+msgid "plugins.generic.CspSubmission.Revisao.Notificacao"
+msgstr "Revisão sistemática somente será aceita em inglês e com registro no PROSPERO"
