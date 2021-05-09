@@ -59,7 +59,9 @@
 						<legend class="pkpFormField--options__legend">
 							{$stage}
 						</legend>
-						{foreach from=$array_status key=key item=list_status}
+						{$array_intersect = array_intersect_key($array_sort, $array_status)}
+						{$array_merge = array_merge($array_intersect, $array_status)}
+						{foreach from=$array_merge key=key item=list_status}
 						<div class="pkpFormField__control">
 							<label class="pkpFormField--options__option">
 									<a href="?substage={$key}">{$list_status}</a>
