@@ -1263,10 +1263,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'user/identityForm.tpl'){
-			$args[4] = $templateMgr->fetch($this->getTemplateResource('identityForm.tpl'));
-
-			return true;
 		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
 			if(strpos($request->_requestPath, 'editor-submission-details-files-grid/fetch-grid')
 			OR strpos($request->_requestPath, 'final-draft-files-grid/fetch-grid')
