@@ -41,8 +41,8 @@
 		{if $reviewForm}
 			{include file="reviewer/review/reviewFormResponse.tpl"}
 		{else}
-			{fbvFormSection title="reviewer.title.canShareWithAuthor"}
-				{fbvElement type="textarea" id="comments" name="comments" value=$comments readonly=$reviewIsClosed rich=true}
+			{fbvFormSection title="reviewer.title.canShareWithAuthor" required="true"}
+				{fbvElement type="textarea" id="comments" name="comments" value=$comments readonly=$reviewIsClosed rich=true required="true"}
 			{/fbvFormSection}
 			{fbvFormSection title="reviewer.title.cannotShareWithAuthor"}
 				{fbvElement type="textarea" id="commentsPrivate" name="commentsPrivate" value=$commentsPrivate readonly=$reviewIsClosed rich=true}
@@ -64,6 +64,4 @@
 	{capture assign="cancelUrl"}{url page="reviewer" op="submission" path=$submission->getId() step=2 escape=false}{/capture}
 	{fbvFormButtons submitText="reviewer.submission.submitReview" confirmSubmit="reviewer.confirmSubmit" saveText="reviewer.submission.saveReviewForLater" saveValue="1" cancelText="navigation.goBack" cancelUrl=$cancelUrl cancelUrlTarget="_self" submitDisabled=$reviewIsClosed}
 {/fbvFormArea}
-
-<p><span class="formRequired">{translate key="common.requiredField"}</span></p>
 </form>
