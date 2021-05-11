@@ -503,12 +503,34 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$stages['Editoração']['edit_em_diagramacao'] = "Em diagramação (" .$this->countStatus('edit_em_diagramacao',date('Y-m-d H:i:s')).")";
 					$stages['Editoração']['edit_aguardando_publicacao'] = "Aguardando publicação (" .$this->countStatus('edit_aguardando_publicacao',date('Y-m-d H:i:s')).")";
 				}
+				$array_sort = array('pre_aguardando_secretaria',
+									'pre_pendencia_tecnica',
+									'pre_aguardando_editor_chefe',
+									'ava_com_editor_associado',
+									'ava_aguardando_autor',
+									'ava_aguardando_autor_mais_60_dias',
+									'ava_aguardando_secretaria',
+									'ava_aguardando_editor_chefe',
+									'ava_consulta_editor_chefe',
+									'ed_text_em_avaliacao_ilustracao',
+									'ed_text_envio_carta_aprovacao',
+									'ed_text_para_revisao_traducao',
+									'ed_text_em_revisao_traducao',
+									'ed_texto_traducao_metadados',
+									'edit_aguardando_padronizador',
+									'edit_em_formatacao_figura',
+									'edit_em_prova_prelo',
+									'edit_pdf_padronizado',
+									'edit_em_diagramacao',
+									'edit_aguardando_publicacao'
+								);
 				$templateManager->assign(array(
 					'userGroupsAbbrev' => array_unique($userGroupsAbbrev),
 					'stages' => $stages,
 					'hasAccess' => $hasAccess,
 					'substage' => $request->getUserVar('substage'),
-					'requestRoleAbbrev' => $request->getUserVar('requestRoleAbbrev')
+					'requestRoleAbbrev' => $request->getUserVar('requestRoleAbbrev'),
+					'array_sort' => array_flip($array_sort)
 				));
 
 				$templateManager->assign('basejs', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js');
