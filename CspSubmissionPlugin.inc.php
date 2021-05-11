@@ -447,8 +447,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$section = $sectionDao->getById($sectionId);
 			$sectionLocalizedTitle = $section->getLocalizedTitle();
 			$templateManager->assign('sectionLocalizedTitle', $sectionLocalizedTitle);
-			$args[2] = $templateManager->fetch($this->getTemplateResource('workflow.tpl'));
-			return true;
 		}
 		if ($args[1] == "dashboard/index.tpl") {
 			$request = \Application::get()->getRequest();
