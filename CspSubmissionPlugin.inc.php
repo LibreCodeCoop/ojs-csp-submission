@@ -1623,10 +1623,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				if($stageId == "5"){// Se o estágio for Editoração, template específico é exibido
-					$userId = $request->getUserVar('userId');
 					$context = $request->getContext();
 					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-					$userInGroup = $userGroupDao->userInGroup($userId, 13); // Padronizador
+					$userInGroup = $userGroupDao->userInGroup($_SESSION["userId"], 13); // Padronizador
 					if($userInGroup){
 						$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
 						$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
@@ -2914,6 +2913,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
+				}
+			break;
+			case '79':// Autor subindo arquivo de correções
+				if (($_FILES['uploadedFile']['type'] <> 'application/pdf')/*PDF*/) {
+					$args[0]->addError('typeId',
+						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
+					);
 				}
 			break;
 		return true;
