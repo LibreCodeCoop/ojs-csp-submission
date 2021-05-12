@@ -33,8 +33,6 @@
 		{/foreach}
 	</div>
 
-	<h3>{translate key="editor.review.createReviewer"}</h3>
-
 	{if count($userGroups)>1}
 		{fbvFormSection title="user.group" required="true"}
 			{fbvElement type="select" name="userGroupId" id="userGroupId" from=$userGroups translate=false label="editor.review.userGroupSelect" required="true"}
@@ -45,9 +43,12 @@
 		{/foreach}
 	{/if}
 
-	{fbvFormSection title="common.name"}
-		{fbvElement type="text" label="user.givenName" multilingual="true" name="givenName" id="givenName" value=$givenName maxlength="255" inline=true size=$fbvStyles.size.MEDIUM required="true"}
-		{fbvElement type="text" label="user.familyName" multilingual="true" name="familyName" id="familyName" value=$familyName maxlength="255" inline=true size=$fbvStyles.size.MEDIUM}
+	{fbvFormSection title="user.givenName" size=$fbvStyles.size.MEDIUM required="true" inline=true}
+		{fbvElement type="text" name="givenName" id="givenName" value=$givenName maxlength="255" required="true"}
+	{/fbvFormSection}
+
+	{fbvFormSection title="user.familyName" size=$fbvStyles.size.MEDIUM required="true" inline=true}
+		{fbvElement type="text" name="familyName" id="familyName" value=$familyName maxlength="255" required="true"}
 	{/fbvFormSection}
 
 	{fbvFormSection title="user.username" required="true"}
@@ -64,7 +65,7 @@
 	{/fbvFormSection}
 
 	{fbvFormSection title="user.affiliation"}
-		{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation size=$fbvStyles.size.LARGE}
+		{fbvElement type="text" name="affiliation" id="affiliation" value=$affiliation size=$fbvStyles.size.LARGE}
 	{/fbvFormSection}
 
 	
