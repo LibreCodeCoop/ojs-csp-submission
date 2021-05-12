@@ -1622,15 +1622,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$templateBody['EDICAO_TEXTO_PENDENC_TEC'] = $mail->_data["body"];
 					}
 				}
-
 				if($stageId == "5"){// Se o estágio for Editoração, template específico é exibido
-					$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
-					$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
-					$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
+					$userId = $request->getUserVar('userId');
+					$context = $request->getContext();
+					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+					$userInGroup = $userGroupDao->userInGroup($userId, 13); // Padronizador
+					if($userInGroup){
+						$mail = new MailTemplate('EDITORACAO_PROVA_PRELO');
+						$templateSubject['EDITORACAO_PROVA_PRELO'] = $mail->_data["subject"];
+						$templateBody['EDITORACAO_PROVA_PRELO'] = $mail->_data["body"];
+					}
 				}
 			}
 
-			if($stageId <> "3" or $author->getData('id') == $_SESSION["userId"]){ // No estágio de Avaliação, não tem template pré-definido
+			if($mail or $author->getData('id') == $_SESSION["userId"]){
 				$authorName = $author->getLocalizedGivenName();
 				$submissionTitle = $publication->getLocalizedTitle();
 				$submissionIdCSP = 999;
