@@ -64,11 +64,11 @@ class NotifyEditorInactivity extends ScheduledTask
         $mail->sendWithParams(['submissionId' => $submissionId]);
 
         $notification = NotifyScheduleTaskConstants::PRIMEIRO_AVISO_ASSOCIADO_EMAIL_KEY === $mailKey ?
-            NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO :
-            NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO;
+            NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_PRIMEIRO_AVISO :
+            NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_SEGUNDO_AVISO;
 
         $this->userDao->retrieve(
-            'INSERT INTO notification_status_csp 
+            'INSERT INTO csp_status_notification 
                 (user_id, status, submission_id, notification, created_at) VALUES(?,?,?,?,?)
             ON DUPLICATE KEY UPDATE notification = ?, updated_at = ?',
             [
@@ -115,7 +115,7 @@ class NotifyEditorInactivity extends ScheduledTask
             INNER JOIN stage_assignments AS sa
                 ON sa.submission_id = sc.submission_id 
             AND sa.user_group_id = ?
-            LEFT JOIN notification_status_csp AS nsc 
+            LEFT JOIN csp_status_notification AS nsc 
                 ON nsc.submission_id = sc.submission_id 
                 AND nsc.status = sc.status
                 AND nsc.user_id = sa.user_id
@@ -126,7 +126,7 @@ class NotifyEditorInactivity extends ScheduledTask
                 NotifyScheduleTaskConstants::EDITOR_ASSOCIADO_USER_GROUP,
                 NotifyScheduleTaskConstants::STATUS_AVA_EDITOR_ASSOCIADO,
                 $lastWeek->format('Y-m-d H:i:s'),
-                NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO,
+                NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_SEGUNDO_AVISO,
             ]
         );
 
@@ -140,7 +140,7 @@ class NotifyEditorInactivity extends ScheduledTask
             }
 
             if ($item['date_status'] > $twoWeeksAgo->format('Y-m-d H:i:s') &&
-                NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO === $item['notification']
+                NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_PRIMEIRO_AVISO === $item['notification']
             ) {
                 continue;
             }
