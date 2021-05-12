@@ -14,7 +14,7 @@ class CspDeclinedSubmissions
     {
         $serializedData = serialize($args->getAllData());
         $this->submissionDAO->retrieve(
-            'INSERT INTO declined_submission_email
+            'INSERT INTO csp_declined_submission_email
                 (submission_id, data, sended, created_at)
                 VALUES(?, ?, ?, ?)',
             [

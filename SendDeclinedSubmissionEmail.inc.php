@@ -73,7 +73,7 @@ class SendDeclinedSubmissionEmail extends ScheduledTask
                 dse.data,
                 dse.sended,
                 dse.created_at
-             FROM declined_submission_email AS dse 
+             FROM csp_declined_submission_email AS dse 
             WHERE dse.sended = FALSE',
         );
 
@@ -87,7 +87,7 @@ class SendDeclinedSubmissionEmail extends ScheduledTask
             $this->sendEmail($submission, $item['data']);
 
             $result = $this->submissionDAO->retrieve(
-                'UPDATE declined_submission_email SET sended = ?, updated_at = ? WHERE id = ?',
+                'UPDATE csp_declined_submission_email SET sended = ?, updated_at = ? WHERE id = ?',
                 [true, (new DateTimeImmutable())->format('Y-m-d H:i:s'), $item['id']]
             );
         }

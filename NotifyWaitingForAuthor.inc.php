@@ -65,7 +65,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
         $mail->sendWithParams(['submissionId' => $submissionId]);
 
         $this->userDao->retrieve(
-            'INSERT INTO notification_status_csp 
+            'INSERT INTO csp_status_notification 
                 (user_id, status, submission_id, notification, created_at) VALUES(?,?,?,?,?)
             ON DUPLICATE KEY UPDATE notification = ?, updated_at = ?',
             [
@@ -92,7 +92,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
             INNER JOIN stage_assignments AS sa
                 ON sa.submission_id = sc.submission_id 
             AND sa.user_group_id = ?
-            LEFT JOIN notification_status_csp AS nsc 
+            LEFT JOIN csp_status_notification AS nsc 
                 ON nsc.submission_id = sc.submission_id 
                 AND nsc.status = sc.status
                 AND nsc.user_id = sa.user_id
@@ -103,7 +103,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
                 NotifyScheduleTaskConstants::AUTOR_USER_GROUP,
                 NotifyScheduleTaskConstants::STATUS_AVA_AGUARDANDO_AUTOR,
                 $aMonthAgo->format('Y-m-d H:i:s'),
-                NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO,
+                NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_SEGUNDO_AVISO,
             ]
         );
 
@@ -116,7 +116,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
             }
 
             if ($item['date_status'] > $aMonthAndAWeekAgo->format('Y-m-d H:i:s')
-                && NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO === $item['notification']
+                && NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_PRIMEIRO_AVISO === $item['notification']
             ) {
                 continue;
             }
@@ -126,7 +126,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
                     $journal,
                     $user,
                     $item['submission_id'],
-                    NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_PRIMEIRO_AVISO,
+                    NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_PRIMEIRO_AVISO,
                 );
 
                 continue;
@@ -136,7 +136,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
                 $journal,
                 $user,
                 $item['submission_id'],
-                NotifyScheduleTaskConstants::NOTIFICATION_STATUS_CSP_SEGUNDO_AVISO,
+                NotifyScheduleTaskConstants::CSP_STATUS_NOTIFICATION_SEGUNDO_AVISO,
             );
         }
     }
