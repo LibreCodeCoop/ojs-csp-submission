@@ -879,16 +879,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 
-			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada
-
+			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada e status é alterado
 				unset($args[0]->_data["recipients"]);
-
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 23);
-
 				while ($user = $users->next()) {
 					$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
 				}
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_secretaria', (string)$now, (int)$submissionId)
+				);
 			}
 
 			$recipient = $userDao->getUserByEmail($args[0]->_data["recipients"][0]["email"]);
@@ -1746,52 +1749,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userId = $_SESSION["userId"];
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
-
 		$templateMgr =& $args[0];
 
-		if ($fileStage == 2 && $submissionProgress == 0){
-
-			$result = $userDao->retrieve(
-				'SELECT A.genre_id, setting_value
-				FROM genre_settings A
-				LEFT JOIN genres B
-				ON B.genre_id = A.genre_id
-				WHERE locale = ? AND entry_key = ?',
-				array((string)$locale, (string)'SUBMISSAO_PDF')
-			);
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
+		if ($fileStage == 2){
+			if($submissionProgress == 0){
+				$result = $userDao->retrieve(
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = ? AND entry_key = ?',
+					array((string)$locale, (string)'SUBMISSAO_PDF')
+				);
+				while (!$result->EOF) {
+					$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+					$result->MoveNext();
+				}
+				$templateMgr->setData('submissionFileGenres', $genreList);
+				$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
 			}
-
-			$templateMgr->setData('submissionFileGenres', $genreList);
-			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
-		}
-
-		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
-
-			$result = $userDao->retrieve(
-				'SELECT A.genre_id, setting_value
-				FROM genre_settings A
-				LEFT JOIN genres B
-				ON B.genre_id = A.genre_id
-				WHERE locale = ? AND entry_key LIKE ?',
-				array((string)$locale, (string)'AVAL_SECRETARIA%')
-			);
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
-			}
-
-			$templateMgr->setData('submissionFileGenres', $genreList);
-			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
-
-		}
-
-		if ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
-
+		}elseif ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
 				FROM genre_settings A
@@ -1802,37 +1779,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 			);
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
 				$result->MoveNext();
 			}
-
 			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
-
-		}
-		if ($fileStage == 6) { // Envio de  arquivo de versão final
-
+		}elseif ($fileStage == 6) { // Envio de  arquivo de versão final
 			$context = $request->getContext();
 			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 			$userInGroup = $userGroupDao->userInGroup($userId, 10); // Revisor de figura
-
 			if($userInGroup){
 				$genreDao = \DAORegistry::getDAO('GenreDAO');
 				$genre = $genreDao->getByKey('EDICAO_TEXTO_FIG_ALT', $context->getId());
 				$genre =  array($genre->getData('id') => $genre->getLocalizedName());
 				$templateMgr->setData('submissionFileGenres', $genre);
-
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // Seta variável para true pois é verificada no template para não exibir os componentes de arquivo
 			}			
-
-		}
-		if ($fileStage == 9) { // Upload de arquivo em box de arquivos de revisão de texto
-
+		}elseif ($fileStage == 9) { // Upload de arquivo em box de arquivos de revisão de texto
 			$context = $request->getContext();
 			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 			$userInGroup = $userGroupDao->userInGroup($userId, 7); // Revisor / tradutor
-
 			if($userInGroup){
 				$result = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
@@ -1852,17 +1818,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					array((string)$locale, (string)'EDICAO_ASSIST_ED%')
 				);
 			}
-
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
 				$result->MoveNext();
 			}
-
 			$templateMgr->setData('submissionFileGenres', $genreList);
-
-		}
-		if ($fileStage == 10) { // Upload de PDF para publicação
+		}elseif ($fileStage == 10) { // Upload de PDF para publicação
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
 				FROM genre_settings A
@@ -1871,16 +1832,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'EDITORACAO_DIAGRM%')
 			);
-
 			while (!$result->EOF) {
 				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
 				$result->MoveNext();
 			}
-
 			$templateMgr->setData('submissionFileGenres', $genreList);
-		}
-		if ($fileStage == 11) { // Upload de arquivo em box "Arquivos prontos para layout"
+		}elseif ($fileStage == 11) { // Upload de arquivo em box "Arquivos prontos para layout"
 			$userGroupAssignmentDao = DAORegistry::getDAO('UserGroupAssignmentDAO'); /* @var $userGroupAssignmentDao UserGroupAssignmentDAO */
 			$userGroupAssignments = $userGroupAssignmentDao->getByUserId($request->getUser()->getId());
 			while ($assignment = $userGroupAssignments->next()) {
@@ -1913,25 +1870,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
-		}
-
-		if ($fileStage == 15) { // Upload de nova versão
-
-			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$stageAssignments = $stageAssignmentDao->getBySubmissionAndRoleId($request->getUserVar('submissionId'), ROLE_ID_AUTHOR, null, $request->getUser()->getId());
-			$isAuthor = $stageAssignments->getCount()>0;
-			$stageAssignments = $stageAssignmentDao->getBySubmissionAndRoleId($request->getUserVar('submissionId'), ROLE_ID_ASSISTANT, null, $request->getUser()->getId());
-			$isAssistent = $stageAssignments->getCount()>0;
-			if($isAuthor){
-				$result_genre = $userDao->retrieve(
-					'SELECT A.genre_id, setting_value
-					FROM genre_settings A
-					LEFT JOIN genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = ? AND entry_key LIKE ?',
-					array((string)$locale, (string)'AVAL_AUTOR%')
-				);
-			}
+		}elseif ($fileStage == 15) { // Upload de nova versão
+			$currentUser = $request->getUser();
+			$context = $request->getContext();
+			$isAssistent = $currentUser->hasRole(array(ROLE_ID_ASSISTANT), $context->getId());
 			if($isAssistent){
 				$result_genre = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
@@ -1941,6 +1883,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 					WHERE locale = ? AND entry_key LIKE ?',
 					array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
 				);
+			}else{
+				$result_genre = $userDao->retrieve(
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = ? AND entry_key LIKE ?',
+					array((string)$locale, (string)'AVAL_AUTOR%')
+				);
+				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 			}
 			if(isset($result_genre)){
 				while (!$result_genre->EOF) {
@@ -1948,17 +1900,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$result_genre->MoveNext();
 				}
 				$templateMgr->setData('submissionFileGenres', $genreList);
-				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // Seta variável para true pois é verificada no template para não exibir os componentes de arquivo
 			}
-		}
-
-		if ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
+		}elseif ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
-
-		}
-		if ($fileStage == 18) {  // Upload no box de discussão
+		}elseif ($fileStage == 18) {  // Upload no box de discussão
 			if($stageId == 5){
 				$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
 				$stageAssignments = $stageAssignmentDao->getBySubmissionAndRoleId($request->getUserVar('submissionId'), ROLE_ID_AUTHOR, null, $request->getUser()->getId());
@@ -1992,13 +1939,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$submissionId = $request->getUserVar('submissionId');
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 14);
-
 				while ($user = $users->next()) {
 					if($user->getData('id') == $_SESSION["userId"]){
 						$isAuthor = true;
 					}
 				}
-
 				if(isset($isAuthor)){
 					$result = $userDao->retrieve(
 						'SELECT A.genre_id, setting_value
@@ -2010,21 +1955,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 					);
 					while (!$result->EOF) {
 						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
 						$result->MoveNext();
 					}
-
 					$templateMgr->setData('submissionFileGenres', $genreList);
 				}else{
 					$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 				}
-
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 			}
-
+		}else{
+			$templateMgr->setData('isReviewAttachment', TRUE); // Atribui TRUE para variável utilizada para não exibir os componentes
 		}
-
 	}
 
 	function pkp_services_pkpuserservice_getmany($hookName, $args)
@@ -2625,20 +2567,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$stageId = $request->getUserVar('stageId');
 						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
-
 						import('lib.pkp.classes.mail.MailTemplate');
-
 						while ($user = $users->next()) {
-
 							$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
 							$mail->addRecipient($user->getEmail(), $user->getFullName());
-
 							if (!$mail->send()) {
 								import('classes.notification.NotificationManager');
 								$notificationMgr = new NotificationManager();
 								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 							}
 						}
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$now = date('Y-m-d H:i:s');
+						$submissionId = $request->getUserVar('submissionId');
+						$userDao->retrieve(
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+						);
 					}
 				}
 			break;
@@ -2917,26 +2862,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if (!$args[0]->isValid()) {
 			return true;
-		}
-		if($args[0]->getData('reviewRoundId')){
-			if($args[0]->getData('fileStage')  == 15){ ///// Quando autor insere nova versão, o status é alterado
-				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_aguardando_secretaria', (string)$now, (int)$submissionId)
-				);
-			}
-			if($args[0]->getData('fileStage')  == 4){ ///// Quando secretaria insere nova versão de PDF, o status é alterado
-				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
-				);
-			}
 		}
 		return false;
 	}
