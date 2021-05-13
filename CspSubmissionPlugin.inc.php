@@ -886,6 +886,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 
+		if($args[0]->emailKey == "COPYEDIT_REQUEST"){
+			$context = $request->getContext();
+			$userGroupId = 8; /// Secretaria
+			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+			$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
+			while ($user = $users->next()) {
+				$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
+			}
+		}
 		if($stageId == 3){
 
 			if($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
