@@ -2916,6 +2916,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 			break;
+			case '75': // XML publicação PT
+			case '76': // XML publicação EN
+			case '77': // XML publicação ES
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_aguardando_publicacao', (string)$now, (int)$submissionId)
+				);
+			break;
 		return true;
 		}
 
