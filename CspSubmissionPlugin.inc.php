@@ -879,16 +879,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return true;
 			}
 
-			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada
-
+			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada e status é alterado
 				unset($args[0]->_data["recipients"]);
-
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 23);
-
 				while ($user = $users->next()) {
 					$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
 				}
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ava_aguardando_secretaria', (string)$now, (int)$submissionId)
+				);
 			}
 
 			$recipient = $userDao->getUserByEmail($args[0]->_data["recipients"][0]["email"]);
@@ -2564,20 +2567,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$stageId = $request->getUserVar('stageId');
 						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
-
 						import('lib.pkp.classes.mail.MailTemplate');
-
 						while ($user = $users->next()) {
-
 							$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
 							$mail->addRecipient($user->getEmail(), $user->getFullName());
-
 							if (!$mail->send()) {
 								import('classes.notification.NotificationManager');
 								$notificationMgr = new NotificationManager();
 								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 							}
 						}
+						$userDao = DAORegistry::getDAO('UserDAO');
+						$now = date('Y-m-d H:i:s');
+						$submissionId = $request->getUserVar('submissionId');
+						$userDao->retrieve(
+							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+						);
 					}
 				}
 			break;
@@ -2856,26 +2862,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if (!$args[0]->isValid()) {
 			return true;
-		}
-		if($args[0]->getData('reviewRoundId')){
-			if($args[0]->getData('fileStage')  == 15){ ///// Quando autor insere nova versão, o status é alterado
-				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_aguardando_secretaria', (string)$now, (int)$submissionId)
-				);
-			}
-			if($args[0]->getData('fileStage')  == 4){ ///// Quando secretaria insere nova versão de PDF, o status é alterado
-				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
-				);
-			}
 		}
 		return false;
 	}
