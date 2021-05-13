@@ -2734,39 +2734,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case '58': // PDF para publicação EN
 			case '59': // PDF para publicação ES
 				// Quando é feito upload PDF para publicação, editores de XML recebem email de convite para produzir XML
-				$userGroupEditorXML = 25;
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$site = $request->getSite();
 				$context = $request->getContext();
-				$result = $userDao->retrieve(
-					'SELECT u.email, u.user_id
-					FROM users u
-					LEFT JOIN user_user_groups g
-					ON u.user_id = g.user_id
-					WHERE  g.user_group_id = ?',
-					array((int)$userGroupEditorXML)
-				);
-
+				$userGroupId = 9; //  Editor de XML 
+				$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 				import('lib.pkp.classes.mail.MailTemplate');
-				while (!$result->EOF) {
+				while ($user = $users->next()) {
 					$mail = new MailTemplate('PRODUCAO_XML');
-					$mail->addRecipient($result->GetRowAssoc(0)['email']);
+					$mail->addRecipient($user->getData('email'));
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
 					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
 												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
 												"submissionId=$submissionId".
-												"&userGroupId=$userGroupEditorXML".
-												"&userIdSelected=".$result->GetRowAssoc(0)['user_id'].
+												"&userGroupId=$userGroupId".
+												"&userIdSelected=".$user->getData('id').
 												"&stageId=5&accept=1";
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
-					$result->MoveNext();
 				}
 			break;        
 			case '60': // Template PT
@@ -2921,6 +2911,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF')
 					);
 				}
+      break;
+			case '75': // XML publicação PT
+			case '76': // XML publicação EN
+			case '77': // XML publicação ES
+				$request = \Application::get()->getRequest();
+				$submissionId = $request->getUserVar('submissionId');
+				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
+				$now = date('Y-m-d H:i:s');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'edit_aguardando_publicacao', (string)$now, (int)$submissionId)
+				);
 			break;
 		return true;
 		}
