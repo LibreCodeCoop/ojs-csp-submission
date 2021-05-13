@@ -2658,47 +2658,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 			case '48': // DE rev-trad corpo PT
 			case '49': // DE rev-trad corpo  EN
 			case '50': // DE rev-trad corpo  ES
+			case '51': // DE rev-trad legenda  PT
+			case '52': // DE rev-trad legenda  EN
+			case '53': // DE rev-trad legenda  ES
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$stageId = $request->getUserVar('stageId');
-				$locale = AppLocale::getLocale();
+				$userGroupId =  4; // Editor assistente
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
+				import('lib.pkp.classes.mail.MailTemplate');
+				while ($user = $users->next()) {
 
-				import('lib.pkp.classes.file.SubmissionFileManager');
+					$mail = new MailTemplate('COPYEDIT_RESPONSE');
+					$mail->addRecipient($user->getEmail(), $user->getFullName());
 
-				$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-				$submissionFiles = $submissionFileDao->getBySubmissionId($submissionId);
-				foreach ($submissionFiles as $submissionFile) {
-					$genreIds[] = $submissionFile->_data["genreId"];
-				}
-
-				$genreIdsRevTrad = array(48,49,50);
-
-				if(empty(array_intersect($genreIds, $genreIdsRevTrad))){
-
-					import('lib.pkp.classes.mail.MailTemplate');
-
-					$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-					$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
-					while ($user = $users->next()) {
-
-						$mail = new MailTemplate('COPYEDIT_RESPONSE');
-						$mail->addRecipient($user->getEmail(), $user->getFullName());
-
-						if (!$mail->send()) {
-							import('classes.notification.NotificationManager');
-							$notificationMgr = new NotificationManager();
-							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-						}
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
-
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ed_texto_traducao_metadados', (string)$now, (int)$submissionId)
 				);
-
 			break;
 			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
 			case '54': // Figura alterada
