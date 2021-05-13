@@ -1768,28 +1768,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
 		}
-
-		if ($fileStage == 4) { // SECRETARIA FAZENDO UPLOAD DE NOVA VERSÃO
-
-			$result = $userDao->retrieve(
-				'SELECT A.genre_id, setting_value
-				FROM genre_settings A
-				LEFT JOIN genres B
-				ON B.genre_id = A.genre_id
-				WHERE locale = ? AND entry_key LIKE ?',
-				array((string)$locale, (string)'AVAL_SECRETARIA%')
-			);
-			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
-
-				$result->MoveNext();
-			}
-
-			$templateMgr->setData('submissionFileGenres', $genreList);
-			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
-
-		}
-
 		if ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
 
 			$result = $userDao->retrieve(
@@ -1916,22 +1894,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 
 		if ($fileStage == 15) { // Upload de nova versão
-
-			$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO'); /* @var $stageAssignmentDao StageAssignmentDAO */
-			$stageAssignments = $stageAssignmentDao->getBySubmissionAndRoleId($request->getUserVar('submissionId'), ROLE_ID_AUTHOR, null, $request->getUser()->getId());
-			$isAuthor = $stageAssignments->getCount()>0;
-			$stageAssignments = $stageAssignmentDao->getBySubmissionAndRoleId($request->getUserVar('submissionId'), ROLE_ID_ASSISTANT, null, $request->getUser()->getId());
-			$isAssistent = $stageAssignments->getCount()>0;
-			if($isAuthor){
-				$result_genre = $userDao->retrieve(
-					'SELECT A.genre_id, setting_value
-					FROM genre_settings A
-					LEFT JOIN genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = ? AND entry_key LIKE ?',
-					array((string)$locale, (string)'AVAL_AUTOR%')
-				);
-			}
+			$currentUser = $request->getUser();
+			$context = $request->getContext();
+			$isAssistent = $currentUser->hasRole(array(ROLE_ID_ASSISTANT), $context->getId());
 			if($isAssistent){
 				$result_genre = $userDao->retrieve(
 					'SELECT A.genre_id, setting_value
@@ -1941,6 +1906,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 					WHERE locale = ? AND entry_key LIKE ?',
 					array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
 				);
+			}else{
+				$result_genre = $userDao->retrieve(
+					'SELECT A.genre_id, setting_value
+					FROM genre_settings A
+					LEFT JOIN genres B
+					ON B.genre_id = A.genre_id
+					WHERE locale = ? AND entry_key LIKE ?',
+					array((string)$locale, (string)'AVAL_AUTOR%')
+				);
+				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 			}
 			if(isset($result_genre)){
 				while (!$result_genre->EOF) {
@@ -1948,7 +1923,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$result_genre->MoveNext();
 				}
 				$templateMgr->setData('submissionFileGenres', $genreList);
-				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // Seta variável para true pois é verificada no template para não exibir os componentes de arquivo
 			}
