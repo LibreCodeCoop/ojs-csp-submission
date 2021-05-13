@@ -786,34 +786,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 			}
-			if($request->getUserVar('decision') == 7){ // Quando submissão é enviada para editoração, padronizadores recebem email com convite para assumir padronização e status é alterado para Aguardando padronizador
+			if($request->getUserVar('decision') == 7){ // Quando submissão é enviada para editoração, status é alterado para Aguardando padronizador
 				if($params[1] == "savePromote"){
-					$userGroupId = 13; // Padronizador
 					$request = \Application::get()->getRequest();
 					$submissionId = $request->getUserVar('submissionId');
-					$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-					$context = $request->getContext();
-					$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
-
-					import('lib.pkp.classes.mail.MailTemplate');
-					while ($user = $users->next()) {
-						$mail = new MailTemplate('EDITORACAO_PADRONIZACAO');
-						$mail->addRecipient($user->getData('email'));
-						$indexUrl = $request->getIndexUrl();
-						$contextPath = $request->getRequestedContextPath();
-						$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
-													"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
-													"submissionId=$submissionId".
-													"&userGroupId=$userGroupId".
-													"&userIdSelected=".$user->getData('id').
-													"&stageId=5&accept=1";
-						if (!$mail->send()) {
-							import('classes.notification.NotificationManager');
-							$notificationMgr = new NotificationManager();
-							$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-						}
-					}
-					// Quando submissão é enviada para editoração, o status é alterado para "Aguardando padronizador"
 					$userDao = DAORegistry::getDAO('UserDAO');
 					$now = date('Y-m-d H:i:s');
 					$userDao->retrieve(
