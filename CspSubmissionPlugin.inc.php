@@ -587,6 +587,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$qb->whereIn('s.submission_id',$queryStatusCsp);
 			$qb->where('s.status', '=', 1);
 		}
+		$qb->orders[0]["column"] = 's.date_last_activity';
+		$qb->orders[0]["direction"] = 'asc';
 	}
 
 	/**
