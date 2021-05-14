@@ -1348,13 +1348,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
 			$templateMgr->tpl_vars['reviewerActions']->value[] = 
 				new LinkAction(
-					'consultKfinder',
+					'consultPubMed',
 					new OpenWindowAction(
-						'http://www.kfinder.com/member-search/login.cgi?medweb=1&data=qhjnK2a9jJgT28s2GQY8YGwvX8XUOvW8W6pvj85npuq8hq&searchstring='.
-						$submission->getTitle(AppLocale::getLocale()).
-						'&dbproduct=MEDLINE&searchlogic=fuzzy&getcount=200&relevance=50&segments=4&getchunk=20&concept_mapping=on&wordvars=on&relevance_sort=on'
+						'https://pubmed.ncbi.nlm.nih.gov/?term='.
+						$submission->getTitle(AppLocale::getLocale())
 					),
-					__('editor.submission.consultKfinder')
+					__('editor.submission.consultPubMed')
 				);
 
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorName'] = 'reviewerId';
