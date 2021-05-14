@@ -864,6 +864,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 
+		if($args[0]->emailKey == "SUBMISSION_ACK_NOT_USER"){
+			$args[0]->_data["body"] = str_replace('{$coAuthorName}', $args[0]->_data["recipients"][0]["name"], $args[0]->_data["body"]);
+		}
 		if($args[0]->emailKey == "COPYEDIT_REQUEST"){
 			$context = $request->getContext();
 			$userGroupId = 8; /// Secretaria
@@ -1072,6 +1075,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0]->_data["from"]["email"] = "noreply@fiocruz.br";
 		$args[0]->_data["replyTo"][0]["name"] =  "Cadernos de Saúde Pública";
 		$args[0]->_data["replyTo"][0]["email"] = "noreply@fiocruz.br";
+		$submissionDAO = Application::getSubmissionDAO();
+		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$submissionIdCSP = $submission->getData('codigoArtigo');
+		$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
 	}
 
 	public function APIHandler_endpoints($hookName, $args) {
