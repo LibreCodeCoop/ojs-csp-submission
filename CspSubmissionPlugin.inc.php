@@ -1636,22 +1636,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($mail or $author->getData('id') == $_SESSION["userId"]){
 				$authorName = $author->getLocalizedGivenName();
 				$submissionTitle = $publication->getLocalizedTitle();
-				$submissionIdCSP = 999;
 				$context = $request->getContext();
 				$contextName = $context->getLocalizedName();
+				$submissionDAO = Application::getSubmissionDAO();
+				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+				$submissionIdCSP = $submission->getData('codigoArtigo');
 
 				$comment = str_replace(
 					[
 						'{$authorName}',
 						'{$submissionTitle}',
 						'{$submissionIdCSP}',
-						'{$contextName}'
+						'{$contextName}',
+						'{$editorialContactSignature}'
 					],
 					[
 						$authorName,
 						$submissionTitle,
 						$submissionIdCSP,
-						$contextName
+						$contextName,
+						$context->getData('emailSignature')
 					],
 					$templateBody
 				);
