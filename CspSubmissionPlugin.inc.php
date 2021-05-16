@@ -1148,7 +1148,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return false;
 		} elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 			// Retrieve peer reviews.
-			if($request->_requestVars["decision"] == 9){ // Recusa imediata
+			if($request->_requestVars["decision"] == 9 or $request->_requestVars["decision"] == 4){ // Recusa imediata e Recusa após avaliação
 				$submissionDAO = Application::getSubmissionDAO();
 				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 				$submissionIdCSP = $submission->getData('codigoArtigo');
