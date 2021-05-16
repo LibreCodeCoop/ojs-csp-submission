@@ -2697,7 +2697,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 				import('lib.pkp.classes.mail.MailTemplate');
 				while ($user = $users->next()) {
-					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
+					$mail = new MailTemplate('LAYOUT_REQUEST');
 					$mail->addRecipient($user->getData('email'));
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
@@ -2822,7 +2822,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $groupId);
 				while ($user = $users->next()) {
-					$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
+					$mail = new MailTemplate('LAYOUT_COMPLETE');
 					$mail->addRecipient($user->getEmail(), $user->getFullName());
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
