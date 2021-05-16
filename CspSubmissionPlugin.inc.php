@@ -970,7 +970,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 
-		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
+		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "aprov")){  // É enviado email de aprovação
 			$periodico = $args[0]->params["contextName"];
 
 			$submissionDAO = Application::getSubmissionDAO();
@@ -1079,6 +1079,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 		$submissionIdCSP = $submission->getData('codigoArtigo');
 		$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
+		$args[0]->_data["subject"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["subject"]);
 	}
 
 	public function APIHandler_endpoints($hookName, $args) {
@@ -2631,29 +2632,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 					array((string)'ed_texto_traducao_metadados', (string)$now, (int)$submissionId)
 				);
 			break;
-			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
+			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto, editores assistentes são notificados
 			case '54': // Figura alterada
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$stageId = $request->getUserVar('stageId');
-				$locale = AppLocale::getLocale();
-
 				import('lib.pkp.classes.mail.MailTemplate');
-
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 4);
 				while ($user = $users->next()) {
-
 					$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
 					$mail->addRecipient($user->getEmail(), $user->getFullName());
-
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
-
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
