@@ -1438,7 +1438,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$currentUser = $request->getUser();
 
 			import('lib.pkp.classes.mail.MailTemplate');
-			$mail = new MailTemplate('REVIEW_THANK');
+			$mail = new MailTemplate('REVIEW_ACK');
 			$mail->addRecipient($currentUser->getEmail(), $currentUser->getFullName());
 
 			if (!$mail->send()) {
@@ -2582,7 +2582,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
 						import('lib.pkp.classes.mail.MailTemplate');
 						while ($user = $users->next()) {
-							$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
+							$mail = new MailTemplate('AVALIACAO_SEC_EDITOR_ASSOC');
 							$mail->addRecipient($user->getEmail(), $user->getFullName());
 							if (!$mail->send()) {
 								import('classes.notification.NotificationManager');
