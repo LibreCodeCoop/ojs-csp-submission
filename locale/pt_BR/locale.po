@@ -135,11 +135,11 @@ msgstr "Caso possível, informe o código de financiamento"
 msgid "plugins.generic.CspSubmission.AuthorContribution"
 msgstr "Contribuição do autor no trabalho"
 
-msgid "editor.submission.consultKfinder"
-msgstr "Consultar Kfinder"
+msgid "editor.submission.consultPubMed"
+msgstr "Consultar PubMed"
 
-msgid "grid.action.consultKfinder"
-msgstr "Consultar Kfinder"
+msgid "grid.action.consultPubMed"
+msgstr "Consultar PubMed"
 
 msgid "editor.submission.addReviewerSagas"
 msgstr "Adicionar avaliador"

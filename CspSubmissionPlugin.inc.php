@@ -587,6 +587,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$qb->whereIn('s.submission_id',$queryStatusCsp);
 			$qb->where('s.status', '=', 1);
 		}
+		$qb->orders[0]["column"] = 's.date_last_activity';
+		$qb->orders[0]["direction"] = 'asc';
 	}
 
 	/**
@@ -862,6 +864,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 
+		if($args[0]->emailKey == "SUBMISSION_ACK_NOT_USER"){
+			$args[0]->_data["body"] = str_replace('{$coAuthorName}', $args[0]->_data["recipients"][0]["name"], $args[0]->_data["body"]);
+		}
 		if($args[0]->emailKey == "COPYEDIT_REQUEST"){
 			$context = $request->getContext();
 			$userGroupId = 8; /// Secretaria
@@ -965,7 +970,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 
-		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "Artigo aprovado")){  // É enviado email de aprovação
+		if($stageId == 4 && strpos($args[0]->params["notificationContents"], "aprov")){  // É enviado email de aprovação
 			$periodico = $args[0]->params["contextName"];
 
 			$submissionDAO = Application::getSubmissionDAO();
@@ -1070,6 +1075,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0]->_data["from"]["email"] = "noreply@fiocruz.br";
 		$args[0]->_data["replyTo"][0]["name"] =  "Cadernos de Saúde Pública";
 		$args[0]->_data["replyTo"][0]["email"] = "noreply@fiocruz.br";
+		$submissionDAO = Application::getSubmissionDAO();
+		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$submissionIdCSP = $submission->getData('codigoArtigo');
+		$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
+		$args[0]->_data["subject"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["subject"]);
 	}
 
 	public function APIHandler_endpoints($hookName, $args) {
@@ -1139,97 +1149,97 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return false;
 		} elseif ($args[1] == 'controllers/modals/editorDecision/form/sendReviewsForm.tpl') {
 			// Retrieve peer reviews.
-			$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
-			$submissionCommentDao = DAORegistry::getDAO('SubmissionCommentDAO'); /* @var $submissionCommentDao SubmissionCommentDAO */
-			$reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO'); /* @var $reviewFormResponseDao ReviewFormResponseDAO */
-			$reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO'); /* @var $reviewFormElementDao ReviewFormElementDAO */
-
-			$reviewAssignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $request->getUserVar('reviewRoundId'));
-			$reviewIndexes = $reviewAssignmentDao->getReviewIndexesForRound($submissionId, $request->getUserVar('reviewRoundId'));
-			AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION);
-
-			$body = '';
-			$textSeparator = '------------------------------------------------------';
-			foreach ($reviewAssignments as $reviewAssignment) {
-				// If the reviewer has completed the assignment, then import the review.
-				if ($reviewAssignment->getDateCompleted() != null && $reviewAssignment->getUnconsidered() != 1) {
-					// Get the comments associated with this review assignment
-					$submissionComments = $submissionCommentDao->getSubmissionComments($submissionId, COMMENT_TYPE_PEER_REVIEW, $reviewAssignment->getId());
-
-					$body .= "<br><br>$textSeparator<br>";
-					// If it is an open review, show reviewer's name.
-					if ($reviewAssignment->getReviewMethod() == SUBMISSION_REVIEW_METHOD_OPEN) {
-						$body .= $reviewAssignment->getReviewerFullName() . "<br>\n";
-					} else {
-						$body .= __('submission.comments.importPeerReviews.reviewerLetter', array('reviewerLetter' => PKPString::enumerateAlphabetically($reviewIndexes[$reviewAssignment->getId()]))) . "<br>\n";
-					}
-
-					while ($comment = $submissionComments->next()) {
-						// If the comment is viewable by the author, then add the comment.
-						if ($comment->getViewable()) {
-							$body .= PKPString::stripUnsafeHtml($comment->getComments());
+			if($request->_requestVars["decision"] == 9 or $request->_requestVars["decision"] == 4){ // Recusa imediata e Recusa após avaliação
+				$submissionDAO = Application::getSubmissionDAO();
+				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+				$submissionIdCSP = $submission->getData('codigoArtigo');
+				$templateMgr->assign('submissionIdCSP', $submissionIdCSP);
+			}else{
+				$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
+				$submissionCommentDao = DAORegistry::getDAO('SubmissionCommentDAO'); /* @var $submissionCommentDao SubmissionCommentDAO */
+				$reviewFormResponseDao = DAORegistry::getDAO('ReviewFormResponseDAO'); /* @var $reviewFormResponseDao ReviewFormResponseDAO */
+				$reviewFormElementDao = DAORegistry::getDAO('ReviewFormElementDAO'); /* @var $reviewFormElementDao ReviewFormElementDAO */
+				$reviewAssignments = $reviewAssignmentDao->getBySubmissionId($submissionId, $request->getUserVar('reviewRoundId'));
+				$reviewIndexes = $reviewAssignmentDao->getReviewIndexesForRound($submissionId, $request->getUserVar('reviewRoundId'));
+				AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION);
+	
+				$body = '';
+				$textSeparator = '------------------------------------------------------';
+				foreach ($reviewAssignments as $reviewAssignment) {
+					// If the reviewer has completed the assignment, then import the review.
+					if ($reviewAssignment->getDateCompleted() != null && $reviewAssignment->getUnconsidered() != 1) {
+						// Get the comments associated with this review assignment
+						$submissionComments = $submissionCommentDao->getSubmissionComments($submissionId, COMMENT_TYPE_PEER_REVIEW, $reviewAssignment->getId());
+	
+						$body .= "<br><br>$textSeparator<br>";
+						// If it is an open review, show reviewer's name.
+						if ($reviewAssignment->getReviewMethod() == SUBMISSION_REVIEW_METHOD_OPEN) {
+							$body .= $reviewAssignment->getReviewerFullName() . "<br>\n";
+						} else {
+							$body .= __('submission.comments.importPeerReviews.reviewerLetter', array('reviewerLetter' => PKPString::enumerateAlphabetically($reviewIndexes[$reviewAssignment->getId()]))) . "<br>\n";
 						}
-					}
-
-					// Add reviewer recommendation
-					$recommendation = $reviewAssignment->getLocalizedRecommendation();
-					$body .= __('submission.recommendation', array('recommendation' => $recommendation)) . "<br>\n";
-
-					$body .= "<br>$textSeparator<br><br>";
-
-					if ($reviewFormId = $reviewAssignment->getReviewFormId()) {
-						$reviewId = $reviewAssignment->getId();
-
-
-						$reviewFormElements = $reviewFormElementDao->getByReviewFormId($reviewFormId);
-						if(!$submissionComments) {
-							$body .= "$textSeparator<br>";
-
-							$body .= __('submission.comments.importPeerReviews.reviewerLetter', array('reviewerLetter' => PKPString::enumerateAlphabetically($reviewIndexes[$reviewAssignment->getId()]))) . '<br><br>';
+	
+						while ($comment = $submissionComments->next()) {
+							// If the comment is viewable by the author, then add the comment.
+							if ($comment->getViewable()) {
+								$body .= PKPString::stripUnsafeHtml($comment->getComments());
+							}
 						}
-						while ($reviewFormElement = $reviewFormElements->next()) {
-							if (!$reviewFormElement->getIncluded()) continue;
-
-							$body .= PKPString::stripUnsafeHtml($reviewFormElement->getLocalizedQuestion());
-							$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
-
-							if ($reviewFormResponse) {
-								$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
-								// See issue #2437.
-								if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES, REVIEW_FORM_ELEMENT_TYPE_RADIO_BUTTONS))) {
-									ksort($possibleResponses);
-									$possibleResponses = array_values($possibleResponses);
-								}
-								if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
-									if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
-										$body .= '<ul>';
-										foreach ($reviewFormResponse->getValue() as $value) {
-											$body .= '<li>' . PKPString::stripUnsafeHtml($possibleResponses[$value]) . '</li>';
-										}
-										$body .= '</ul>';
-									} else {
-										$body .= '<blockquote>' . PKPString::stripUnsafeHtml($possibleResponses[$reviewFormResponse->getValue()]) . '</blockquote>';
+	
+						// Add reviewer recommendation
+						$recommendation = $reviewAssignment->getLocalizedRecommendation();
+						$body .= __('submission.recommendation', array('recommendation' => $recommendation)) . "<br>\n";
+	
+						$body .= "<br>$textSeparator<br><br>";
+	
+						if ($reviewFormId = $reviewAssignment->getReviewFormId()) {
+							$reviewId = $reviewAssignment->getId();
+	
+	
+							$reviewFormElements = $reviewFormElementDao->getByReviewFormId($reviewFormId);
+							if(!$submissionComments) {
+								$body .= "$textSeparator<br>";
+	
+								$body .= __('submission.comments.importPeerReviews.reviewerLetter', array('reviewerLetter' => PKPString::enumerateAlphabetically($reviewIndexes[$reviewAssignment->getId()]))) . '<br><br>';
+							}
+							while ($reviewFormElement = $reviewFormElements->next()) {
+								if (!$reviewFormElement->getIncluded()) continue;
+	
+								$body .= PKPString::stripUnsafeHtml($reviewFormElement->getLocalizedQuestion());
+								$reviewFormResponse = $reviewFormResponseDao->getReviewFormResponse($reviewId, $reviewFormElement->getId());
+								if ($reviewFormResponse) {
+									$possibleResponses = $reviewFormElement->getLocalizedPossibleResponses();
+									// See issue #2437.
+									if (in_array($reviewFormElement->getElementType(), array(REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES, REVIEW_FORM_ELEMENT_TYPE_RADIO_BUTTONS))) {
+										ksort($possibleResponses);
+										$possibleResponses = array_values($possibleResponses);
 									}
-									$body .= '<br>';
-								} else {
-									$body .= '<blockquote>' . nl2br(htmlspecialchars($reviewFormResponse->getValue())) . '</blockquote>';
+									if (in_array($reviewFormElement->getElementType(), $reviewFormElement->getMultipleResponsesElementTypes())) {
+										if ($reviewFormElement->getElementType() == REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES) {
+											$body .= '<ul>';
+											foreach ($reviewFormResponse->getValue() as $value) {
+												$body .= '<li>' . PKPString::stripUnsafeHtml($possibleResponses[$value]) . '</li>';
+											}
+											$body .= '</ul>';
+										} else {
+											$body .= '<blockquote>' . PKPString::stripUnsafeHtml($possibleResponses[$reviewFormResponse->getValue()]) . '</blockquote>';
+										}
+										$body .= '<br>';
+									} else {
+										$body .= '<blockquote>' . nl2br(htmlspecialchars($reviewFormResponse->getValue())) . '</blockquote>';
+									}
 								}
 							}
-
+							$body .= "$textSeparator<br><br>";
 						}
-						$body .= "$textSeparator<br><br>";
-
 					}
 				}
+				import('lib.pkp.classes.mail.MailTemplate');
+				$mail = new MailTemplate('EDITOR_DECISION_RESUBMIT');
+				$mail->getData('body');
+				$templateMgr->assign('personalMessage', $mail->getData('body').$body);
 			}
-
-			import('lib.pkp.classes.mail.MailTemplate');
-			$mail = new MailTemplate('EDITOR_DECISION_RESUBMIT');
-			$mail->getData('body');
-
-			$templateMgr->assign('personalMessage', $mail->getData('body').$body);
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('sendReviewsForm.tpl'));
-
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/form/createReviewerForm.tpl') {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('createReviewerForm.tpl'));
@@ -1348,13 +1358,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
 			$templateMgr->tpl_vars['reviewerActions']->value[] = 
 				new LinkAction(
-					'consultKfinder',
+					'consultPubMed',
 					new OpenWindowAction(
-						'http://www.kfinder.com/member-search/login.cgi?medweb=1&data=qhjnK2a9jJgT28s2GQY8YGwvX8XUOvW8W6pvj85npuq8hq&searchstring='.
-						$submission->getTitle(AppLocale::getLocale()).
-						'&dbproduct=MEDLINE&searchlogic=fuzzy&getcount=200&relevance=50&segments=4&getchunk=20&concept_mapping=on&wordvars=on&relevance_sort=on'
+						'https://pubmed.ncbi.nlm.nih.gov/?term='.
+						$submission->getTitle(AppLocale::getLocale())
 					),
-					__('editor.submission.consultKfinder')
+					__('editor.submission.consultPubMed')
 				);
 
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorName'] = 'reviewerId';
@@ -1429,7 +1438,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$currentUser = $request->getUser();
 
 			import('lib.pkp.classes.mail.MailTemplate');
-			$mail = new MailTemplate('REVIEW_THANK');
+			$mail = new MailTemplate('REVIEW_ACK');
 			$mail->addRecipient($currentUser->getEmail(), $currentUser->getFullName());
 
 			if (!$mail->send()) {
@@ -1628,22 +1637,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($mail or $author->getData('id') == $_SESSION["userId"]){
 				$authorName = $author->getLocalizedGivenName();
 				$submissionTitle = $publication->getLocalizedTitle();
-				$submissionIdCSP = 999;
 				$context = $request->getContext();
 				$contextName = $context->getLocalizedName();
+				$submissionDAO = Application::getSubmissionDAO();
+				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+				$submissionIdCSP = $submission->getData('codigoArtigo');
 
 				$comment = str_replace(
 					[
 						'{$authorName}',
 						'{$submissionTitle}',
 						'{$submissionIdCSP}',
-						'{$contextName}'
+						'{$contextName}',
+						'{$editorialContactSignature}'
 					],
 					[
 						$authorName,
 						$submissionTitle,
 						$submissionIdCSP,
-						$contextName
+						$contextName,
+						$context->getData('emailSignature')
 					],
 					$templateBody
 				);
@@ -2569,7 +2582,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
 						import('lib.pkp.classes.mail.MailTemplate');
 						while ($user = $users->next()) {
-							$mail = new MailTemplate('AVALIACAO_AUTOR_EDITOR_ASSOC');
+							$mail = new MailTemplate('AVALIACAO_SEC_EDITOR_ASSOC');
 							$mail->addRecipient($user->getEmail(), $user->getFullName());
 							if (!$mail->send()) {
 								import('classes.notification.NotificationManager');
@@ -2619,29 +2632,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 					array((string)'ed_texto_traducao_metadados', (string)$now, (int)$submissionId)
 				);
 			break;
-			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto
+			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto, editores assistentes são notificados
 			case '54': // Figura alterada
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$stageId = $request->getUserVar('stageId');
-				$locale = AppLocale::getLocale();
-
 				import('lib.pkp.classes.mail.MailTemplate');
-
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 24);
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 4);
 				while ($user = $users->next()) {
-
 					$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
 					$mail->addRecipient($user->getEmail(), $user->getFullName());
-
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');
 						$notificationMgr = new NotificationManager();
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
-
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
@@ -2690,7 +2697,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
 				import('lib.pkp.classes.mail.MailTemplate');
 				while ($user = $users->next()) {
-					$mail = new MailTemplate('EDITORACAO_TEMPLATE_DIAGRAMAR');
+					$mail = new MailTemplate('LAYOUT_REQUEST');
 					$mail->addRecipient($user->getData('email'));
 					$indexUrl = $request->getIndexUrl();
 					$contextPath = $request->getRequestedContextPath();
@@ -2815,7 +2822,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
 				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $groupId);
 				while ($user = $users->next()) {
-					$mail = new MailTemplate('EDITORACAO_PDF_DIAGRAMADO');
+					$mail = new MailTemplate('LAYOUT_COMPLETE');
 					$mail->addRecipient($user->getEmail(), $user->getFullName());
 					if (!$mail->send()) {
 						import('classes.notification.NotificationManager');

@@ -40,7 +40,7 @@
 	<div id="sendReviews-emailContent">
 		{* Message to author textarea *}
 		{fbvFormSection for="personalMessage"}
-			{fbvElement type="textarea" name="personalMessage" id="personalMessage" value=$personalMessage rich=true variables=$allowedVariables variablesType=$allowedVariablesType}
+			{fbvElement type="textarea" name="personalMessage" id="personalMessage" value=str_replace('{$submissionIdCSP}',$submissionIdCSP, $personalMessage) rich=true variables=$allowedVariables variablesType=$allowedVariablesType}
 		{/fbvFormSection}
 
 		{* Button to add reviews to the email automatically
