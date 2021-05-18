@@ -325,11 +325,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$assigned = (int)$reviewAssignmentDao->retrieve(
 			<<<SQL
 			SELECT count(*) AS total
-			FROM review_assignments
-			WHERE declined = 0
-			AND cancelled = 0
-			AND date_completed IS NULL
-			AND review_round_id = ?
+			  FROM review_assignments
+			 WHERE declined = 0
+			   AND cancelled = 0
+			   AND date_completed IS NULL
+			   AND review_round_id = ?
 			SQL,
 			[$reviewRoundId]
 		)->GetRowAssoc(false)['total'];
