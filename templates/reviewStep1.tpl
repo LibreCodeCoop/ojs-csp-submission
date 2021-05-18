@@ -42,9 +42,6 @@ function getUrlVars() {
 {include file="controllers/notification/inPlaceNotification.tpl" notificationId="reviewStep1FormNotification"}
 
 {fbvFormArea id="reviewStep1"}
-	{fbvFormSection title="reviewer.step1.request"}
-		<p>{$reviewerRequest|nl2br}</p>
-	{/fbvFormSection}
 	{fbvFormSection label="submission.title"}
 		{$submission->getLocalizedTitle()|strip_unsafe_html}
 	{/fbvFormSection}
@@ -70,11 +67,6 @@ function getUrlVars() {
 		{fbvElement type="text" id="responseDue" label="reviewer.submission.responseDueDate" value=$submission->getDateResponseDue()|date_format:$dateFormatShort readonly=true inline=true size=$fbvStyles.size.SMALL}
 		{fbvElement type="text" id="dateDue" label="reviewer.submission.reviewDueDate" value=$submission->getDateDue()|date_format:$dateFormatShort readonly=true inline=true size=$fbvStyles.size.SMALL}
 	{/fbvFormSection}
-	<br /><br />
-		<div class="pkp_linkActions">
-			{include file="linkAction/linkAction.tpl" action=$aboutDueDatesAction contextId="reviewStep1"}
-		</div>
-	<br /><br />
 	{if $competingInterestsAction}
 		{fbvFormSection label="reviewer.submission.competingInterests" description="reviewer.submission.enterCompetingInterests"}
 			<div class="pkp_linkActions">

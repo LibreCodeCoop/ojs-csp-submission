@@ -44,11 +44,11 @@
 	{/if}
 
 	{fbvFormSection title="user.givenName" size=$fbvStyles.size.MEDIUM required="true" inline=true}
-		{fbvElement type="text" name="givenName" id="givenName" value=$givenName maxlength="255" required="true"}
+		{fbvElement type="text" name="givenName" id="givenName" multilingual="true" value=$givenName maxlength="255" required="true"}
 	{/fbvFormSection}
 
 	{fbvFormSection title="user.familyName" size=$fbvStyles.size.MEDIUM required="true" inline=true}
-		{fbvElement type="text" name="familyName" id="familyName" value=$familyName maxlength="255" required="true"}
+		{fbvElement type="text" name="familyName" id="familyName" multilingual="true" value=$familyName maxlength="255" required="true"}
 	{/fbvFormSection}
 
 	{fbvFormSection title="user.username" required="true"}
@@ -65,7 +65,7 @@
 	{/fbvFormSection}
 
 	{fbvFormSection title="user.affiliation"}
-		{fbvElement type="text" name="affiliation" id="affiliation" value=$affiliation size=$fbvStyles.size.LARGE}
+		{fbvElement type="text" name="affiliation" multilingual="true" id="affiliation" value=$affiliation size=$fbvStyles.size.LARGE}
 	{/fbvFormSection}
 
 	

@@ -315,23 +315,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	}
 
-	/**
-	 * Hook to intercept the reviewer grid
-	 * @param $hookName string
-	 * @param $args array
-	 * @return void
-	 */
-	public function reviewergridhandler_initfeatures($hookName, $args)
-	{
-		$returner = &$args[3];
-		import('plugins.generic.cspSubmission.controllers.grid.feature.AddReviewerSagasFeature');
-		$returner[] = new AddReviewerSagasFeature();
-	}
-
 	public function advancedsearchreviewerform_validate($hookName, $args)
 	{
 		$reviewerForm = $args[0];
-		$reviewerIds = json_decode($reviewerForm->getData('reviewerId'), true);
+		$reviewerId = $reviewerForm->getData('reviewerId');
 		$reviewRoundId = (int)$reviewerForm->getData('reviewRoundId');
 
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -346,22 +333,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			SQL,
 			[$reviewRoundId]
 		)->GetRowAssoc(false)['total'];
+
 		$inQueue = $this->getReviewersInQueue($reviewRoundId);
-		$totalToAssingNow = 3 - $assigned - count($reviewerIds);
 		foreach ($inQueue as $reviewer) {
 			$this->removeFromQueue($reviewer['user_id'], $reviewer['review_round_id']);
 			$reviewerIds[] = $reviewer['user_id'];
-			$totalToAssingNow--;
-			if (!$totalToAssingNow) {
-				break;
-			}
 		}
-		$totalToAddInQueue = count($reviewerIds) - (3 - $assigned);
-		for ($i = 0; $i < $totalToAddInQueue; $i++) {
-			$this->addToQueue(array_shift($reviewerIds), $reviewRoundId);
-			$assigned++;
+		$totalToAddInQueue = $assigned - 3;
+		if ($totalToAddInQueue >= 0){
+			$this->addToQueue($reviewerId, $reviewRoundId);
 		}
-		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
+		$reviewerForm->setData('reviewerId', $reviewerId);
 	}
 
 	private function getReviewersInQueue(int $reviewRoundId) {
@@ -605,10 +587,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($component == 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler') {
 			return true;
 		}
-		if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
-			$component = 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler';
-			return true;
-		}
+	//	if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
+	//		$component = 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler';
+	//		return true;
+	//	}
 		if ($component == 'grid.users.stageParticipant.stageParticipantGrid.SaveParticipantHandler') {
 			if($request->getUserVar('accept')){
 				$submissionId = $request->getUserVar('submissionId');
@@ -1107,7 +1089,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		if ($args[1] == 'controllers/grid/gridBodyPart.tpl') {
 			if (!strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
-				return false;
+			//	return false;
 			}
 			$rows = $templateMgr->getVariable('rows');
 
@@ -1367,8 +1349,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				);
 
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorName'] = 'reviewerId';
-			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selectorType'] = 'checkbox';
-			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['selected'] = [];
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelect'] = 'true';
 			$templateMgr->tpl_vars['selectReviewerListData']->value['components']['selectReviewer']['canSelectAll'] = 'true';
 
