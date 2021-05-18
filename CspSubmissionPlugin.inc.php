@@ -351,9 +351,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return $reviewAssignmentDao->retrieve(
 			<<<SQL
 			SELECT *
-			FROM csp_reviewer_queue
-			WHERE review_round_id = ?
-			ORDER BY created_at
+			  FROM csp_reviewer_queue
+			 WHERE review_round_id = ?
+			 ORDER BY created_at
 			SQL,
 			[$reviewRoundId]
 		)->GetAssoc();
