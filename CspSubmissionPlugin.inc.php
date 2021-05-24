@@ -409,30 +409,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * @return boolean
 	 */
 	public function templateManager_display($hookName, $args) {
-		$x = 1;
-		if ($args[1] == "submission/form/index.tpl") {
+		$request =& Registry::get('request');
+		$templateManager =& $args[0];
 
-			$request =& Registry::get('request');
-			$templateManager =& $args[0];
+		// // Load JavaScript file
+		$templateManager->addJavaScript(
+			'coautor',
+			$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
+			array(
+				'contexts' => 'backend',
+				'priority' => STYLE_SEQUENCE_LAST,
+			)
+		);
+		$templateManager->addStyleSheet(
+			'coautor',
+			$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
+			array(
+				'contexts' => 'backend',
+				'priority' => STYLE_SEQUENCE_LAST,
+			)
+		);
 
-			// // Load JavaScript file
-			$templateManager->addJavaScript(
-				'coautor',
-				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js',
-				array(
-					'contexts' => 'backend',
-					'priority' => STYLE_SEQUENCE_LAST,
-				)
-			);
-			$templateManager->addStyleSheet(
-				'coautor',
-				$request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css',
-				array(
-					'contexts' => 'backend',
-					'priority' => STYLE_SEQUENCE_LAST,
-				)
-			);
-		}
 		if ($args[1] == "workflow/workflow.tpl") {
 			$request =& Registry::get('request');
 			$templateManager =& $args[0];
