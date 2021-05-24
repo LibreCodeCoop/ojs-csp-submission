@@ -2,7 +2,6 @@
 	<div class="pkpListPanel--submissions" :class="classes">
 		<!-- Header -->
 		<pkp-header>
-			{{ title }}
 			<spinner v-if="isLoading" />
 			<template slot="actions">
 				<search
