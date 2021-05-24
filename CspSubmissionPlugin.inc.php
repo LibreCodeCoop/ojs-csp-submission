@@ -595,6 +595,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function loadComponentHandler($hookName, $params) {
 		$component =& $params[0];
+		$action =& $params[1];
 		$request = \Application::get()->getRequest();
 		if ($component == 'plugins.generic.CspSubmission.controllers.grid.AddAuthorHandler') {
 			return true;
@@ -602,7 +603,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($component == 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler') {
 			return true;
 		}
-		if ($component == 'grid.users.reviewer.ReviewerGridHandler') {
+		if ($component == 'grid.users.reviewer.ReviewerGridHandler' && $action == 'updateReviewer') {
 			$component = 'plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerGridHandler';
 			return true;
 		}
