@@ -1099,6 +1099,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$stageId = $request->getUserVar('stageId');
 		$submissionId = $request->getUserVar('submissionId');
 		import('lib.pkp.classes.mail.MailTemplate');
+		if ($args[1] == "submission/form/complete.tpl") {
+			$args[4] = $templateMgr->fetch($this->getTemplateResource('complete.tpl'));
+			return true;
+		}
 		if ($args[1] == "controllers/grid/users/userSelect/searchUserFilter.tpl") {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('searchUserFilter.tpl'));
 			return true;
