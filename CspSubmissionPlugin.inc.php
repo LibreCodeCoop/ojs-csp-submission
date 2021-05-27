@@ -819,12 +819,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 		if ($component == 'api.file.ManageFileApiHandler') {
+
+			if($request->_requestVars["reviewRoundId"] != ""){
+				$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+				$reviewRound = $reviewRoundDao->getById($request->_requestVars["reviewRoundId"]);
+				$version = '_'.$reviewRound->_data["round"];
+			}else{
+				$version = '_1';
+			}
+
 			$locale = AppLocale::getLocale();
-			$submissionId = $request->getUserVar('submissionId');
 			if (!empty($request->_requestVars["name"][$locale])) {
-				$request->_requestVars["name"][$locale] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"][$locale];
+				$request->_requestVars["name"][$locale] = str_replace('.',$version,$request->_requestVars["name"][$locale]);
 			} elseif(!empty($request->_requestVars["name"])) {
-				$request->_requestVars["name"] = "csp_".$submissionId."_".date("Y")."_".$request->_requestVars["name"];
+				$request->_requestVars["name"] = str_replace('.',$version,$request->_requestVars["name"]);
 			}
 		}
 		return false;
@@ -2884,10 +2892,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function fileManager_downloadFile($hookName, $args)
 	{
 		$request = \Application::get()->getRequest();
+		$fileVersion = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
+
 		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
 		$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
-		$file = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
-		$localizedName = $submissionFiles[$file]->getLocalizedName();
+
+		$submissionDAO = Application::getSubmissionDAO();
+		$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
+		$submissionIdCsp = $submission->getData('codigoArtigo');
+
+		$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
 		$args[4] = $localizedName;
 	}
 
