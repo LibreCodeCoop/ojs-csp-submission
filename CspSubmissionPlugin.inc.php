@@ -892,8 +892,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			if($args[0]->emailKey == "REVISED_VERSION_NOTIFY"){ // Quando autor submete nova versão, secretaria é notificada e status é alterado
 				unset($args[0]->_data["recipients"]);
+				$userGroupId = 8; // Secretaria
 				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 23);
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
 				while ($user = $users->next()) {
 					$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
 				}
@@ -1894,38 +1895,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
 		}elseif ($fileStage == 15) { // Upload de nova versão
+
 			$currentUser = $request->getUser();
 			$context = $request->getContext();
 			$isAssistent = $currentUser->hasRole(array(ROLE_ID_ASSISTANT), $context->getId());
+
+			$genreDao = \DAORegistry::getDAO('GenreDAO');
 			if($isAssistent){
-				$result_genre = $userDao->retrieve(
-					'SELECT A.genre_id, setting_value
-					FROM genre_settings A
-					LEFT JOIN genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = ? AND entry_key LIKE ?',
-					array((string)$locale, (string)'AVAL_SECRETARIA_NOVA_VERSAO%')
-				);
+
+				$genre = $genreDao->getByKey('SUBMISSAO_PDF', $context->getId());
+				$templateMgr->_data["submissionFileGenres"] = array($genre->getData('id') => $genre->getLocalizedName());
+
 			}else{
-				$result_genre = $userDao->retrieve(
-					'SELECT A.genre_id, setting_value
-					FROM genre_settings A
-					LEFT JOIN genres B
-					ON B.genre_id = A.genre_id
-					WHERE locale = ? AND entry_key LIKE ?',
-					array((string)$locale, (string)'AVAL_AUTOR%')
-				);
+
+				$genre = $genreDao->getByKey('AVAL_AUTOR_ALTERACOES', $context->getId());
+				$templateMgr->_data["submissionFileGenres"][$genre->getData('id')] = $genre->getLocalizedName();
 				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 			}
-			if(isset($result_genre)){
-				while (!$result_genre->EOF) {
-					$genreList[$result_genre->GetRowAssoc(0)['genre_id']] = $result_genre->GetRowAssoc(0)['setting_value'];
-					$result_genre->MoveNext();
-				}
-				$templateMgr->setData('submissionFileGenres', $genreList);
-			}else{
-				$templateMgr->setData('isReviewAttachment', TRUE); // Seta variável para true pois é verificada no template para não exibir os componentes de arquivo
-			}
+
 		}elseif ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 		}elseif ($fileStage == 18) {  // Upload no box de discussão
@@ -2396,9 +2383,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		switch($genreId) {
 			case 1: // Corpo do artigo
 			case 13: // Tabela ou quadro
-			case 19: // Nova versão corpo
 			case 18: // Legendas
-			case 20: // Nova versão tabela ou quadro
 				if (!in_array($_FILES['uploadedFile']['type'],
 				['application/msword', 'application/wps-office.doc', /*Doc*/
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
@@ -2528,7 +2513,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
 			break;
 			case 10: // Figura
-			case 22: // Nova versão Figura
 				if (!in_array($_FILES['uploadedFile']['type'], ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg'])) {
 					$args[0]->addError('genreId',
 						__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')
