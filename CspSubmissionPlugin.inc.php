@@ -2883,45 +2883,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function fileManager_downloadFile($hookName, $args)
 	{
-		list($filePath, $mediaType, $inline, $result, $fileName) = $args;
-		if (is_readable($filePath)) {
-			if ($mediaType === null) {
-				// If the media type wasn't specified, try to detect.
-				$mediaType = PKPString::mime_content_type($filePath);
-				if (empty($mediaType)) $mediaType = 'application/octet-stream';
-			}
-			if ($fileName === null) {
-				// If the filename wasn't specified, use the server-side.
-				$fileName = basename($filePath);
-			}
-			preg_match('/\/articles\/(?P<id>\d+)\//',$filePath,$matches);
-			if ($matches) {
-				$submissionDao = DAORegistry::getDAO('SubmissionFileDAO');
-				$result = $submissionDao->retrieve(
-					<<<QUERY
-					SELECT REPLACE(setting_value,'/','_') AS codigo_artigo
-					FROM submission_settings
-					WHERE setting_name = 'codigoArtigo' AND submission_id = ?
-					QUERY,
-					[$matches['id']]
-				);
-				$a = $result->GetRowAssoc(false);
-				$fileName = $a['codigo_artigo'].'_'.$fileName;
-			}
-			// Stream the file to the end user.
-			header("Content-Type: $mediaType");
-			header('Content-Length: ' . filesize($filePath));
-			header('Accept-Ranges: none');
-			header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . "; filename=\"$fileName\"");
-			header('Cache-Control: private'); // Workarounds for IE weirdness
-			header('Pragma: public');
-			FileManager::readFileFromPath($filePath, true);
-			$returner = true;
-		} else {
-			$returner = false;
-		}
-		HookRegistry::call('FileManager::downloadFileFinished', array(&$returner));
-		return true;
+		$request = \Application::get()->getRequest();
+		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+		$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
+		$file = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
+		$localizedName = $submissionFiles[$file]->getLocalizedName();
+		$args[4] = $localizedName;
 	}
 
 	public function submissionDelete($hookName, $args){
