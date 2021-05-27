@@ -430,7 +430,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			)
 		);
 
-		if ($args[1] == "workflow/workflow.tpl") {
+		if ($args[1] == "workflow/workflow.tpl" or $args[1] == "authorDashboard/authorDashboard.tpl") {
 			$request =& Registry::get('request');
 			$templateManager =& $args[0];
 			$path = $request->getRequestPath();
