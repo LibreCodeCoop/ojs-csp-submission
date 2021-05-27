@@ -819,20 +819,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 		if ($component == 'api.file.ManageFileApiHandler') {
-
-			if($request->_requestVars["reviewRoundId"] != ""){
-				$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
-				$reviewRound = $reviewRoundDao->getById($request->_requestVars["reviewRoundId"]);
-				$version = '_'.$reviewRound->_data["round"];
-			}else{
-				$version = '_1';
-			}
-
 			$locale = AppLocale::getLocale();
-			if (!empty($request->_requestVars["name"][$locale])) {
-				$request->_requestVars["name"][$locale] = str_replace('.',$version,$request->_requestVars["name"][$locale]);
-			} elseif(!empty($request->_requestVars["name"])) {
-				$request->_requestVars["name"] = str_replace('.',$version,$request->_requestVars["name"]);
+			$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+			$reviewRound = $reviewRoundDao->getById($request->_requestVars["reviewRoundId"]);
+			$version = $reviewRound->_data["round"] == "" ? '1' : $reviewRound->_data["round"];
+
+			if($request->_requestVars["name"][$locale]){
+				$fileNameArray = explode('.',$request->_requestVars["name"][$locale]);
+				$request->_requestVars["name"][$locale] = $fileNameArray[0].'_'.$version.'.'.$fileNameArray[1];
+			}else{
+				$fileNameArray = explode('.',$request->_requestVars["name"]);
+				$request->_requestVars["name"] = $fileNameArray[0].'_'.$version.'.'.$fileNameArray[1];
 			}
 		}
 		return false;
