@@ -824,12 +824,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$reviewRound = $reviewRoundDao->getById($request->_requestVars["reviewRoundId"]);
 			$version = $reviewRound->_data["round"] == "" ? '1' : $reviewRound->_data["round"];
 
+			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+			$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
+			$fileVersion = $request->_requestVars["fileId"].'-1';
+			$originalFileName = $submissionFiles[$fileVersion]->_data["originalFileName"];
+			$originalFileNameArray = explode('.',$originalFileName);
+
 			if($request->_requestVars["name"][$locale]){
 				$fileNameArray = explode('.',$request->_requestVars["name"][$locale]);
-				$request->_requestVars["name"][$locale] = $fileNameArray[0].'_'.$version.'.'.$fileNameArray[1];
+				$request->_requestVars["name"][$locale] = $fileNameArray[0].'_v'.$version.'.'.$originalFileNameArray[1];
 			}else{
 				$fileNameArray = explode('.',$request->_requestVars["name"]);
-				$request->_requestVars["name"] = $fileNameArray[0].'_'.$version.'.'.$fileNameArray[1];
+				$request->_requestVars["name"] = $fileNameArray[0].'_v'.$version.'.'.$originalFileNameArray[1];
 			}
 		}
 		return false;
