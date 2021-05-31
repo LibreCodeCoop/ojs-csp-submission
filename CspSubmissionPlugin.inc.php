@@ -1086,7 +1086,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0]->_data["replyTo"][0]["name"] =  "Cadernos de Saúde Pública";
 		$args[0]->_data["replyTo"][0]["email"] = "noreply@fiocruz.br";
 		$submissionDAO = Application::getSubmissionDAO();
-		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$submissionId = $submissionId == "" ? $request->getUserVar('submissionId') : $submissionId;
+		$submission = $submissionDAO->getById($submissionId);
 		$submissionIdCSP = $submission->getData('codigoArtigo');
 		$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
 		$args[0]->_data["subject"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["subject"]);
@@ -1892,7 +1893,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$genre = $genreDao->getByKey('EDITORACAO_PDF_DIAGRAMADO', $context->getId());
 				$genres[$genre->getData('id')] = $genre->getLocalizedName();
 			}
-			if(!empty($userGroupIds)){
+			if(!empty($genres)){
 				$templateMgr->setData('submissionFileGenres', $genres);
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
