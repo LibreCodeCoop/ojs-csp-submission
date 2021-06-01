@@ -1276,6 +1276,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$columns->value['assigns'] = clone $columns->value["name"];
 				$columns->value["assigns"]->_title = "author.users.contributor.assign";
 			}
+			if (strpos($request->_requestPath, 'manage-final-draft-files-grid/fetch-grid')) {
+				$columns = $templateMgr->getVariable('columns');
+				$cells = $templateMgr->getVariable('cells');
+				$row = $templateMgr->getVariable('row');
+				$columns->value["date"] = clone $columns->value["name"];
+				if($row->value->_data["submissionFile"]->_data["dateUploaded"]){
+					$dateTimeFormatLong = \Config::getVar('general', 'datetime_format_long');
+					$timestamp = strtotime($row->value->_data["submissionFile"]->_data["dateUploaded"]);
+					array_splice( $cells->value, 3, 0, strftime($dateTimeFormatLong, $timestamp));
+				}
+			}
 
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$submissionDAO = Application::getSubmissionDAO();
