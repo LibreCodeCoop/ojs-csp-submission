@@ -1276,6 +1276,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$columns->value['assigns'] = clone $columns->value["name"];
 				$columns->value["assigns"]->_title = "author.users.contributor.assign";
 			}
+			if(strpos($request->_requestPath, 'editor-submission-details-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'final-draft-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'editor-review-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'production-ready-files-grid/fetch-grid')){ //Busca comentários somente quando grid for de arquivos
+				$templateMgr = TemplateManager::getManager($request);
+				$columns = $templateMgr->getVariable('columns');
+				$cells = $templateMgr->getVariable('cells');
+				$row = $templateMgr->getVariable('row');
+				if($row->value->_data["submissionFile"]->_data["comentario"] <> ''){
+					array_splice($cells->value, -1, 1, $row->value->_data["submissionFile"]->_data["comentario"]);
+				}
+			}
 			if (strpos($request->_requestPath, 'manage-final-draft-files-grid/fetch-grid')) {
 				$columns = $templateMgr->getVariable('columns');
 				$cells = $templateMgr->getVariable('cells');
@@ -1310,23 +1322,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
-			if(strpos($request->_requestPath, 'editor-submission-details-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'final-draft-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'editor-review-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'production-ready-files-grid/fetch-grid')){ //Busca comentários somente quando grid for de arquivos
-				$row = $templateMgr->getVariable('row');
-				if($row->value->_data["submissionFile"]->_data["comentario"]){
-					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
-				}
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
-				return true;
-			}
-			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
-				if ($templateMgr->getVariable('column')->value->_title == 'common.type') {
-					return true;
-				};
-			}
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadConfirmationForm.tpl'));
 
