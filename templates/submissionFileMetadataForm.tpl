@@ -29,7 +29,7 @@
 
 		{* File name and detail summary *}
 		{fbvFormSection}
-			{include file="controllers/wizard/fileUpload/form/uploadedFileSummary.tpl" submissionFile=$submissionFile}
+			{include file="../plugins/generic/cspSubmission/templates/uploadedFileSummary.tpl" submissionFile=$submissionFile}
 		{/fbvFormSection}
 		{if $display}
 		{fbvFormSection title="plugins.generic.CspSubmission.artworkFile.Comment" inline=true}
