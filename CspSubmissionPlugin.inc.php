@@ -1697,7 +1697,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadForm.tpl'));
-
 			return true;
 
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
@@ -1710,26 +1709,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$request = \Application::get()->getRequest();
 			$context = $request->getContext();
 			$contextId = $context->getData('id');
-			$genre = $genreDao->getByKey('OTHER', $contextId);
+			$genreOther = $genreDao->getByKey('OTHER', $contextId);
 
-			if($genreId == $genre->getData('id')){
+			if($genreId == $genreOther->getData('id')){
 
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$tplvars->_form->_submissionFile->_data["originalFileName"];
 
 			}else{
 
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					'SELECT setting_value
-					FROM genre_settings
-					WHERE genre_id = ? AND locale = ?',
-					array((int)$genreId, (string)$locale)
-				);
-				$genreName = $result->GetRowAssoc(false)['setting_value'];
-				$genreName = str_replace(" ","_",$genreName);
-
+				$genre = $genreDao->getById($genreId);
+				$genreName = str_replace(" ","_",$genre->getLocalizedName());
 				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
-
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = $genreName.".".$extensao;
 
 			}
@@ -1743,7 +1733,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionFileMetadataForm.tpl'));
-
 			return true;
 
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/readReview.tpl'){
