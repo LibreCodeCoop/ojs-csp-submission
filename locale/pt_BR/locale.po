@@ -167,3 +167,6 @@ msgstr "Nova submissão"
 
 msgid "plugins.generic.CspSubmission.Revisao.Notificacao"
 msgstr "Revisão sistemática somente será aceita  em inglês e com registro no PROSPERO"
+
+msgid "plugins.generic.CspSubmission.user.affiliation.2"
+msgstr "Instituição/Afiliação 2"
