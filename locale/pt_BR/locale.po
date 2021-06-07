@@ -55,10 +55,10 @@ msgid "plugins.generic.CspSubmission.Metadados.Notification"
 msgstr "Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito."
 
 msgid "plugins.generic.CspSubmission.File.Title"
-msgstr "Especifique a ordem que você quer que apareça no artigo"
+msgstr "Numere a Tabela/Figura/Quadro na ordem que aparece no texto."
 
 msgid "plugins.generic.CspSubmission.File.Description"
-msgstr "Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2"
+msgstr "Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2, Quadro 1, Quadro 2"
 
 msgid "plugins.generic.CspSubmission.artworkFile.Title"
 msgstr "Título"
