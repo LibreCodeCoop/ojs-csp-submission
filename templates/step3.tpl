@@ -25,9 +25,9 @@
 	<input type="hidden" name="submissionId" value="{$submissionId|escape}" />
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="submitStep3FormNotification"}
 
-	{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFields.tpl"}	
-	
-	{fbvFormSection description="plugins.generic.CspSubmission.InclusaoAutores.Description"}{/fbvFormSection}
+	{fbvFormSection class="req" title="plugins.generic.CspSubmission.InclusaoAutores.Description"}{/fbvFormSection}
+
+	{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFields.tpl"}
 
 	<!--  Contributors -->
 	{capture assign=authorGridUrl}{url router=$smarty.const.ROUTE_COMPONENT component="grid.users.author.AuthorGridHandler" op="fetchGrid" submissionId=$submissionId publicationId=$publicationId escape=false}{/capture}
