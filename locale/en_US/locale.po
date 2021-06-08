@@ -102,9 +102,6 @@ msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arqu
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF"
 msgstr "Formato de arquivo inválido! Este arquivo deve estar no formato PDF."
 
-msgid "plugins.generic.CspSubmission.doi"
-msgstr "Caso tenha sido colocado em algum local como preprint, favor informar o acesso (DOI)"
-
 msgid "plugins.generic.CspSubmission.doi.Valid"
 msgstr "DOI inválido"
 
