@@ -1086,7 +1086,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0]->_data["replyTo"][0]["name"] =  "Cadernos de Saúde Pública";
 		$args[0]->_data["replyTo"][0]["email"] = "noreply@fiocruz.br";
 		$submissionDAO = Application::getSubmissionDAO();
-		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$submissionId = $submissionId == "" ? $request->getUserVar('submissionId') : $submissionId;
+		$submission = $submissionDAO->getById($submissionId);
 		$submissionIdCSP = $submission->getData('codigoArtigo');
 		$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
 		$args[0]->_data["subject"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["subject"]);
@@ -1275,6 +1276,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$columns->value['assigns'] = clone $columns->value["name"];
 				$columns->value["assigns"]->_title = "author.users.contributor.assign";
 			}
+			if(strpos($request->_requestPath, 'editor-submission-details-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'final-draft-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'editor-review-files-grid/fetch-grid')
+			OR strpos($request->_requestPath, 'production-ready-files-grid/fetch-grid')){ //Busca comentários somente quando grid for de arquivos
+				$templateMgr = TemplateManager::getManager($request);
+				$columns = $templateMgr->getVariable('columns');
+				$cells = $templateMgr->getVariable('cells');
+				$row = $templateMgr->getVariable('row');
+				if($row->value->_data["submissionFile"]->_data["comentario"] <> ''){
+					array_splice($cells->value, -1, 1, $row->value->_data["submissionFile"]->_data["comentario"]);
+				}
+			}
+			if (strpos($request->_requestPath, 'manage-final-draft-files-grid/fetch-grid')) {
+				$columns = $templateMgr->getVariable('columns');
+				$cells = $templateMgr->getVariable('cells');
+				$row = $templateMgr->getVariable('row');
+				$columns->value["date"] = clone $columns->value["name"];
+				if($row->value->_data["submissionFile"]->_data["dateUploaded"]){
+					$dateTimeFormatLong = \Config::getVar('general', 'datetime_format_long');
+					$timestamp = strtotime($row->value->_data["submissionFile"]->_data["dateUploaded"]);
+					array_splice( $cells->value, 3, 0, strftime($dateTimeFormatLong, $timestamp));
+				}
+			}
 
 		} elseif ($args[1] == 'submission/form/step3.tpl'){
 			$submissionDAO = Application::getSubmissionDAO();
@@ -1298,23 +1322,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('step3.tpl'));
 
 			return true;
-		} elseif ($args[1] == 'controllers/grid/gridCell.tpl'){
-			if(strpos($request->_requestPath, 'editor-submission-details-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'final-draft-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'editor-review-files-grid/fetch-grid')
-			OR strpos($request->_requestPath, 'production-ready-files-grid/fetch-grid')){ //Busca comentários somente quando grid for de arquivos
-				$row = $templateMgr->getVariable('row');
-				if($row->value->_data["submissionFile"]->_data["comentario"]){
-					$templateMgr->assign('comentario', $row->value->_data["submissionFile"]->_data["comentario"]);
-				}
-				$args[4] = $templateMgr->fetch($this->getTemplateResource('gridCell.tpl'));
-				return true;
-			}
-			if (strpos($request->_requestPath, 'reviewer-grid/fetch-grid')) {
-				if ($templateMgr->getVariable('column')->value->_title == 'common.type') {
-					return true;
-				};
-			}
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadConfirmationForm.tpl'){
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadConfirmationForm.tpl'));
 
@@ -1690,7 +1697,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}elseif ($args[1] == 'controllers/wizard/fileUpload/form/fileUploadForm.tpl') {
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('fileUploadForm.tpl'));
-
 			return true;
 
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
@@ -1703,26 +1709,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$request = \Application::get()->getRequest();
 			$context = $request->getContext();
 			$contextId = $context->getData('id');
-			$genre = $genreDao->getByKey('OTHER', $contextId);
+			$genreOther = $genreDao->getByKey('OTHER', $contextId);
 
-			if($genreId == $genre->getData('id')){
+			if($genreId == $genreOther->getData('id')){
 
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = "csp_".$request->_requestVars["submissionId"]."_".date("Y")."_".$tplvars->_form->_submissionFile->_data["originalFileName"];
 
 			}else{
 
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$result = $userDao->retrieve(
-					'SELECT setting_value
-					FROM genre_settings
-					WHERE genre_id = ? AND locale = ?',
-					array((int)$genreId, (string)$locale)
-				);
-				$genreName = $result->GetRowAssoc(false)['setting_value'];
-				$genreName = str_replace(" ","_",$genreName);
-
+				$genre = $genreDao->getById($genreId);
+				$genreName = str_replace(" ","_",$genre->getLocalizedName());
 				$extensao = pathinfo($tplvars->_form->_submissionFile->_data["originalFileName"], PATHINFO_EXTENSION);
-
 				$tplvars->_form->_submissionFile->_data["name"][$locale] = $genreName.".".$extensao;
 
 			}
@@ -1736,7 +1733,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 			$args[4] = $templateMgr->fetch($this->getTemplateResource('submissionFileMetadataForm.tpl'));
-
 			return true;
 
 		} elseif ($args[1] == 'controllers/grid/users/reviewer/readReview.tpl'){
@@ -1892,7 +1888,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$genre = $genreDao->getByKey('EDITORACAO_PDF_DIAGRAMADO', $context->getId());
 				$genres[$genre->getData('id')] = $genre->getLocalizedName();
 			}
-			if(!empty($userGroupIds)){
+			if(!empty($genres)){
 				$templateMgr->setData('submissionFileGenres', $genres);
 			}else{
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES

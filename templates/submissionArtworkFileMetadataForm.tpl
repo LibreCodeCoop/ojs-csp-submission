@@ -29,9 +29,8 @@
 
 		{* File detail summary *}
 		{fbvFormSection class="req" label="plugins.generic.CspSubmission.Metadados.Notification"}{/fbvFormSection}
-		{fbvFormSection}
-			{include file="../plugins/generic/cspSubmission/templates/uploadedFileSummary.tpl" submissionFile=$submissionFile}
-			
+		{fbvFormSection label="plugins.generic.CspSubmission.File.Title" description="plugins.generic.CspSubmission.File.Description" required=true}
+			{fbvElement type="text" id="name" multilingual=true maxlength="255" required=true}
 		{/fbvFormSection}
 		{fbvFormSection title="plugins.generic.CspSubmission.artworkFile.Title" inline=true size=$fbvStyles.size.MEDIUM required="true"}
 			{fbvElement type="textarea" id="artworkCaption" height=$fbvStyles.height.SHORT value=$submissionFile->getCaption() required="true"}

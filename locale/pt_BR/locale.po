@@ -55,10 +55,10 @@ msgid "plugins.generic.CspSubmission.Metadados.Notification"
 msgstr "Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito."
 
 msgid "plugins.generic.CspSubmission.File.Title"
-msgstr "Especifique a ordem que você quer que apareça no artigo"
+msgstr "Numere a Tabela/Figura/Quadro na ordem que aparece no texto."
 
 msgid "plugins.generic.CspSubmission.File.Description"
-msgstr "Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2"
+msgstr "Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2, Quadro 1, Quadro 2"
 
 msgid "plugins.generic.CspSubmission.artworkFile.Title"
 msgstr "Título"
@@ -76,7 +76,7 @@ msgid "plugins.generic.CspSubmission.Subtitle.Description"
 msgstr "Até 70 caracteres"
 
 msgid "plugins.generic.CspSubmission.InclusaoAutores.Description"
-msgstr "A ordenação dos nomes dos autores deve ser a mesma que será utilizada na publicação (utilize as setas verdes que aparecem quando há mais de um autor cadastrado para trocar a ordem dos autores). Você já foi inserido como autor do artigo, de acordo com os seus dados cadastrais. Caso esteja faltando alguma informação relevante para a publicação uma mensagem irá lhe alertar a respeito. Para editar as informações clique em cima do nome do autor e depois em “editar dados” (use esta mesma ação para inserir sua colaboração, obrigatória caso o artigo tenha mais de um autor). Em caso de dificuldades com o processo, entre em contado com o suporte do SAGAS através do e-mail csp-artigos@ensp.fiocruz.br"
+msgstr "Em caso de dificuldades com o processo, entre em contado com o suporte do SAGAS através do e-mail csp-artigos@ensp.fiocruz.br"
 
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
 msgstr "A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
@@ -102,9 +102,6 @@ msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arqu
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF"
 msgstr "Formato de arquivo inválido! Este arquivo deve estar no formato PDF."
 
-msgid "plugins.generic.CspSubmission.doi"
-msgstr "Caso tenha sido colocado em algum local como preprint, favor informar o acesso (DOI)"
-
 msgid "plugins.generic.CspSubmission.doi.Valid"
 msgstr "DOI inválido"
 
@@ -127,10 +124,10 @@ msgid "plugins.generic.CspSubmission.smallTitle"
 msgstr "Título curto"
 
 msgid "plugins.generic.CspSubmission.keywords.tip"
-msgstr "Mínimo 3 e máximo 5 palavras (separadas pela tecla Enter)"
+msgstr "Mínimo de 3 e máximo de 5 no idioma original do artigo. Devem constar na base do DeCS (Descritores em Ciências da Saúde) da <a target=\"_new\" class=\"action\" href=\"https://decs.bvsalud.org/\">Biblioteca Virtual em Saúde BVS</a>."
 
 msgid "plugins.generic.CspSubmission.supportingAgencies.tip"
-msgstr "Caso possível, informe o código de financiamento"
+msgstr "Informe as fontes de financiamento do estudo e o código do projeto."
 
 msgid "plugins.generic.CspSubmission.AuthorContribution"
 msgstr "Contribuição do autor no trabalho"
@@ -167,3 +164,6 @@ msgstr "Nova submissão"
 
 msgid "plugins.generic.CspSubmission.Revisao.Notificacao"
 msgstr "Revisão sistemática somente será aceita  em inglês e com registro no PROSPERO"
+
+msgid "plugins.generic.CspSubmission.user.affiliation.2"
+msgstr "Instituição/Afiliação 2"

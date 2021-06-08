@@ -143,7 +143,7 @@
 			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE required=true}
 		{/fbvFormSection}
 
-		{fbvFormSection for="affiliation2" title="user.affiliation"}
+		{fbvFormSection for="affiliation2" title="plugins.generic.CspSubmission.user.affiliation.2"}
 			{fbvElement type="text" name="affiliation2" id="affiliation2" value=$affiliation2 inline=true size=$fbvStyles.size.LARGE}
 		{/fbvFormSection}
 		
