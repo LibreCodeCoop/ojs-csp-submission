@@ -164,3 +164,9 @@ msgstr "New submission"
 
 msgid "plugins.generic.CspSubmission.Revisao.Notificacao"
 msgstr "Revisão sistemática somente será aceita em inglês e com registro no PROSPERO"
+
+msgid "plugins.generic.CspSubmission.user.affiliation.2"
+msgstr "Instituição/Afiliação 2"
+
+msgid "plugins.generic.CspSubmission.submission.Step2.MissingFile"
+msgstr "É necessário inserir um arquivo Corpo do texto"

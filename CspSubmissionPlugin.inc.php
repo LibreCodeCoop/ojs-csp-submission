@@ -2870,6 +2870,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 	{
 		$this->article = $args[1];
 
+		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+		$submissionFiles = $submissionFileDao->getBySubmissionId($args[1]->_data["id"]);
+
+		if(!empty($submissionFiles)){
+			foreach ($submissionFiles as $submissionFile) {
+				$name = $submissionFile->getLocalizedName();
+				if(str_contains($name, 'Corpo_do_Texto')){
+					return;
+				}else{
+					$args[2]->addError('genreId',
+					__('plugins.generic.CspSubmission.submission.Step2.MissingFile')
+					);
+					return true;
+				}
+			}
+		}else{
+			$args[2]->addError('genreId',
+			__('plugins.generic.CspSubmission.submission.Step2.MissingFile')
+			);
+			return false;
+		}
 	}
 
 	function fileManager_downloadFile($hookName, $args)
