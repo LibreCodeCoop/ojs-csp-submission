@@ -173,3 +173,6 @@ msgstr "É necessário inserir um arquivo Corpo do texto"
 
 msgid "plugins.generic.CspSubmission.submission.Title.Tip"
 msgstr "Limite mínimo 15, limite máximo 180 caracteres com espaços"
+
+msgid "plugins.generic.CspSubmission.submission.keywords.Notification"
+msgstr "São necessárias no mínimo 3 e no máximo 5 palavras-chave"

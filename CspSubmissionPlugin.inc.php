@@ -2893,6 +2893,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return false;
 			}
 		}
+		if($args[0] == 3){
+			$keywords = $args[2]->_data["keywords"][$args[2]->requiredLocale."-keywords"];
+			if(count($keywords) < 3 or count($keywords) > 5){
+				$args[2]->addError('genreId', __('plugins.generic.CspSubmission.submission.keywords.Notification'));
+				return false;
+			}
+		}
 	}
 
 	function fileManager_downloadFile($hookName, $args)
