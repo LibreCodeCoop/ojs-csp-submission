@@ -2395,6 +2395,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 					break;
 				}
 
+				if($genreId == 1){
+					$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+					$submissionFiles = $submissionFileDao->getBySubmissionId($args[0]->getData('submissionId'));
+					foreach ($submissionFiles as $submissionFile) {
+						if(substr($submissionFile->getLocalizedName(), 0, 14) == 'Corpo_do_Texto'){
+							$args[0]->addError('genreId',
+							__('plugins.generic.CspSubmission.submission.bodyTextFile.Twice')
+						);
+						}
+					}
+				}
 				$submissionDAO = Application::getSubmissionDAO();
 				$request = \Application::get()->getRequest();
 				/** @val Submission */
