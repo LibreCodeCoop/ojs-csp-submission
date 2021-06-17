@@ -2974,7 +2974,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				return false;
 			}
 		}
-		if($args[0] == 3){
+		if($args[0] == 3 && !in_array($args[1]->_data["publications"][0]->_data["sectionId"], [2, 3, 10, 11, 12, 13, 14, 15])){
 			$keywords = $args[2]->_data["keywords"][$args[2]->requiredLocale."-keywords"];
 			if(count($keywords) < 3 or count($keywords) > 5){
 				$args[2]->addError('genreId', __('plugins.generic.CspSubmission.submission.keywords.Notification'));
