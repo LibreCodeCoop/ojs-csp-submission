@@ -164,3 +164,42 @@ msgstr "New submission"
 
 msgid "plugins.generic.CspSubmission.Revisao.Notificacao"
 msgstr "Revisão sistemática somente será aceita em inglês e com registro no PROSPERO"
+
+msgid "plugins.generic.CspSubmission.user.affiliation.2"
+msgstr "Instituição/Afiliação 2"
+
+msgid "plugins.generic.CspSubmission.submission.Step2.MissingFile"
+msgstr "É necessário inserir um arquivo Corpo do texto"
+
+msgid "plugins.generic.CspSubmission.submission.Title.Tip"
+msgstr "Limite mínimo 15, limite máximo 180 caracteres com espaços"
+
+msgid "plugins.generic.CspSubmission.submission.keywords.Notification"
+msgstr "São necessárias no mínimo 3 e no máximo 5 palavras-chave"
+
+msgid "plugins.generic.CspSubmission.submission.bodyTextFile.Twice"
+msgstr "Só é permitido inseir um arquivo Corpo do texto"
+
+msgid "plugins.generic.CspSubmission.submission.consideracoesEticas"
+msgstr "Considerações éticas e legais"
+
+msgid "plugins.generic.CspSubmission.submission.consideracoesEticas.checkbox.sim"
+msgstr "No caso de artigos que envolvem pesquisas com seres humanos, foram cumpridos os princípios contidos na Declaração de Helsinki, além de atendida a legislação específica do país no qual a pesquisa foi realizada. No caso de pesquisa envolvendo animais da fauna silvestre e/ou cobaias foram atendidas as legislações pertinentes."
+
+msgid "plugins.generic.CspSubmission.submission.consideracoesEticas.checkbox.nao"
+msgstr "Não se aplica (estudo não envolve pesquisa com seres humanos ou animais)."
+
+msgid "plugins.generic.CspSubmission.submission.ensaiosClinicos"
+msgstr "Ensaios clínicos"
+
+msgid "plugins.generic.CspSubmission.submission.ensaiosClinicos.checkbox.sim"
+msgstr "O estudo está de acordo com os princípios do International Committee of Medical Journals Editors, item III.J, para publicação de ensaios clínicos."
+
+msgid "plugins.generic.CspSubmission.submission.ensaiosClinicos.checkbox.nao"
+msgstr "Não se aplica."
+
+msgid "plugins.generic.CspSubmission.submission.ensaiosClinicos.numRegistro"
+msgstr "Número do registro"
+
+msgid "plugins.generic.CspSubmission.submission.ensaiosClinicos.orgao"
+msgstr "Órgão"

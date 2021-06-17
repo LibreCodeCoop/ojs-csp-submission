@@ -118,7 +118,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$templateManager["fields"],
 						["name" => "agradecimentos",
 						"component" => "field-text",
-						"label" => "Agradecimentos",
+						"label" => __('plugins.generic.CspSubmission.agradecimentos'),
 						"groupId" => "default",
 						"isRequired" => false,
 						"isMultilingual" => true,
@@ -128,21 +128,65 @@ class CspSubmissionPlugin extends GenericPlugin {
 						],
 						["name" => "conflitoInteresse",
 						"component" => "field-text",
-						"label" => "Seu artigo possui conflito de interesse?",
+						"label" => __('plugins.generic.CspSubmission.conflitoInteresse'),
 						"groupId" => "default",
 						"isRequired" => false,
 						"isMultilingual" => true,
 						"value" => $submission->getData('conflitoInteresse'),
 						"inputType" => "text",
 						"size" => "large"
-						]
+						],
+						["name" => "consideracoesEticas",
+						"component" => "field-radio-input",
+						"label" => __('plugins.generic.CspSubmission.submission.consideracoesEticas'),
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => false,
+						"value" => $submission->getData('consideracoesEticas'),
+						"options" => 	[
+											["value" => 1, "label" => __('plugins.generic.CspSubmission.submission.consideracoesEticas.checkbox.sim')],
+											["value" => 0, "label" => __('plugins.generic.CspSubmission.submission.consideracoesEticas.checkbox.nao')]
+										],
+						],
+						["name" => "ensaiosClinicos",
+						"component" => "field-radio-input",
+						"label" => __('plugins.generic.CspSubmission.submission.ensaiosClinicos'),
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => false,
+						"value" => $submission->getData('ensaiosClinicos'),
+						"options" => 	[
+											["value" => 1, "label" => __('plugins.generic.CspSubmission.submission.ensaiosClinicos.checkbox.sim')],
+											["value" => 0, "label" => __('plugins.generic.CspSubmission.submission.ensaiosClinicos.checkbox.nao')]
+										],
+						],
+						["name" => "numRegistro",
+						"component" => "field-text",
+						"label" => __('plugins.generic.CspSubmission.submission.ensaiosClinicos.numRegistro'),
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('numRegistro'),
+						"inputType" => "text",
+						"size" => "medium"
+						],
+						["name" => "orgao",
+						"component" => "field-text",
+						"label" => __('plugins.generic.CspSubmission.submission.ensaiosClinicos.orgao'),
+						"groupId" => "default",
+						"isRequired" => false,
+						"isMultilingual" => true,
+						"value" => $submission->getData('orgao'),
+						"inputType" => "text",
+						"size" => "medium"
+						],
 					);
 			if($publication->getData('sectionId') == 5){
 				array_push(
 					$templateManager["fields"],
 					["name" => "codigoTematico",
 					"component" => "field-text",
-					"label" => "Código do fascículo temático",
+					"label" => __('plugins.generic.CspSubmission.codigoTematico'),
 					"groupId" => "default",
 					"isRequired" => false,
 					"isMultilingual" => true,
@@ -152,7 +196,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					],
 					["name" => "tema",
 					"component" => "field-text",
-					"label" => "Tema",
+					"label" => __('plugins.generic.CspSubmission.Tema'),
 					"groupId" => "default",
 					"isRequired" => false,
 					"isMultilingual" => true,
@@ -167,7 +211,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$templateManager["fields"],
 					["name" => "codigoArtigoRelacionado",
 					"component" => "field-text",
-					"label" => "Código do artigo relacionado",
+					"label" => __('plugins.generic.CspSubmission.codigoArtigoRelacionado'),
 					"groupId" => "default",
 					"isRequired" => false,
 					"isMultilingual" => true,
@@ -2212,6 +2256,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
 		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('consideracoesEticas.tpl'));
+		$output .= $smarty->fetch($this->getTemplateResource('ensaiosClinicos.tpl'));
 
 
 		return false;
@@ -2225,6 +2271,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$userVars[] = 'tema';
 		$userVars[] = 'codigoArtigoRelacionado';
 		$userVars[] = 'codigoArtigo';
+		$userVars[] = 'consideracoesEticas';
+		$userVars[] = 'ensaiosClinicos';
+		$userVars[] = 'numRegistro';
+		$userVars[] = 'orgao';
 
 		return false;
 	}
@@ -2267,6 +2317,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$article->setData('codigoTematico', $form->getData('codigoTematico'));
 		$article->setData('tema', $form->getData('tema'));
 		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
+		$article->setData('consideracoesEticas', $form->getData('consideracoesEticas'));
+		$article->setData('ensaiosClinicos', $form->getData('ensaiosClinicos'));
+		$article->setData('numRegistro', $form->getData('numRegistro'));
+		$article->setData('orgao', $form->getData('orgao'));
 
 		return false;
 	}
@@ -2317,6 +2371,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
 		$form->setData('tema', $article->getData('tema'));
 		$form->setData('codigoArtigo', $article->getData('codigoArtigo'));
+		$form->setData('consideracoesEticas', $article->getData('consideracoesEticas'));
+		$form->setData('ensaiosClinicos', $article->getData('ensaiosClinicos'));
+		$form->setData('numRegistro', $article->getData('numRegistro'));
+		$form->setData('orgao', $article->getData('orgao'));
 
 		return false;
 	}
@@ -2339,6 +2397,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$params[0]->setData('tema', $params[3]->_requestVars["tema"]);
 			$params[1]->setData('tema', $params[3]->_requestVars["tema"]);
 			$params[2]["tema"] = $params[3]->_requestVars["tema"];
+			$params[0]->setData('consideracoesEticas', $params[3]->_requestVars["consideracoesEticas"]);
+			$params[1]->setData('consideracoesEticas', $params[3]->_requestVars["consideracoesEticas"]);
+			$params[2]["consideracoesEticas"] = $params[3]->_requestVars["consideracoesEticas"];
+			$params[0]->setData('ensaiosClinicos', $params[3]->_requestVars["ensaiosClinicos"]);
+			$params[1]->setData('ensaiosClinicos', $params[3]->_requestVars["ensaiosClinicos"]);
+			$params[2]["ensaiosClinicos"] = $params[3]->_requestVars["ensaiosClinicos"];
+			$params[0]->setData('numRegistro', $params[3]->_requestVars["numRegistro"]);
+			$params[1]->setData('numRegistro', $params[3]->_requestVars["numRegistro"]);
+			$params[2]["numRegistro"] = $params[3]->_requestVars["numRegistro"];
+			$params[0]->setData('orgao', $params[3]->_requestVars["orgao"]);
+			$params[1]->setData('orgao', $params[3]->_requestVars["orgao"]);
+			$params[2]["orgao"] = $params[3]->_requestVars["orgao"];
 		}
 		return false;
 	}
@@ -2395,6 +2465,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 					break;
 				}
 
+				if($genreId == 1){
+					$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+					$submissionFiles = $submissionFileDao->getBySubmissionId($args[0]->getData('submissionId'));
+					foreach ($submissionFiles as $submissionFile) {
+						if(substr($submissionFile->getLocalizedName(), 0, 14) == 'Corpo_do_Texto'){
+							$args[0]->addError('genreId',
+							__('plugins.generic.CspSubmission.submission.bodyTextFile.Twice')
+						);
+						}
+					}
+				}
 				$submissionDAO = Application::getSubmissionDAO();
 				$request = \Application::get()->getRequest();
 				/** @val Submission */
@@ -2870,6 +2951,36 @@ class CspSubmissionPlugin extends GenericPlugin {
 	{
 		$this->article = $args[1];
 
+		if($args[0] == 2){
+			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+			$submissionFiles = $submissionFileDao->getBySubmissionId($args[1]->_data["id"]);
+
+			if(!empty($submissionFiles)){
+				foreach ($submissionFiles as $submissionFile) {
+					$name = $submissionFile->getLocalizedName();
+					if(str_contains($name, 'Corpo_do_Texto')){
+						return;
+					}else{
+						$args[2]->addError('genreId',
+						__('plugins.generic.CspSubmission.submission.Step2.MissingFile')
+						);
+						return true;
+					}
+				}
+			}else{
+				$args[2]->addError('genreId',
+				__('plugins.generic.CspSubmission.submission.Step2.MissingFile')
+				);
+				return false;
+			}
+		}
+		if($args[0] == 3 && !in_array($args[1]->_data["publications"][0]->_data["sectionId"], [2, 3, 10, 11, 12, 13, 14, 15])){
+			$keywords = $args[2]->_data["keywords"][$args[2]->requiredLocale."-keywords"];
+			if(count($keywords) < 3 or count($keywords) > 5){
+				$args[2]->addError('genreId', __('plugins.generic.CspSubmission.submission.keywords.Notification'));
+				return false;
+			}
+		}
 	}
 
 	function fileManager_downloadFile($hookName, $args)
