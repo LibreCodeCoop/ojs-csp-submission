@@ -1129,9 +1129,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$args[0]->_data["from"]["email"] = "noreply@fiocruz.br";
 		$args[0]->_data["replyTo"][0]["name"] =  "Cadernos de Saúde Pública";
 		$args[0]->_data["replyTo"][0]["email"] = "noreply@fiocruz.br";
-		$submissionDAO = Application::getSubmissionDAO();
-		$submissionId = $submissionId == "" ? $request->getUserVar('submissionId') : $submissionId;
-		$submission = $submissionDAO->getById($submissionId);
+		if(!$args[0]->submission){
+			$submissionDAO = Application::getSubmissionDAO();
+			$submissionId = $submissionId == "" ? $request->getUserVar('submissionId') : $submissionId;
+			$submission = $submissionDAO->getById($submissionId);
+		}else{
+			$submission = $args[0]->submission;
+		}
+
 		$submissionIdCSP = $submission->getData('codigoArtigo');
 		$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
 		$args[0]->_data["subject"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["subject"]);
