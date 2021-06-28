@@ -3,7 +3,7 @@
 /**
  * @file plugins/generic/CspSubmission/CspSubmissionPlugin.inc.php
  *
- * Copyright (c) 2014-2019 LyseonTech
+ * Copyright (c) 2014-2019 LibreCode Coop
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CspSubmissionPlugin
