@@ -7,7 +7,7 @@
 /**
  * @file plugins/generic/cspSubmission/index.php
  *
- * Copyright (c) 2014-2019 LyseonTech
+ * Copyright (c) 2019-2021 LibreCodeCoop
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @ingroup plugins_generic_cspSubmission
