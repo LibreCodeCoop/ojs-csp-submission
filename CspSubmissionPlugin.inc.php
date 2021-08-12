@@ -1920,6 +1920,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$templateMgr->setData('submissionFileGenres', $genreList);
 				$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
 			}
+		}elseif ($fileStage == 4) { // UPLOAD DE ARQUIVOS PARA AVALIAÇÃO
+			$context = $request->getContext();
+			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
+			$userInGroup = $userGroupDao->userInGroup($userId, 8); // Secretaria
+			if($userInGroup){
+				$genreDao = \DAORegistry::getDAO('GenreDAO');
+				$genre = $genreDao->getByKey('SUBMISSAO_PDF', $context->getId());
+				$genreList[$genre->getData('id')] =  $genre->getLocalizedName();
+				$genre = $genreDao->getByKey('AVAL_AUTOR_ALTERACOES', $context->getId());
+				$genreList[$genre->getData('id')] =  $genre->getLocalizedName();
+				$templateMgr->setData('submissionFileGenres', $genreList);
+			}
 		}elseif ($fileStage == 5) { // AVALIADOR FAZENDO UPLOAD DE PARECER
 			$result = $userDao->retrieve(
 				'SELECT A.genre_id, setting_value
@@ -2023,24 +2035,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 			}
 		}elseif ($fileStage == 15) { // Upload de nova versão
-
-			$currentUser = $request->getUser();
 			$context = $request->getContext();
-			$isAssistent = $currentUser->hasRole(array(ROLE_ID_ASSISTANT), $context->getId());
-
 			$genreDao = \DAORegistry::getDAO('GenreDAO');
-			if($isAssistent){
-
-				$genre = $genreDao->getByKey('SUBMISSAO_PDF', $context->getId());
-				$templateMgr->_data["submissionFileGenres"] = array($genre->getData('id') => $genre->getLocalizedName());
-
-			}else{
-
-				$genre = $genreDao->getByKey('AVAL_AUTOR_ALTERACOES', $context->getId());
-				$templateMgr->_data["submissionFileGenres"][$genre->getData('id')] = $genre->getLocalizedName();
-				$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
-			}
-
+			$genre = $genreDao->getByKey('AVAL_AUTOR_ALTERACOES', $context->getId());
+			$templateMgr->_data["submissionFileGenres"][$genre->getData('id')] = $genre->getLocalizedName();
+			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
 		}elseif ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 		}elseif ($fileStage == 18) {  // Upload no box de discussão
