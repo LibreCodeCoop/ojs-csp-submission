@@ -98,10 +98,35 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
 			
 			HookRegistry::register('schemadao::_updateobject', array($this, 'updateObject'));
+
+			HookRegistry::register('newreviewroundform::validate', array($this, 'newreviewroundform_validate'));
 		}
 		return $success;
 	}
 
+	public function newreviewroundform_validate($hookName, $args) {
+		$stageId = $args[0]->_submission->_data["stageId"];
+		$submissionId = $args[0]->_submission->_data["id"];
+		$userGroupId = 5; // Editor associado
+		$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO');
+		$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
+		import('lib.pkp.classes.mail.MailTemplate');
+		while ($user = $users->next()) {
+			$mail = new MailTemplate('AVALIACAO_SEC_EDITOR_ASSOC');
+			$mail->addRecipient($user->getEmail(), $user->getFullName());
+			if (!$mail->send()) {
+				import('classes.notification.NotificationManager');
+				$notificationMgr = new NotificationManager();
+				$notificationMgr->createTrivialNotification($_SESSION["userId"], NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+			}
+		}
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$now = date('Y-m-d H:i:s');
+		$userDao->retrieve(
+			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+		);
+	}
 	public function formConfigAfter($hookName, $args) {
 		$templateManager =& $args[0];
 		if ($templateManager["id"] == "titleAbstract"){
@@ -2732,28 +2757,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$userDao->retrieve(
 							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
 							array((string)'pre_aguardando_editor_chefe',(string)$now,(int)$submissionId)
-						);
-					}
-					if($genreId == 30){ // QUANDO SECRETARIA SOBE UM PDF NO ESTÁGIO DE AVALIAÇÃO, O EDITOR ASSOCIADO É NOTIFICADO
-						$stageId = $request->getUserVar('stageId');
-						$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-						$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 5);
-						import('lib.pkp.classes.mail.MailTemplate');
-						while ($user = $users->next()) {
-							$mail = new MailTemplate('AVALIACAO_SEC_EDITOR_ASSOC');
-							$mail->addRecipient($user->getEmail(), $user->getFullName());
-							if (!$mail->send()) {
-								import('classes.notification.NotificationManager');
-								$notificationMgr = new NotificationManager();
-								$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-							}
-						}
-						$userDao = DAORegistry::getDAO('UserDAO');
-						$now = date('Y-m-d H:i:s');
-						$submissionId = $request->getUserVar('submissionId');
-						$userDao->retrieve(
-							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-							array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
 						);
 					}
 				}
