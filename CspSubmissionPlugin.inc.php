@@ -303,36 +303,46 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return true;
 	}
 
-	public function countStatus($status, $date){
+	public function countStatus($subStage, $date, $status){
 		$request =& Registry::get('request');
 		$context = $request->getContext();
 		$contextId = $context->getData('id');
 		$currentUser = $request->getUser();
 		$currentUserId = $currentUser->getData('id');
+		$sessionManager = SessionManager::getManager();
+		$session = $sessionManager->getUserSession();
+		$role = $session->getSessionVar('role');
 
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$result = $userDao->retrieve(
-		"select count(*) as contador
+		$sql = "select count(DISTINCT s.submission_id) as contador
 		from
 			submissions as s
 		left join stage_assignments as sa on
 			s.submission_id = sa.submission_id
-			and sa.user_id = $currentUserId
 		left join review_assignments as ra on
 			s.submission_id = ra.submission_id
-			and ra.reviewer_id = $currentUserId
-		where
-			s.context_id = $contextId
-			and (sa.stage_assignment_id is not null or ra.review_id is not null)
-			and s.submission_id in (
-			select
-				DISTINCT status_csp.submission_id
-			from
-				status_csp
-			where
-				status_csp.status in (".trim($status).")
-				and date_status <= '$date')");
+		where s.context_id = $contextId
+		and (sa.stage_assignment_id is not null or ra.review_id is not null)
+		and s.status = $status";
 
+		if($subStage == "'aguardando_avaliacao'"){
+			$sql .= " and ra.reviewer_id = $currentUserId";
+		}elseif($subStage == "'em_progresso'"){
+			$sql .= " and s.date_submitted IS NULL";
+		}else{
+			$sql .= "
+			and s.submission_id in (select DISTINCT status_csp.submission_id
+									from status_csp
+									where status_csp.status in (".trim($subStage).")
+									and date_status <= '$date')";
+		}
+		if($role <> "Gerente"){
+			$sql .= " and sa.user_id = $currentUserId";
+			if($role == "Autor"){
+				$sql .= " and sa.user_group_id = 14";
+			}
+		}
+		$result = $userDao->retrieve($sql);
 		$count = $result->GetRowAssoc(false);
 		return $count["contador"];
 	}
@@ -529,49 +539,72 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$userGroupsAbbrev[] = $userGroup->getLocalizedAbbrev();
 				}
 				$requestRoleAbbrev = $request->getUserVar('requestRoleAbbrev');
+				$sessionManager = SessionManager::getManager();
+				$session = $sessionManager->getUserSession();
+				if($requestRoleAbbrev){
+					$session->setSessionVar('role', $requestRoleAbbrev);
+				}
+				$role = $session->getSessionVar('role');
 
-				if ($requestRoleAbbrev == 'Ed. chefe' or $requestRoleAbbrev == 'Gerente') {
-					$stages['Pré-avaliação']["'pre_aguardando_editor_chefe'"] = "Aguardando decisão (" .$this->countStatus("'pre_aguardando_editor_chefe'",date('Y-m-d H:i:s')).")";
-					$stages['Avaliação']["'ava_aguardando_editor_chefe'"] = "Aguardando decisão (" .$this->countStatus("'ava_aguardando_editor_chefe'",date('Y-m-d H:i:s')).")";
-					$stages['Avaliação']["'ava_consulta_editor_chefe'"] = "Consulta ao editor chefe (" .$this->countStatus("'ava_consulta_editor_chefe'",date('Y-m-d H:i:s')).")";
+				if ($role == 'Ed. chefe' or $role == 'Gerente') {
+					$stages['Pré-avaliação']["'pre_aguardando_editor_chefe'"][1] = "Aguardando decisão (" .$this->countStatus("'pre_aguardando_editor_chefe'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_editor_chefe'"][1] = "Aguardando decisão (" .$this->countStatus("'ava_aguardando_editor_chefe'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_consulta_editor_chefe'"][1] = "Consulta ao editor chefe (" .$this->countStatus("'ava_consulta_editor_chefe'",date('Y-m-d H:i:s'),1).")";
 				}
-				if ($requestRoleAbbrev == 'Ed. associado' or $requestRoleAbbrev == 'Gerente') {
-					$stages['Avaliação']["'ava_com_editor_associado'"] = "Com o editor associado (" .$this->countStatus("'ava_com_editor_associado'",date('Y-m-d H:i:s')).")";
-					$stages['Avaliação']["'ava_aguardando_autor'"] = "Aguardando autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s')).")";
+				if ($role == 'Ed. associado' or $role == 'Gerente') {
+					$status = "'ava_aguardando_editor_chefe','ava_consulta_editor_chefe'";
+					$stages['Avaliação'][$status][1] = "Aguardando decisão da editoria (" .$this->countStatus($status,date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_com_editor_associado'"][1] = "Com o editor associado (" .$this->countStatus("'ava_com_editor_associado'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_autor'"][1] = "Aguardando autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_autor_mais_60_dias'"][1] = "Há mais de 60 dias com o autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s', strtotime('-2 months')),1).")";
+					$stages['Avaliação']["'ava_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'ava_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";
 				}
-				if ($requestRoleAbbrev == 'Secretaria' or $requestRoleAbbrev == 'Gerente') {
-					$stages['Pré-avaliação']["'pre_aguardando_secretaria'"] = "Aguardando secretaria (" .$this->countStatus("'pre_aguardando_secretaria'",date('Y-m-d H:i:s')) .")";
-					$stages['Pré-avaliação']["'pre_pendencia_tecnica'"] = "Pendência técnica (" .$this->countStatus("'pre_pendencia_tecnica'",date('Y-m-d H:i:s')).")";
-					$stages['Avaliação']["'ava_aguardando_autor_mais_60_dias'"] = "Há mais de 60 dias com o autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s', strtotime('-2 months'))).")";
-					$stages['Avaliação']["'ava_aguardando_secretaria'"] = "Aguardando secretaria (" .$this->countStatus("'ava_aguardando_secretaria'",date('Y-m-d H:i:s')) .")";
+				if ($role == 'Avaliador') {
+					$stages['Avaliação']["'aguardando_avaliacao'"][1] = "Aguardando avaliacao (" .$this->countStatus("'aguardando_avaliacao'",date('Y-m-d H:i:s'),1).")";
 				}
-				if ($requestRoleAbbrev == 'Autor') {
+				if ($role == 'Secretaria' or $role == 'Gerente') {
+					$stages['Pré-avaliação']["'pre_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'pre_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";
+					$stages['Pré-avaliação']["'pre_pendencia_tecnica'"][1] = "Pendência técnica (" .$this->countStatus("'pre_pendencia_tecnica'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_autor_mais_60_dias'"][1] = "Há mais de 60 dias com o autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s', strtotime('-2 months')),1).")";
+					$stages['Avaliação']["'ava_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'ava_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";
+				}
+				if ($role == 'Autor') {
+					$stages['Pré-avaliação']["'em_progresso'"][1] = "Em progresso (".$this->countStatus("'em_progresso'",date('Y-m-d H:i:s'),1).")";
 					$status = "'pre_aguardando_secretaria','pre_aguardando_editor_chefe'";
-					$stages['Pré-avaliação'][$status] = "Submetidas (".$this->countStatus($status,date('Y-m-d H:i:s')) .")";
-					$stages['Pré-avaliação']["'pre_pendencia_tecnica'"] = "Pendência técnica (" .$this->countStatus("'pre_pendencia_tecnica'",date('Y-m-d H:i:s')).")";
+					$stages['Pré-avaliação'][$status][1] = "Submetidas (".$this->countStatus($status,date('Y-m-d H:i:s'),1).")";
+					$stages['Pré-avaliação']["'pre_pendencia_tecnica'"][1] = "Pendência técnica (" .$this->countStatus("'pre_pendencia_tecnica'",date('Y-m-d H:i:s'),1).")";
 					$status = "'ava_aguardando_editor_chefe','ava_consulta_editor_chefe','ava_com_editor_associado','ava_aguardando_secretaria'";
-					$stages['Avaliação'][$status] = "Em avaliação (" .$this->countStatus($status,date('Y-m-d H:i:s')).")";
-					$stages['Avaliação']["'ava_aguardando_autor'"] = "Modificações solicitadas (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s')).")";
+					$stages['Avaliação'][$status][1] = "Em avaliação (" .$this->countStatus($status,date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_autor'"][1] = "Modificações solicitadas (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s'),1).")";
 					$status = "'ed_text_envio_carta_aprovacao','ed_text_para_revisao_traducao','ed_text_em_revisao_traducao','ed_texto_traducao_metadados','edit_aguardando_padronizador','edit_pdf_padronizado','edit_em_prova_prelo','ed_text_em_avaliacao_ilustracao','edit_em_formatacao_figura','edit_em_diagramacao','edit_aguardando_publicacao'";
-					$stages['Pós-avaliação'][$status] = "Aprovadas (" .$this->countStatus($status,date('Y-m-d H:i:s')).")";
-					$stages['Pós-avaliação']["'rejeitada'"] = "Rejeitadas (" .$this->countStatus("'rejeitada'",date('Y-m-d H:i:s')).")";
+					$stages['Pós-avaliação'][$status][1] = "Aprovadas (" .$this->countStatus($status,date('Y-m-d H:i:s'),1).")";
 				}
-				if ($requestRoleAbbrev == 'Ed. assistente' or $requestRoleAbbrev == 'Gerente' or $requestRoleAbbrev == 'Revisor - Tradutor') {
-					$stages['Edição de texto']["'ed_text_envio_carta_aprovacao'"] = "Envio de Carta de aprovação (" .$this->countStatus("'ed_text_envio_carta_aprovacao'",date('Y-m-d H:i:s')).")";
-					$stages['Edição de texto']["'ed_text_para_revisao_traducao'"] = "Para revisão/Tradução (" .$this->countStatus("'ed_text_para_revisao_traducao'",date('Y-m-d H:i:s')).")";
-					$stages['Edição de texto']["'ed_text_em_revisao_traducao'"] = "Em revisão/Tradução (" .$this->countStatus("'ed_text_em_revisao_traducao'",date('Y-m-d H:i:s')).")";
-					$stages['Edição de texto']["'ed_texto_traducao_metadados'"] = "Tradução de metadados (" .$this->countStatus("'ed_texto_traducao_metadados'",date('Y-m-d H:i:s')).")";
+				if ($role == 'Ed. assistente' or $role == 'Gerente' or $role == 'Revisor - Tradutor') {
+					$stages['Edição de texto']["'ed_text_envio_carta_aprovacao'"][1] = "Envio de Carta de aprovação (" .$this->countStatus("'ed_text_envio_carta_aprovacao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Edição de texto']["'ed_text_para_revisao_traducao'"][1] = "Para revisão/Tradução (" .$this->countStatus("'ed_text_para_revisao_traducao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Edição de texto']["'ed_text_em_revisao_traducao'"][1] = "Em revisão/Tradução (" .$this->countStatus("'ed_text_em_revisao_traducao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Edição de texto']["'ed_texto_traducao_metadados'"][1] = "Tradução de metadados (" .$this->countStatus("'ed_texto_traducao_metadados'",date('Y-m-d H:i:s'),1).")";
 				}
-				if ($requestRoleAbbrev == 'Ed. assistente' or $requestRoleAbbrev == 'Gerente') {
-					$stages['Editoração']["'edit_aguardando_padronizador'"] = "Aguardando padronizador (" .$this->countStatus("'edit_aguardando_padronizador'",date('Y-m-d H:i:s')).")";
-					$stages['Editoração']["'edit_pdf_padronizado'"] = "PDF padronizado (" .$this->countStatus("'edit_pdf_padronizado'",date('Y-m-d H:i:s')).")";
-					$stages['Editoração']["'edit_em_prova_prelo'"] = "Em prova de prelo (" .$this->countStatus("'edit_em_prova_prelo'",date('Y-m-d H:i:s')).")";
+				if ($role == 'Ed. assistente' or $role == 'Gerente') {
+					$stages['Editoração']["'edit_aguardando_padronizador'"][1] = "Aguardando padronizador (" .$this->countStatus("'edit_aguardando_padronizador'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_pdf_padronizado'"][1] = "PDF padronizado (" .$this->countStatus("'edit_pdf_padronizado'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_em_prova_prelo'"][1] = "Em prova de prelo (" .$this->countStatus("'edit_em_prova_prelo'",date('Y-m-d H:i:s'),1).")";
 				}
-				if ($requestRoleAbbrev == 'Ed. Layout' or $requestRoleAbbrev == 'Gerente') {
-					$stages['Edição de texto']["'ed_text_em_avaliacao_ilustracao'"] = "Em avaliação de ilustração (" .$this->countStatus("'ed_text_em_avaliacao_ilustracao'",date('Y-m-d H:i:s')).")";
-					$stages['Editoração']["'edit_em_formatacao_figura'"] = "Em formatação de Figura (" .$this->countStatus("'edit_em_formatacao_figura'",date('Y-m-d H:i:s')).")";
-					$stages['Editoração']["'edit_em_diagramacao'"] = "Em diagramação (" .$this->countStatus("'edit_em_diagramacao'",date('Y-m-d H:i:s')).")";
-					$stages['Editoração']["'edit_aguardando_publicacao'"] = "Aguardando publicação (" .$this->countStatus("'edit_aguardando_publicacao'",date('Y-m-d H:i:s')).")";
+				if ($role == 'Ed. Layout' or $role == 'Gerente') {
+					$stages['Edição de texto']["'ed_text_em_avaliacao_ilustracao'"][1] = "Em avaliação de ilustração (" .$this->countStatus("'ed_text_em_avaliacao_ilustracao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_em_formatacao_figura'"][1] = "Em formatação de Figura (" .$this->countStatus("'edit_em_formatacao_figura'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_em_diagramacao'"][1] = "Em diagramação (" .$this->countStatus("'edit_em_diagramacao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_aguardando_publicacao'"][1] = "Aguardando publicação (" .$this->countStatus("'edit_aguardando_publicacao'",date('Y-m-d H:i:s'),1).")";
+				}
+				if ($role == 'Ed. Layout' or $role == 'Gerente') {
+					$stages['Edição de texto']["'ed_text_em_avaliacao_ilustracao'"][1] = "Em avaliação de ilustração (" .$this->countStatus("'ed_text_em_avaliacao_ilustracao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_em_formatacao_figura'"][1] = "Em formatação de Figura (" .$this->countStatus("'edit_em_formatacao_figura'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_em_diagramacao'"][1] = "Em diagramação (" .$this->countStatus("'edit_em_diagramacao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Editoração']["'edit_aguardando_publicacao'"][1] = "Aguardando publicação (" .$this->countStatus("'edit_aguardando_publicacao'",date('Y-m-d H:i:s'),1).")";
+				}
+				if($role){
+					$stages['Finalizadas']["'publicada'"][3] = "Publicadas (" .$this->countStatus("'publicada'",date('Y-m-d H:i:s'),3).")";
+					$stages['Finalizadas']["'rejeitada'"][4] = "Rejeitadas (" .$this->countStatus("'rejeitada'",date('Y-m-d H:i:s'),4).")";
 				}
 				$array_sort = array('pre_aguardando_secretaria',
 									'pre_pendencia_tecnica',
@@ -592,7 +625,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 									'edit_em_prova_prelo',
 									'edit_pdf_padronizado',
 									'edit_em_diagramacao',
-									'edit_aguardando_publicacao'
+									'edit_aguardando_publicacao',
+									'publicada',
+									'rejeitada'
 								);
 				$templateManager->assign('basejs', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/js/build.js');
 				$templateManager->assign('basecss', $request->getBaseUrl() . DIRECTORY_SEPARATOR . $this->getPluginPath() . '/styles/build.css');
@@ -622,7 +657,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'userGroupsAbbrev' => array_unique($userGroupsAbbrev),
 				'stages' => $stages,
 				'substage' => $request->getUserVar('substage'),
-				'requestRoleAbbrev' => $request->getUserVar('requestRoleAbbrev'),
+				'requestRoleAbbrev' => $role,
 				'array_sort' => array_flip($array_sort)
 			));
 			$args[2] = $templateManager->fetch($this->getTemplateResource('index.tpl'));
@@ -643,21 +678,38 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$qb = $args[0];
 		$request = \Application::get()->getRequest();
 		$substage = $request->_requestVars["substage"];
+		$status = $request->_requestVars["status"];
+
+		$sessionManager = SessionManager::getManager();
+		$session = $sessionManager->getUserSession();
+		$role = $session->getSessionVar('role');
+
 		if ($substage) {
 			$substages = explode(',',str_replace("'", "", $substage));
 			$queryStatusCsp = Capsule::table('status_csp');
 			$queryStatusCsp->select(Capsule::raw('DISTINCT status_csp.submission_id'));
 			$queryStatusCsp->whereIn('status_csp.status', $substages);
+
 			if($substage == 'ava_aguardando_autor_mais_60_dias'){
 				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
+			}elseif($substage == "'em_progresso'"){
+				$qb->where('s.date_submitted','=' ,null);
+			}elseif($substage <> "'aguardando_avaliacao'"){
+				$qb->whereIn('s.submission_id',$queryStatusCsp);
 			}
-			$qb->whereIn('s.submission_id',$queryStatusCsp);
+
+			$qb->wheres[1]["values"][0] = $status;
+			$qb->bindings["where"][1] = $status;
+
+			if($role == "Gerente"){
+				unset($qb->joins[0]->wheres[1]);
+			}
+			if($role == "Autor"){
+				$qb->where('sa.user_group_id','=' ,14);
+			}
 		}
 		$qb->orders[0]["column"] = 's.date_last_activity';
 		$qb->orders[0]["direction"] = 'asc';
-		unset($qb->wheres[1]);
-		$qb->wheres = array_values($qb->wheres);
-		unset($qb->bindings["where"][1]);
 	}
 
 	/**

@@ -45,19 +45,21 @@
 					</div>
 			</fieldset>
 			</div>
-				{foreach from=$stages key=stage item=array_status}
+				{foreach from=$stages key=stage item=array_substages}
 					<fieldset class="pkpFormField pkpFormField--options">
 						<legend class="pkpFormField--options__legend">
 							{$stage}
 						</legend>
-						{$array_intersect = array_intersect_key($array_sort, $array_status)}
-						{$array_merge = array_merge($array_intersect, $array_status)}
-						{foreach from=$array_merge key=key item=list_status}
-						<div class="pkpFormField__control">
-							<label class="pkpFormField--options__option">
-									<a href="?substage={$key}">{$list_status}</a>
-							</label>
-						</div>
+						{$array_intersect = array_intersect_key($array_sort, $array_substages)}
+						{$array_merge = array_merge($array_intersect, $array_substages)}
+						{foreach from=$array_merge key=substage_key item=substages_status}
+							{foreach from=$substages_status key=status item=substage}
+								<div class="pkpFormField__control">
+									<label class="pkpFormField--options__option">
+											<a href="?substage={$substage_key}&status={$status}">{$substage}</a>
+									</label>
+								</div>
+							{/foreach}
 						{/foreach}
 					</fieldset>
 				{/foreach}
