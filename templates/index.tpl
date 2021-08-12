@@ -14,21 +14,11 @@
 {assign var="uuid" value=""|uniqid|escape}
 
 <div id="dashboard-{$uuid}">
-	{if $substage or !$hasAccess or $requestRoleAbbrev == "AU"}
+	{if $substage}
 		<tabs>
 			<tab id="myQueue" label="{translate key="dashboard.myQueue"}" :badge="components.{$smarty.const.SUBMISSIONS_LIST_MY_QUEUE}.itemsMax">
 				{help file="submissions" class="pkp_help_tab"}
 				<submissions-list-panel v-bind="components.{$smarty.const.SUBMISSIONS_LIST_MY_QUEUE}"@set="set"/>
-			</tab>
-			{if array_intersect(array(ROLE_ID_SITE_ADMIN, ROLE_ID_MANAGER), (array)$userRoles)}
-				<tab id="active" label="{translate key="common.queue.long.active"}" :badge="components.{$smarty.const.SUBMISSIONS_LIST_ACTIVE}.itemsMax">
-					{help file="submissions" section="active" class="pkp_help_tab"}
-					<submissions-list-panel v-bind="components.{$smarty.const.SUBMISSIONS_LIST_ACTIVE}" @set="set"/>
-				</tab>
-			{/if}
-			<tab id="archive" label="{translate key="navigation.archives"}" :badge="components.{$smarty.const.SUBMISSIONS_LIST_ARCHIVE}.itemsMax">
-				{help file="submissions" section="archives" class="pkp_help_tab"}
-				<submissions-list-panel v-bind="components.{$smarty.const.SUBMISSIONS_LIST_ARCHIVE}" @set="set"/>
 			</tab>
 		</tabs>
 	{else}
@@ -42,6 +32,7 @@
 							<div class="pkpFormField__control">
 								<select name="requestRoleAbbrev" class="pkpFormField__input pkpFormField--select__input"
 								onchange="document.location.href='?requestRoleAbbrev='+this.value">
+									<option value="" selected="selected">Escolha um papel</option>
 									{foreach from=$userGroupsAbbrev key=key item=name }
 										<option value="{$name}" {if $requestRoleAbbrev == $name} selected="selected"{/if}>{$name}</option>
 									{/foreach}
@@ -54,19 +45,21 @@
 					</div>
 			</fieldset>
 			</div>
-				{foreach from=$stages key=stage item=array_status}
+				{foreach from=$stages key=stage item=array_substages}
 					<fieldset class="pkpFormField pkpFormField--options">
 						<legend class="pkpFormField--options__legend">
 							{$stage}
 						</legend>
-						{$array_intersect = array_intersect_key($array_sort, $array_status)}
-						{$array_merge = array_merge($array_intersect, $array_status)}
-						{foreach from=$array_merge key=key item=list_status}
-						<div class="pkpFormField__control">
-							<label class="pkpFormField--options__option">
-									<a href="?substage={$key}">{$list_status}</a>
-							</label>
-						</div>
+						{$array_intersect = array_intersect_key($array_sort, $array_substages)}
+						{$array_merge = array_merge($array_intersect, $array_substages)}
+						{foreach from=$array_merge key=substage_key item=substages_status}
+							{foreach from=$substages_status key=status item=substage}
+								<div class="pkpFormField__control">
+									<label class="pkpFormField--options__option">
+											<a href="?substage={$substage_key}&status={$status}">{$substage}</a>
+									</label>
+								</div>
+							{/foreach}
 						{/foreach}
 					</fieldset>
 				{/foreach}
