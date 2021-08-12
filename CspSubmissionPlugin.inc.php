@@ -350,23 +350,23 @@ class CspSubmissionPlugin extends GenericPlugin {
 		and (sa.stage_assignment_id is not null or ra.review_id is not null)
 		and s.status = $status";
 
-		if($subStage == "'aguardando_avaliacao'"){
-			$sql .= " and ra.reviewer_id = $currentUserId";
-		}elseif($subStage == "'em_progresso'"){
-			$sql .= " and s.date_submitted IS NULL";
-		}else{
-			$sql .= "
-			and s.submission_id in (select DISTINCT status_csp.submission_id
-									from status_csp
-									where status_csp.status in (".trim($subStage).")
-									and date_status <= '$date')";
-		}
-		if($role <> "Gerente"){
+		if($role == 'Avaliador'){
+			$sql .= " and ra.reviewer_id = $currentUserId and ra.declined = 0 and ra.date_completed IS NULL";
+		}elseif($role <> "Gerente"){
 			$sql .= " and sa.user_id = $currentUserId";
 			if($role == "Autor"){
 				$sql .= " and sa.user_group_id = 14";
 			}
 		}
+		if($subStage == "'em_progresso'"){
+			$sql .= " and s.date_submitted IS NULL";
+		}else{
+			$sql .= " and s.submission_id in (select DISTINCT status_csp.submission_id
+												from status_csp
+												where status_csp.status in (".trim($subStage).")
+												and date_status <= '$date')";
+		}
+
 		$result = $userDao->retrieve($sql);
 		$count = $result->GetRowAssoc(false);
 		return $count["contador"];
@@ -585,7 +585,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$stages['Avaliação']["'ava_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'ava_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";
 				}
 				if ($role == 'Avaliador') {
-					$stages['Avaliação']["'aguardando_avaliacao'"][1] = "Aguardando avaliacao (" .$this->countStatus("'aguardando_avaliacao'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_com_editor_associado'"][1] = "Aguardando avaliacao (" .$this->countStatus("'ava_com_editor_associado'",date('Y-m-d H:i:s'),1).")";
 				}
 				if ($role == 'Secretaria' or $role == 'Gerente') {
 					$stages['Pré-avaliação']["'pre_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'pre_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";
@@ -719,8 +719,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
 			}elseif($substage == "'em_progresso'"){
 				$qb->where('s.date_submitted','=' ,null);
-			}elseif($substage <> "'aguardando_avaliacao'"){
-				$qb->whereIn('s.submission_id',$queryStatusCsp);
 			}
 
 			$qb->wheres[1]["values"][0] = $status;
@@ -731,6 +729,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 			if($role == "Autor"){
 				$qb->where('sa.user_group_id','=' ,14);
+			}
+			if($role == "Avaliador"){
+				$qb->where('ra.date_completed','=' ,null);
 			}
 		}
 		$qb->orders[0]["column"] = 's.date_last_activity';
