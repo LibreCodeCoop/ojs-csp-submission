@@ -162,6 +162,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 					)
 				);
 			}
+			$userGroupsAbbrev[] = in_array('Autor',$userGroupsAbbrev) ? false : 'Autor';
 			$templateManager->assign(array(
 				'userGroupsAbbrev' => array_unique($userGroupsAbbrev),
 				'stages' => $stages,
