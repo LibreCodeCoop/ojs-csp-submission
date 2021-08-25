@@ -5,7 +5,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 
 	public function display($args) {
 		$request =& Registry::get('request');
-		$templateManager =& $args[1][0];
+		$templateManager =& $args[0];
 
 		$templateManager->addJavaScript(
 			'coautor',
@@ -24,7 +24,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 			)
 		);
 
-		if ($args[1][1] == "workflow/workflow.tpl" or $args[1][1] == "authorDashboard/authorDashboard.tpl") {
+		if ($args[1] == "workflow/workflow.tpl" or $args[1] == "authorDashboard/authorDashboard.tpl") {
 			$path = $request->getRequestPath();
 			$pathItens = explode('/', $path);
 			$submissionId = $pathItens[6];
@@ -37,7 +37,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 			$sectionLocalizedTitle = $section->getLocalizedTitle();
 			$templateManager->assign('sectionLocalizedTitle', $sectionLocalizedTitle);
 		}
-		if ($args[1][1] == "dashboard/index.tpl") {
+		if ($args[1] == "dashboard/index.tpl") {
 			if(!$request->getUserVar('substage')){
 				$currentUser = $request->getUser();
 				$context = $request->getContext();
@@ -162,7 +162,10 @@ class TemplateManagerCsp extends AbstractPlugin {
 					)
 				);
 			}
-			$userGroupsAbbrev[] = in_array('Autor',$userGroupsAbbrev) ? false : 'Autor';
+
+			if(in_array('Autor',$userGroupsAbbrev) == true){
+				$userGroupsAbbrev[] = 'Autor';
+			}
 			$templateManager->assign(array(
 				'userGroupsAbbrev' => array_unique($userGroupsAbbrev),
 				'stages' => $stages,

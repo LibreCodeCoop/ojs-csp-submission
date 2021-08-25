@@ -108,7 +108,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		import('plugins.generic.cspSubmission.class.' . $matches['class']);
 		$class = new $matches['class']($this);
-		call_user_func(array($class, $matches["method"]),$arguments);
+		call_user_func(array($class, $matches["method"]),$arguments[1]);
 	}
 
 	public function newreviewroundform_validate($hookName, $args) {
