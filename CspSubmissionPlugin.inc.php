@@ -19,8 +19,6 @@ use Symfony\Component\HttpClient\HttpClient;
 import('lib.pkp.classes.plugins.GenericPlugin');
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
-import('plugins.generic.cspSubmission.CspDeclinedSubmissions');
-
 class CspSubmissionPlugin extends GenericPlugin {
 	/**
 	 * @copydoc Plugin::register()
@@ -824,6 +822,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($stageId == 3){
 
 			if($args[0]->emailKey == "EDITOR_DECISION_DECLINE"){
+				import('plugins.generic.cspSubmission.class.CspDeclinedSubmissions');
+
 				(new CspDeclinedSubmissions())->saveDeclinedSubmission($submissionId, $args[0]);
 
 				return true;
