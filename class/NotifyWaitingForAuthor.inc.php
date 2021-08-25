@@ -2,7 +2,7 @@
 
 import('lib.pkp.classes.scheduledTask.ScheduledTask');
 import('lib.pkp.classes.mail.MailTemplate');
-import('plugins.generic.cspSubmission.NotifyScheduleTaskConstants');
+import('plugins.generic.cspSubmission.class.NotifyScheduleTaskConstants');
 
 class NotifyWaitingForAuthor extends ScheduledTask
 {
@@ -24,7 +24,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
      */
     public function getName()
     {
-        return __('plugins.generic.cspSubmission.NotifyWaitingForAuthor');
+        return __('plugins.generic.cspSubmission.class.NotifyWaitingForAuthor');
     }
 
     /**

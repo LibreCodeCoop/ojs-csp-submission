@@ -19,7 +19,7 @@ class SendDeclinedSubmissionEmail extends ScheduledTask
      */
     public function getName()
     {
-        return __('plugins.generic.cspSubmission.SendDeclinedSubmissionEmail');
+        return __('plugins.generic.cspSubmission.class.SendDeclinedSubmissionEmail');
     }
 
     /**

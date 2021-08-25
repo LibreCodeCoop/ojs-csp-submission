@@ -37,7 +37,7 @@ class ReviewQuewe extends ScheduledTask
      */
     public function getName()
     {
-        return __('plugins.generic.cspSubmission.ReviewQuewe');
+        return __('plugins.generic.cspSubmission.class.ReviewQuewe');
     }
 
     /**
