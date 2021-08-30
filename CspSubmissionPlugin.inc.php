@@ -96,6 +96,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
 
 			HookRegistry::register('newreviewroundform::validate', array($this, 'newreviewroundform_validate'));
+
+			HookRegistry::register('registrationform::display', array($this, 'RegistrationFormCsp_display'));
+			HookRegistry::register('registrationform::readuservars', array($this, 'RegistrationFormCsp_readuservars'));
+			HookRegistry::register('registrationform::execute', array($this, 'RegistrationFormCsp_execute'));
+			HookRegistry::register('registrationform::Constructor', array($this, 'RegistrationFormCsp_constructor'));
+
+			HookRegistry::register('userdao::getAdditionalFieldNames', array($this, 'UserdaoCsp_getAdditionalFieldNames'));
 		}
 		return $success;
 	}
