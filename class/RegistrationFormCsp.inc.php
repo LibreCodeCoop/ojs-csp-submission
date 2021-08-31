@@ -4,11 +4,6 @@ import('plugins.generic.cspSubmission.class.AbstractPlugin');
 class RegistrationFormCsp extends AbstractPlugin
 {
 
-	public function display($args)
-	{
-		$args[0]->_template = "../plugins/generic/cspSubmission/templates/userRegister.tpl";
-	}
-
 	public function constructor($args)
 	{
 		$form =& $args[0];
