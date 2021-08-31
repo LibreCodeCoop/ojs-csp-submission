@@ -162,8 +162,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 					)
 				);
 			}
-
-			if(in_array('Autor',$userGroupsAbbrev) == true){
+			if(in_array('Autor',$userGroupsAbbrev) == False){
 				$userGroupsAbbrev[] = 'Autor';
 			}
 			$templateManager->assign(array(
@@ -173,6 +172,8 @@ class TemplateManagerCsp extends AbstractPlugin {
 				'requestRoleAbbrev' => $role,
 				'array_sort' => array_flip($array_sort)
 			));
+
+			$args[1] = '../plugins/generic/cspSubmission/templates/dashboard.tpl';
 		}
 		return false;
 	}
