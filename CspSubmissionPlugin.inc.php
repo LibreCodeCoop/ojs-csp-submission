@@ -14,7 +14,6 @@
 
 use APP\Services\QueryBuilders\SubmissionQueryBuilder;
 use Illuminate\Database\Capsule\Manager as Capsule;
-use Symfony\Component\HttpClient\HttpClient;
 
 import('lib.pkp.classes.plugins.GenericPlugin');
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
@@ -44,21 +43,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
 
-			// Hook for initData in two forms -- init the new field
-			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'metadataInitData'));
-
-			// Hook for readUserVars in two forms -- consider the new field entry
-			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'metadataReadUserVars'));			
 			HookRegistry::register('authorform::readuservars', array($this, 'authorformReadUserVars'));
-			
 
-			// Hook for execute in forms -- consider the new field
-			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'metadataExecuteStep3'));
 			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
 			HookRegistry::register('authorform::execute', array($this, 'authorformExecute'));
-				
-			// Hook for save in two forms -- add validation for the new field
-			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'addCheck'));
+
+			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'SubmissionSubmitStep3FormCsp_constructor'));
+			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'SubmissionSubmitStep3FormCsp_initData'));
+			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'SubmissionSubmitStep3FormCsp_readUserVars'));
+			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'SubmissionSubmitStep3FormCsp_execute'));
 
 			// Consider the new field for ArticleDAO for storage
 			HookRegistry::register('articledao::getAdditionalFieldNames', array($this, 'metadataReadUserVars'));
@@ -2178,22 +2171,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	function metadataReadUserVars($hookName, $params) {
-		$userVars =& $params[1];
-		$userVars[] = 'conflitoInteresse';
-		$userVars[] = 'agradecimentos';
-		$userVars[] = 'codigoTematico';
-		$userVars[] = 'tema';
-		$userVars[] = 'codigoArtigoRelacionado';
-		$userVars[] = 'codigoArtigo';
-		$userVars[] = 'consideracoesEticas';
-		$userVars[] = 'ensaiosClinicos';
-		$userVars[] = 'numRegistro';
-		$userVars[] = 'orgao';
-
-		return false;
-	}
-
 	function authorformReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'authorContribution';
@@ -2220,22 +2197,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$submissionFile = $form->_submissionFile;
 		$submissionFile->setData('comentario', $form->getData('comentario'));
-
-		return false;
-	}
-
-	function metadataExecuteStep3($hookName, $params) {
-		$form =& $params[0];
-		$article = $form->submission;
-		$article->setData('conflitoInteresse', $form->getData('conflitoInteresse'));
-		$article->setData('agradecimentos', $form->getData('agradecimentos'));
-		$article->setData('codigoTematico', $form->getData('codigoTematico'));
-		$article->setData('tema', $form->getData('tema'));
-		$article->setData('codigoArtigoRelacionado', $form->getData('codigoArtigoRelacionado'));
-		$article->setData('consideracoesEticas', $form->getData('consideracoesEticas'));
-		$article->setData('ensaiosClinicos', $form->getData('ensaiosClinicos'));
-		$article->setData('numRegistro', $form->getData('numRegistro'));
-		$article->setData('orgao', $form->getData('orgao'));
 
 		return false;
 	}
@@ -2273,26 +2234,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	/**
-	 * Init article Campo1
-	 */
-	function metadataInitData($hookName, $params) {
-		$form =& $params[0];
-		$article = $form->submission;
-		$this->sectionId = $article->getData('sectionId');
-		$form->setData('agradecimentos', $article->getData('agradecimentos'));
-		$form->setData('codigoTematico', $article->getData('codigoTematico'));
-		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
-		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
-		$form->setData('tema', $article->getData('tema'));
-		$form->setData('codigoArtigo', $article->getData('codigoArtigo'));
-		$form->setData('consideracoesEticas', $article->getData('consideracoesEticas'));
-		$form->setData('ensaiosClinicos', $article->getData('ensaiosClinicos'));
-		$form->setData('numRegistro', $article->getData('numRegistro'));
-		$form->setData('orgao', $article->getData('orgao'));
-
-		return false;
-	}
 
 	function publicationEdit($hookName, $params) {
 		$router = $params[3]->getRouter();
@@ -2327,38 +2268,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		return false;
 	}
-	/**
-	 * Add check/validation for the Campo1 field (= 6 numbers)
-	 */
-	function addCheck($hookName, $params) {
 
-		$form =& $params[0];
-
-		if($this->sectionId == 4){
-			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
-			$form->addCheck(new FormValidatorLength($form, 'tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
-			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
-		}
-
-		$form->addCheck(new FormValidatorCustom($form, 'source', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function($doi) {
-			if (!filter_var($doi, FILTER_VALIDATE_URL)) {
-				if (strpos(reset($doi), 'doi.org') === false){
-					$doi = 'http://dx.doi.org/'.reset($doi);
-				} elseif (strpos(reset($doi),'http') === false) {
-					$doi = 'http://'.reset($doi);
-				} else {
-					return false;
-				}
-			}
-
-			$client = HttpClient::create();
-			$response = $client->request('GET', $doi);
-			$statusCode = $response->getStatusCode();
-			return in_array($statusCode,[303,200]);
-		}));
-
-		return false;
-	}
 
 	public function submissionfilesuploadformValidate($hookName, $args) {
 		// Retorna o tipo do arquivo enviado
