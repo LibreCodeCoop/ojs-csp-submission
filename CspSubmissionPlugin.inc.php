@@ -53,12 +53,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'SubmissionSubmitStep3FormCsp_readUserVars'));
 			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'SubmissionSubmitStep3FormCsp_execute'));
 
+			HookRegistry::register('submissionsubmitstep2form::Constructor', array($this, 'SubmissionSubmitStep2FormCsp_constructor'));
+
 			// Consider the new field for ArticleDAO for storage
 			HookRegistry::register('articledao::getAdditionalFieldNames', array($this, 'metadataReadUserVars'));
 
 			HookRegistry::register('submissionfilesuploadform::validate', array($this, 'submissionfilesuploadformValidate'));
 
-			HookRegistry::register('SubmissionHandler::saveSubmit', array($this, 'SubmissionHandler_saveSubmit'));
 			HookRegistry::register('User::getMany::queryObject', array($this, 'pkp_services_pkpuserservice_getmany'));
 			HookRegistry::register('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
 			HookRegistry::register('User::getProperties::values', array($this, 'user_getProperties_values'));
@@ -2464,43 +2465,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		return false;
 	}
-
-	public function SubmissionHandler_saveSubmit($hookName, $args)
-	{
-		$this->article = $args[1];
-
-		if($args[0] == 2){
-			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-			$submissionFiles = $submissionFileDao->getBySubmissionId($args[1]->_data["id"]);
-
-			if(!empty($submissionFiles)){
-				foreach ($submissionFiles as $submissionFile) {
-					$name = $submissionFile->getLocalizedName();
-					if(str_contains($name, 'Corpo_do_Texto')){
-						return;
-					}else{
-						$args[2]->addError('genreId',
-						__('plugins.generic.CspSubmission.submission.Step2.MissingFile')
-						);
-						return true;
-					}
-				}
-			}else{
-				$args[2]->addError('genreId',
-				__('plugins.generic.CspSubmission.submission.Step2.MissingFile')
-				);
-				return false;
-			}
-		}
-		if($args[0] == 3 && !in_array($args[1]->_data["publications"][0]->_data["sectionId"], [2, 3, 10, 11, 12, 13, 14, 15])){
-			$keywords = $args[2]->_data["keywords"][$args[2]->requiredLocale."-keywords"];
-			if(count($keywords) < 3 or count($keywords) > 5){
-				$args[2]->addError('genreId', __('plugins.generic.CspSubmission.submission.keywords.Notification'));
-				return false;
-			}
-		}
-	}
-
 	function fileManager_downloadFile($hookName, $args)
 	{
 		$request = \Application::get()->getRequest();
