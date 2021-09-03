@@ -8,22 +8,32 @@ use Symfony\Component\HttpClient\HttpClient;
  *
  * @class SubmissionSubmitStep3FormCsp
  *
- * @brief Adds fields to de submission form
+ * @brief Class for modify behaviors in the third step of submission
  *
  */
-
 class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 {
-
+	/**
+	 * Checks validity of fields
+	 *
+	 * @param [type] $params
+	 * @return void
+	 */
 	function constructor($params)
 	{
 		$form = &$params[0];
+		$request = \Application::get()->getRequest();
+		$submissionDAO = Application::getSubmissionDAO();
+		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+		$publication = $submission->getCurrentPublication();
+		$sectionId = $publication->getData('sectionId');
 
-		if ($this->sectionId == 4) {
+		if ($sectionId == 4) {
 			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
 			$form->addCheck(new FormValidatorLength($form, 'tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
 			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
 		}
+
 		$form->addCheck(new FormValidatorCustom($form, 'source', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function ($doi) {
 			if (!filter_var($doi, FILTER_VALIDATE_URL)) {
 				if (strpos(reset($doi), 'doi.org') === false) {
@@ -34,13 +44,19 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 					return false;
 				}
 			}
-
 			$client = HttpClient::create();
 			$response = $client->request('GET', $doi);
 			$statusCode = $response->getStatusCode();
 			return in_array($statusCode, [303, 200]);
 		}));
 
+		if(!in_array($sectionId, [2, 3, 10, 11, 12, 13, 14, 15])){
+			$keywords = $request->_requestVars["keywords"][$form->defaultLocale."-keywords"];
+			if(count($keywords) < 3 or count($keywords) > 5){
+				$form->addError('genreId', __('plugins.generic.CspSubmission.submission.keywords.Notification'));
+				return false;
+			}
+		}
 		return false;
 	}
 
@@ -48,7 +64,6 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 	{
 		$form = &$params[0];
 		$article = $form->submission;
-		$this->sectionId = $article->getData('sectionId');
 		$form->setData('agradecimentos', $article->getData('agradecimentos'));
 		$form->setData('codigoTematico', $article->getData('codigoTematico'));
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
