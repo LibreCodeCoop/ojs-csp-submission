@@ -105,8 +105,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('identityform::display', array($this, 'IdentityFormCsp_display'));
 			HookRegistry::register('identityform::readuservars', array($this, 'IdentityFormCsp_readuservars'));
 			HookRegistry::register('identityform::execute', array($this, 'IdentityFormCsp_execute'));
+
+			HookRegistry::register('EditorAction::recordDecision', array($this, 'EditorActionCsp_recordDecision'));
 		}
 		return $success;
+	}
+
+	/**
+	 * @copydoc Plugin::getDisplayName()
+	 */
+	function getDisplayName() {
+		return __('plugins.generic.CspSubmission.displayName');
+	}
+
+	/**
+	 * @copydoc Plugin::getDescription()
+	 */
+	function getDescription() {
+		return __('plugins.generic.CspSubmission.description');
 	}
 
 	public function __call($name, $arguments) {
@@ -430,14 +446,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		);
 	}
 
-	/**
-	 * Hooked to the the `display` callback in TemplateManager
-	 * @param $hookName string
-	 * @param $args array
-	 * @return boolean
-	 */
-
-
 	public function submission_getMany_queryBuilder($hookName, $args) {
 		$request = \Application::get()->getRequest();
 		$args[1]["substage"] = $request->_requestVars["substage"];
@@ -694,16 +702,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 						array((string)'edit_aguardando_padronizador', (string)$now, (int)$submissionId)
 					);
 				}
-			}
-			if($request->getUserVar('decision') == 9){
-				$submissionId = $request->getUserVar('submissionId');
-				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					<<<QUERY
-					UPDATE status_csp SET status = 'rejeitada', date_status = '$now' WHERE submission_id = $submissionId
-					QUERY
-				);
 			}
 			if($request->getUserVar('recommendation')){ // Quando editor associado faz recomendação, o status é alterado
 				$submissionId = $request->getUserVar('submissionId');
@@ -1838,19 +1836,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return;
 		}
 		$args[0] = $form;
-	}
-	/**
-	 * @copydoc Plugin::getDisplayName()
-	 */
-	function getDisplayName() {
-		return __('plugins.generic.CspSubmission.displayName');
-	}
-
-	/**
-	 * @copydoc Plugin::getDescription()
-	 */
-	function getDescription() {
-		return __('plugins.generic.CspSubmission.description');
 	}
 
 	/**
