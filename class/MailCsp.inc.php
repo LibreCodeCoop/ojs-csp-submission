@@ -7,7 +7,6 @@ class MailCsp extends AbstractPlugin
 	{
 		$request = \Application::get()->getRequest();
 		$stageId = $request->getUserVar('stageId');
-		$decision = $request->getUserVar('decision');
 		$submissionId = $request->getUserVar('submissionId');
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
@@ -24,12 +23,13 @@ class MailCsp extends AbstractPlugin
 				$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
 			}
 		}
+		/** Quando submissão é rejeitada, não envia email para autor imediatamente */
+		if ($args[0]->emailKey == "EDITOR_DECISION_DECLINE" or $args[0]->emailKey == "EDITOR_DECISION_INITIAL_DECLINE") {
+			import('plugins.generic.cspSubmission.class.CspDeclinedSubmissions');
+			(new CspDeclinedSubmissions())->saveDeclinedSubmission($submissionId, $args[0]);
+			return true;
+		}
 		if ($stageId == 3) {
-			if ($args[0]->emailKey == "EDITOR_DECISION_DECLINE") {
-				import('plugins.generic.cspSubmission.class.CspDeclinedSubmissions');
-				(new CspDeclinedSubmissions())->saveDeclinedSubmission($submissionId, $args[0]);
-				return true;
-			}
 			/** Quando autor submete nova versão, secretaria é notificada e status é alterado*/
 			if ($args[0]->emailKey == "REVISED_VERSION_NOTIFY") { 
 				unset($args[0]->_data["recipients"]);
@@ -61,13 +61,6 @@ class MailCsp extends AbstractPlugin
 					);
 					$args[0]->_data["recipients"][0]["email"] = "noreply@fiocruz.br";
 				}
-			}
-			if ($decision == 2) {
-				$now = date('Y-m-d H:i:s');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_aguardando_autor', (string)$now, (int)$submissionId)
-				);
 			}
 		}
 		if ($request->getRequestedPage() == "reviewer") {
