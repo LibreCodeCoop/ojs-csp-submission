@@ -151,10 +151,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$now = date('Y-m-d H:i:s');
 		$userDao->retrieve(
 			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-			array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+			array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 		);
 	}
 	public function formConfigAfter($hookName, $args) {
@@ -544,11 +543,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 				switch ($userGroupId) {
 					case '12': // Diagramador
 						$userDao = DAORegistry::getDAO('UserDAO');
-						$now = date('Y-m-d H:i:s');
 						$submissionId = $request->getUserVar('submissionId');
 						$userDao->retrieve(
 							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-							array((string)'edit_em_diagramacao', (string)$now, (int)$submissionId)
+							array((string)'edit_em_diagramacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 						);
 					break;
 				return true;
@@ -586,20 +584,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = \Application::get()->getRequest();
 		if($request->getUserVar("userGroupId") == 5){
 			$userDao = DAORegistry::getDAO('UserDAO');
-			$now = date('Y-m-d H:i:s');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'ava_com_editor_associado', (string)$now, (int)$submissionId)
+				array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
 		}
 		if($request->getUserVar("userGroupId") == 7){ // Quando designa revisor/tradutor status é alterado para "Em revisão tradução"
 			$userDao = DAORegistry::getDAO('UserDAO');
-			$now = date('Y-m-d H:i:s');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
 				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'ed_text_em_revisao_traducao', (string)$now, (int)$submissionId)
+				array((string)'ed_text_em_revisao_traducao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
 		}
 	}
@@ -1720,12 +1716,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			QUERY
 		);
 		$article->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
-
-		$now = date('Y-m-d H:i:s');
 		$submissionId = $article->getData('id');
 		$userDao->retrieve(
 			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
-			array((int)$submissionId, (string)'pre_aguardando_secretaria',$now)
+			array((int)$submissionId, (string)'pre_aguardando_secretaria',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'))
 		);
 
 
@@ -1976,10 +1970,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 							}
 						}
-						$now = date('Y-m-d H:i:s');
 						$userDao->retrieve(
 							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-							array((string)'pre_aguardando_editor_chefe',(string)$now,(int)$submissionId)
+							array((string)'pre_aguardando_editor_chefe',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'),(int)$submissionId)
 						);
 					}
 				}
@@ -2010,10 +2003,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_texto_traducao_metadados', (string)$now, (int)$submissionId)
+					array((string)'ed_texto_traducao_metadados', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto, editores assistentes são notificados
@@ -2034,10 +2026,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_text_envio_carta_aprovacao', (string)$now, (int)$submissionId)
+					array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 			case '57': // PDF para publicação PT
@@ -2118,10 +2109,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_pdf_padronizado', (string)$now, (int)$submissionId)
+					array((string)'edit_pdf_padronizado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 			case '65': // Figura para formatar
@@ -2151,11 +2141,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$request = \Application::get()->getRequest();
-				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_em_formatacao_figura', (string)$now, (int)$submissionId)
+					array((string)'edit_em_formatacao_figura', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 			case '':
@@ -2228,10 +2216,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$request = \Application::get()->getRequest();
 				$submissionId = $request->getUserVar('submissionId');
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$now = date('Y-m-d H:i:s');
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_aguardando_publicacao', (string)$now, (int)$submissionId)
+					array((string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 		return true;
@@ -2275,22 +2262,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionDelete($hookName, $args){
 		$submissionId = $args[0]->getData('id');
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$now = date('Y-m-d H:i:s');
 		$userDao->retrieve(
-			<<<QUERY
-			UPDATE status_csp SET status = 'deletada', date_status = '$now' WHERE submission_id = $submissionId
-			QUERY
+			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			array((string)'deletada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 		);
 	}
 
 	public function publicationPublish($hookName, $args){
 		$submissionId = $args[0]->getData('id');
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$now = date('Y-m-d H:i:s');
 		$userDao->retrieve(
-			<<<QUERY
-			UPDATE status_csp SET status = 'publicada', date_status = '$now' WHERE submission_id = $submissionId
-			QUERY
+			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			array((string)'publicada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 		);
 	}
 }
