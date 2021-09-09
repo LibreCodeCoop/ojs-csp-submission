@@ -25,19 +25,19 @@
 					<table>
 						<thead>
 							<tr>
-								<th scope="col" style="text-align: center; width:5%">
+								<th scope="col" style="text-align: center; width:8%">
 									Id
 								</th>
 								<th scope="col" style="text-align: left; width:30%">
 									Título
 								</th>
-								<th scope="col" style="text-align: left; width:30%">
+								<th scope="col" style="text-align: left; width:20%">
 									Autor
 								</th>
 								<th scope="col" style="text-align: left; width:30%">
 									Status
 								</th>
-								<th scope="col" style="text-align: center; width:5%">
+								<th scope="col" style="text-align: center; width:10%">
 									Dias inativos
 								</th>
 								<th></th>
