@@ -6,7 +6,7 @@
 					<tr id="component-grid-issues-backissuegrid-row-3" class="gridRow has_extras orderable">
 						<td style="text-align: center; width:5%">
 							<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
-								{{ item.id }}
+								{{ item.codigoArtigo }}
 							</a>
 						</td>
 						<td style="width:30%">
