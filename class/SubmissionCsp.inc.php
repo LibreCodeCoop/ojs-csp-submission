@@ -1,4 +1,5 @@
 <?php
+
 use APP\Services\QueryBuilders\SubmissionQueryBuilder;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
@@ -14,11 +15,13 @@ import('plugins.generic.cspSubmission.class.AbstractPlugin');
  */
 class SubmissionCsp extends AbstractPlugin
 {
-	public function getBackendListProperties($args) {
+	public function getBackendListProperties($args)
+	{
 		$args[0][] = 'codigoArtigo';
 	}
 
-	public function add($args) {
+	public function add($args)
+	{
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$result = $userDao->retrieve(
 			<<<QUERY
@@ -27,13 +30,13 @@ class SubmissionCsp extends AbstractPlugin
 			WHERE YEAR(date_submitted) = YEAR(now())
 			QUERY
 		);
-
 		$args[0]->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
 		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
 		return false;
 	}
 
-	public function delete($args){
+	public function delete($args)
+	{
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$userDao->retrieve(
 			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
@@ -41,51 +44,58 @@ class SubmissionCsp extends AbstractPlugin
 		);
 	}
 
-	public function getManyQueryBuilder($args) {
+	public function getManyQueryBuilder($args)
+	{
 		$request = \Application::get()->getRequest();
-		$args[1]["substage"] = $request->_requestVars["substage"];
+		if($request->getUserVar('substage')){
+			$args[1]["substage"] = $request->getUserVar('substage');
+			$sessionManager = SessionManager::getManager();
+			$session = $sessionManager->getUserSession();
+			$session->setSessionVar('substage', $request->getUserVar('substage'));
+		}
 	}
 
-	public function getManyQueryObject($args) {
-		/**
-		 * @var SubmissionQueryBuilder
-		 */
+	public function getManyQueryObject($args)
+	{
+		/** @var SubmissionQueryBuilder */
 		$qb = $args[0];
 		$request = \Application::get()->getRequest();
-		$substage = $request->_requestVars["substage"];
-		$status = $request->_requestVars["status"];
+		$status = $request->getUserVar('status');
 
 		$sessionManager = SessionManager::getManager();
 		$session = $sessionManager->getUserSession();
 		$role = $session->getSessionVar('role');
+		$substage = $session->getSessionVar('substage');
 
 		if ($substage) {
-			$substages = explode(',',str_replace("'", "", $substage));
-			$queryStatusCsp = Capsule::table('status_csp');
-			$queryStatusCsp->select(Capsule::raw('DISTINCT status_csp.submission_id'));
-			$queryStatusCsp->whereIn('status_csp.status', $substages);
+			$substages = explode(',', str_replace("'", "", $substage));
+			$qb->leftJoin('status_csp as sc', 'sc.submission_id', '=', 's.submission_id');
+			$qb->whereIn('sc.status', $substages);
 
-			if($substage == 'ava_aguardando_autor_mais_60_dias'){
-				$queryStatusCsp->where('status_csp.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
-			}elseif($substage == "'em_progresso'"){
-				$qb->where('s.date_submitted','=' ,null);
+			if ($substage == 'ava_aguardando_autor_mais_60_dias') {
+				$qb->where('sc.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
+			} elseif ($substage == "'em_progresso'") {
+				$qb->where('s.date_submitted', '=', null);
 			}
-
-			$qb->wheres[1]["values"][0] = $status;
-			$qb->bindings["where"][1] = $status;
-
-			if($role == "Gerente"){
-				unset($qb->joins[0]->wheres[1]);
-			}
-			if($role == "Autor"){
-				$qb->where('sa.user_group_id','=' ,14);
-			}
-			if($role == "Avaliador"){
-				$qb->where('ra.date_completed','=' ,null);
-			}
+		}
+		$qb->wheres[1]["values"][0] = $status;
+		$qb->bindings["where"][1] = $status;
+		if ($role == "Gerente") {
+			unset($qb->joins[0]->wheres[1]);
+		}
+		if ($role == "Autor") {
+			$qb->where('sa.user_group_id', '=', 14);
+		}
+		if ($role == "Avaliador") {
+			$qb->where('ra.date_completed', '=', null);
+		}
+		if($request->_requestVars['searchPhrase']){
+			$qb->orwhere([
+				['ps.setting_name','=','codigoArtigo'],
+				['ps.setting_value','like','%'.$request->getUserVar('searchPhrase').'%'],
+				]);
 		}
 		$qb->orders[0]["column"] = 's.date_last_activity';
 		$qb->orders[0]["direction"] = 'asc';
-
 	}
 }
