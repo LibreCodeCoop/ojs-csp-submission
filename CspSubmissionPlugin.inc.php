@@ -38,6 +38,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Submission::getMany::queryObject', array($this,'SubmissionCsp_getManyQueryObject'));
 			HookRegistry::register('Submission::getMany::queryBuilder', array($this,'SubmissionCsp_getManyQueryBuilder'));
 			HookRegistry::register('Submission::delete', array($this, 'SubmissionCsp_delete'));
+			HookRegistry::register('Submission::add', array($this, 'SubmissionCsp_add'));
 
 			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
 
@@ -1441,21 +1442,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$form =& $params[0];
 		$article = $form->submission;
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$result = $userDao->retrieve(
-			<<<QUERY
-			SELECT CONCAT(LPAD(count(*)+1, CASE WHEN count(*) > 9999 THEN 5 ELSE 4 END, 0), '/', DATE_FORMAT(now(), '%y')) code
-			FROM submissions
-			WHERE YEAR(date_submitted) = YEAR(now())
-			QUERY
-		);
-		$article->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
 		$submissionId = $article->getData('id');
 		$userDao->retrieve(
 			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
 			array((int)$submissionId, (string)'pre_aguardando_secretaria',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'))
 		);
-
-
 		return false;
 	}
 

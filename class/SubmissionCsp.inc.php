@@ -18,6 +18,21 @@ class SubmissionCsp extends AbstractPlugin
 		$args[0][] = 'codigoArtigo';
 	}
 
+	public function add($args) {
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$result = $userDao->retrieve(
+			<<<QUERY
+			SELECT CONCAT(LPAD(count(*)+1, CASE WHEN count(*) > 9999 THEN 5 ELSE 4 END, 0), '/', DATE_FORMAT(now(), '%y')) code
+			FROM submissions
+			WHERE YEAR(date_submitted) = YEAR(now())
+			QUERY
+		);
+
+		$args[0]->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
+		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
+		return false;
+	}
+
 	public function delete($args){
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$userDao->retrieve(
@@ -71,5 +86,6 @@ class SubmissionCsp extends AbstractPlugin
 		}
 		$qb->orders[0]["column"] = 's.date_last_activity';
 		$qb->orders[0]["direction"] = 'asc';
+
 	}
 }
