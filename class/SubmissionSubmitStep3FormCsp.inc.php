@@ -28,9 +28,11 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 		$publication = $submission->getCurrentPublication();
 		$sectionId = $publication->getData('sectionId');
 
-		if ($sectionId == 4) {
+		if ($sectionId == 5) {
 			$form->addCheck(new FormValidatorLength($form, 'codigoTematico', 'required', 'plugins.generic.CspSubmission.codigoTematico.Valid', '>', 0));
 			$form->addCheck(new FormValidatorLength($form, 'tema', 'required', 'plugins.generic.CspSubmission.Tema.Valid', '>', 0));
+		}
+		if ($sectionId == 15) {
 			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
 		}
 
@@ -50,7 +52,7 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 			return in_array($statusCode, [303, 200]);
 		}));
 
-		if(!in_array($sectionId, [2, 3, 10, 11, 12, 13, 14, 15])){
+		if(!in_array($sectionId, [2, 3, 5, 10, 11, 12, 13, 14, 15])){
 			$keywords = $request->_requestVars["keywords"][$form->defaultLocale."-keywords"];
 			if(count($keywords) < 3 or count($keywords) > 5){
 				$form->addError('genreId', __('plugins.generic.CspSubmission.submission.keywords.Notification'));
@@ -69,7 +71,6 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 		$form->setData('codigoArtigoRelacionado', $article->getData('codigoArtigoRelacionado'));
 		$form->setData('conflitoInteresse', $article->getData('conflitoInteresse'));
 		$form->setData('tema', $article->getData('tema'));
-		$form->setData('codigoArtigo', $article->getData('codigoArtigo'));
 		$form->setData('consideracoesEticas', $article->getData('consideracoesEticas'));
 		$form->setData('ensaiosClinicos', $article->getData('ensaiosClinicos'));
 		$form->setData('numRegistro', $article->getData('numRegistro'));
@@ -86,7 +87,6 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 		$userVars[] = 'codigoTematico';
 		$userVars[] = 'tema';
 		$userVars[] = 'codigoArtigoRelacionado';
-		$userVars[] = 'codigoArtigo';
 		$userVars[] = 'consideracoesEticas';
 		$userVars[] = 'ensaiosClinicos';
 		$userVars[] = 'numRegistro';

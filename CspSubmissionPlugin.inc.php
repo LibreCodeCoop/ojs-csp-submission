@@ -778,13 +778,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->assign('abstractDisplay', true);
 			$templateMgr->assign('keywordsEnabled', true);
 			$templateMgr->assign('keywordsRequired', true);
-			if(in_array($sectionId, array(2, 3, 10, 11, 12, 13, 14, 15))){ // Editorial, Perspectivas, Entrevista, Carta, Resenhas, Obituário, Errata, Comentários
+			if(in_array($sectionId, array(2, 3, 5, 10, 11, 12, 13, 14, 15))){ // Editorial, Perspectivas, Entrevista, Carta, Resenhas, Obituário, Errata, Comentários, Espaço temático
 				$templateMgr->assign('keywordsEnabled', false);
 				$templateMgr->assign('keywordsRequired', false);
 				$templateMgr->assign('abstractDisplay', false);
-			}
-			if($sectionId == 5){ // Espaço Temático
-				$templateMgr->assign('keywordsRequired', false);
 			}
 			if($sectionId == 6){ // Revisão
 				$templateMgr->assign('notification', 'plugins.generic.CspSubmission.Revisao.Notificacao');
