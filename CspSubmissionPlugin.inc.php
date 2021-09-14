@@ -73,7 +73,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 
-			HookRegistry::register('Publication::edit', array($this, 'publicationEdit'));
+			HookRegistry::register('Publication::add', array($this, 'PublicationCsp_add'));
+			HookRegistry::register('Publication::edit', array($this, 'PublicationCsp_edit'));
+			HookRegistry::register('Publication::publish', array($this, 'PublicationCsp_publish'));
 
 			HookRegistry::register('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
 
@@ -82,8 +84,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
 			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'submissionFilesMetadataExecute'));
 
-			// Updates status table when the submission is published
-			HookRegistry::register('Publication::publish', array($this, 'publicationPublish'));
 			// Displays extra fields in the workflow metadata area
 			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
 
@@ -1459,41 +1459,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-
-	function publicationEdit($hookName, $params) {
-		$router = $params[3]->getRouter();
-		if($router->_page == 'submission'){
-			$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
-			$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
-			$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
-			$params[0]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
-			$params[1]->setData('codigoTematico', $params[3]->_requestVars["codigoTematico"]);
-			$params[2]["codigoTematico"] = $params[3]->_requestVars["codigoTematico"];
-			$params[0]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
-			$params[1]->setData('codigoArtigoRelacionado', $params[3]->_requestVars["codigoArtigoRelacionado"]);
-			$params[2]["codigoArtigoRelacionado"] = $params[3]->_requestVars["codigoArtigoRelacionado"];
-			$params[0]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
-			$params[1]->setData('conflitoInteresse', $params[3]->_requestVars["conflitoInteresse"]);
-			$params[2]["conflitoInteresse"] = $params[3]->_requestVars["conflitoInteresse"];
-			$params[0]->setData('tema', $params[3]->_requestVars["tema"]);
-			$params[1]->setData('tema', $params[3]->_requestVars["tema"]);
-			$params[2]["tema"] = $params[3]->_requestVars["tema"];
-			$params[0]->setData('consideracoesEticas', $params[3]->_requestVars["consideracoesEticas"]);
-			$params[1]->setData('consideracoesEticas', $params[3]->_requestVars["consideracoesEticas"]);
-			$params[2]["consideracoesEticas"] = $params[3]->_requestVars["consideracoesEticas"];
-			$params[0]->setData('ensaiosClinicos', $params[3]->_requestVars["ensaiosClinicos"]);
-			$params[1]->setData('ensaiosClinicos', $params[3]->_requestVars["ensaiosClinicos"]);
-			$params[2]["ensaiosClinicos"] = $params[3]->_requestVars["ensaiosClinicos"];
-			$params[0]->setData('numRegistro', $params[3]->_requestVars["numRegistro"]);
-			$params[1]->setData('numRegistro', $params[3]->_requestVars["numRegistro"]);
-			$params[2]["numRegistro"] = $params[3]->_requestVars["numRegistro"];
-			$params[0]->setData('orgao', $params[3]->_requestVars["orgao"]);
-			$params[1]->setData('orgao', $params[3]->_requestVars["orgao"]);
-			$params[2]["orgao"] = $params[3]->_requestVars["orgao"];
-		}
-		return false;
-	}
-
 	function fileManager_downloadFile($hookName, $args)
 	{
 		$request = \Application::get()->getRequest();
@@ -1508,14 +1473,5 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 		$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
 		$args[4] = $localizedName;
-	}
-
-	public function publicationPublish($hookName, $args){
-		$submissionId = $args[0]->getData('id');
-		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->retrieve(
-			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-			array((string)'publicada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
-		);
 	}
 }
