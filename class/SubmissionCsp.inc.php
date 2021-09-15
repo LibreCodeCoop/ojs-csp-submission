@@ -32,6 +32,11 @@ class SubmissionCsp extends AbstractPlugin
 		);
 		$args[0]->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
 		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
+
+		$userDao->retrieve(
+			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
+			array((int)$args[0]->getData('id'), (string)'em_progresso',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'))
+		);
 		return false;
 	}
 
@@ -73,8 +78,6 @@ class SubmissionCsp extends AbstractPlugin
 
 				if ($substage == 'ava_aguardando_autor_mais_60_dias') {
 					$qb->where('sc.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
-				} elseif ($substage == "'em_progresso'") {
-					$qb->where('s.date_submitted', '=', null);
 				}
 			}
 			$qb->wheres[1]["values"][0] = $status;

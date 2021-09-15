@@ -1436,13 +1436,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	function metadataExecuteStep4($hookName, $params) {
-		$form =& $params[0];
-		$article = $form->submission;
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$submissionId = $article->getData('id');
 		$userDao->retrieve(
-			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
-			array((int)$submissionId, (string)'pre_aguardando_secretaria',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'))
+			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			array((string)'pre_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$params[0]->submissionId)
 		);
 		return false;
 	}
