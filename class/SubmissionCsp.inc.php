@@ -57,45 +57,45 @@ class SubmissionCsp extends AbstractPlugin
 
 	public function getManyQueryObject($args)
 	{
-		/** @var SubmissionQueryBuilder */
-		$qb = $args[0];
 		$request = \Application::get()->getRequest();
-		$status = $request->getUserVar('status');
+		if($request->_router->_page == 'submissions'){
+			$qb = $args[0];
+			$status = $request->getUserVar('status');
+			$sessionManager = SessionManager::getManager();
+			$session = $sessionManager->getUserSession();
+			$role = $session->getSessionVar('role');
+			$substage = $session->getSessionVar('substage');
 
-		$sessionManager = SessionManager::getManager();
-		$session = $sessionManager->getUserSession();
-		$role = $session->getSessionVar('role');
-		$substage = $session->getSessionVar('substage');
+			if ($substage) {
+				$substages = explode(',', str_replace("'", "", $substage));
+				$qb->leftJoin('status_csp as sc', 'sc.submission_id', '=', 's.submission_id');
+				$qb->whereIn('sc.status', $substages);
 
-		if ($substage) {
-			$substages = explode(',', str_replace("'", "", $substage));
-			$qb->leftJoin('status_csp as sc', 'sc.submission_id', '=', 's.submission_id');
-			$qb->whereIn('sc.status', $substages);
-
-			if ($substage == 'ava_aguardando_autor_mais_60_dias') {
-				$qb->where('sc.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
-			} elseif ($substage == "'em_progresso'") {
-				$qb->where('s.date_submitted', '=', null);
+				if ($substage == 'ava_aguardando_autor_mais_60_dias') {
+					$qb->where('sc.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
+				} elseif ($substage == "'em_progresso'") {
+					$qb->where('s.date_submitted', '=', null);
+				}
 			}
+			$qb->wheres[1]["values"][0] = $status;
+			$qb->bindings["where"][1] = $status;
+			if ($role == "Gerente") {
+				unset($qb->joins[0]->wheres[1]);
+			}
+			if ($role == "Autor") {
+				$qb->where('sa.user_group_id', '=', 14);
+			}
+			if ($role == "Avaliador") {
+				$qb->where('ra.date_completed', '=', null);
+			}
+			if($request->_requestVars['searchPhrase']){
+				$qb->orwhere([
+					['ps.setting_name','=','codigoArtigo'],
+					['ps.setting_value','like','%'.$request->getUserVar('searchPhrase').'%'],
+					]);
+			}
+			$qb->orders[0]["column"] = 's.date_last_activity';
+			$qb->orders[0]["direction"] = 'asc';
 		}
-		$qb->wheres[1]["values"][0] = $status;
-		$qb->bindings["where"][1] = $status;
-		if ($role == "Gerente") {
-			unset($qb->joins[0]->wheres[1]);
-		}
-		if ($role == "Autor") {
-			$qb->where('sa.user_group_id', '=', 14);
-		}
-		if ($role == "Avaliador") {
-			$qb->where('ra.date_completed', '=', null);
-		}
-		if($request->_requestVars['searchPhrase']){
-			$qb->orwhere([
-				['ps.setting_name','=','codigoArtigo'],
-				['ps.setting_value','like','%'.$request->getUserVar('searchPhrase').'%'],
-				]);
-		}
-		$qb->orders[0]["column"] = 's.date_last_activity';
-		$qb->orders[0]["direction"] = 'asc';
 	}
 }
