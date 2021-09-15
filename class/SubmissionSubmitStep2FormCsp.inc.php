@@ -28,15 +28,13 @@ class SubmissionSubmitStep2FormCsp extends AbstractPlugin
 			foreach ($submissionFiles as $submissionFile) {
 				$name = $submissionFile->getLocalizedName();
 				if(str_contains($name, 'Corpo_do_Texto')){
-					return;
-				}else{
-					$params[0]->addError('genreId',__('plugins.generic.CspSubmission.submission.Step2.MissingFile'));
-					return true;
+					$corpoTexto = true;
 				}
 			}
-		}else{
+		}
+		if(!$corpoTexto){
 			$params[0]->addError('genreId',__('plugins.generic.CspSubmission.submission.Step2.MissingFile'));
-			return false;
+			return true;
 		}
 	}
 }
