@@ -3,10 +3,10 @@
 		<div class="pkp_controllers_grid">
 			<table>
 				<tbody>
-					<tr id="component-grid-issues-backissuegrid-row-3" class="gridRow has_extras orderable">
-						<td style="text-align: center; width:5%">
+					<tr id="component-grid-issues-backissuegrid-row-3" class="gridRow orderable">
+						<td style="text-align: center; width:8%">
 							<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
-								{{ item.id }}
+								{{ item.codigoArtigo }}
 							</a>
 						</td>
 						<td style="width:30%">
@@ -19,7 +19,7 @@
 							}}
 							</a>
 						</td>
-						<td style="width:30%">
+						<td style="width:20%">
 							<span id="cell-3-numArticles" class="gridCellContainer">
 								<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
 									{{ currentPublication.authorsStringShort }}
@@ -80,7 +80,7 @@
 								</list-item>
 							</list>
 						</td>
-						<td style="text-align: center; width:5%">
+						<td style="text-align: center; width:10%">
 							<list>
 								<list-item>
 									{{inactiveDays}}

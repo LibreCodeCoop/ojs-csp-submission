@@ -208,14 +208,10 @@ class TemplateManagerCsp extends AbstractPlugin {
 				$sql .= " and sa.user_group_id = 14";
 			}
 		}
-		if($subStage == "'em_progresso'"){
-			$sql .= " and s.date_submitted IS NULL";
-		}else{
-			$sql .= " and s.submission_id in (select DISTINCT status_csp.submission_id
-												from status_csp
-												where status_csp.status in (".trim($subStage).")
-												and date_status <= '$date')";
-		}
+		$sql .= " and s.submission_id in (select DISTINCT status_csp.submission_id
+											from status_csp
+											where status_csp.status in (".trim($subStage).")
+											and date_status <= '$date')";
 
 		$result = $userDao->retrieve($sql);
 		$count = $result->GetRowAssoc(false);

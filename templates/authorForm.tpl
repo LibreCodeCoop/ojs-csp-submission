@@ -3,6 +3,7 @@
 		$('#editAuthor').pkpHandler(
 			'$.pkp.controllers.form.AjaxFormHandler'
 		);
+		//$('#editAuthor .section .checkbox_and_radiobutton').css('display','none');
 	{rdelim});
 </script>
 <form class="pkp_form" id="editAuthor" method="post">
