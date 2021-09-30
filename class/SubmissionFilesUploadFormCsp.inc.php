@@ -579,6 +579,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				$genreId = $genre->getData('id');
 				$args[0]->setData('genreId',$genreId);
 				$args[1] = true;
+				unset($args[0]->_errors);
 			break;
 			case '68': // Fluxograma
 				$file = $_FILES['uploadedFile']['type'];

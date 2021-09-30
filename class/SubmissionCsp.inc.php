@@ -63,7 +63,7 @@ class SubmissionCsp extends AbstractPlugin
 	public function getManyQueryObject($args)
 	{
 		$request = \Application::get()->getRequest();
-		if($request->_router->_page == 'submissions'){
+		if($request->_router->_page == 'submissions' or $request->_dispatcher->_router->_dispatcher->_router->_handler->_id == '_submissions'){
 			$qb = $args[0];
 			$status = $request->getUserVar('status');
 			$sessionManager = SessionManager::getManager();
