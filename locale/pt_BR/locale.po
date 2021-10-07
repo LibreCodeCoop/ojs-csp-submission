@@ -13,7 +13,7 @@ msgid "plugins.generic.CspSubmission.displayName"
 msgstr "cspSubmission"
 
 msgid "plugins.generic.CspSubmission.description"
-msgstr "O plugin cspSubmission inclui campos extras aos metadados do artigo possibilitando associar campos a sessões."
+msgstr "Customiza o fluxo de acordo como o fluxo do Cadernos de Saúde Pública da Fiocruz."
 
 msgid "plugins.generic.CspSubmission.Tema"
 msgstr "Tema"
