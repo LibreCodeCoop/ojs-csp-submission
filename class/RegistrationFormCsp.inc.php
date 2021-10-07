@@ -22,6 +22,7 @@ class RegistrationFormCsp extends AbstractPlugin
 		$args[1][] = 'state';
 		$args[1][] = 'zipCode';
 		$args[1][] = 'orcid';
+		$args[1][] = 'authorGroup';
 	}
 
 
@@ -39,5 +40,6 @@ class RegistrationFormCsp extends AbstractPlugin
 		$newUser->setData('state', $form->getData('state'));
 		$newUser->setData('zipCode', $form->getData('zipCode'));
 		$newUser->setData('orcid', $form->getData('orcid'));
+		$newUser->setData('authorGroup', $form->getData('authorGroup'));
 	}
 }
