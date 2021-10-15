@@ -181,6 +181,12 @@ export default {
 	bottom: 0;
 	padding: @half @base;
 	transition: opacity 0.3s;
+	cursor: pointer;
+
+	&:hover,
+	&:focus {
+		color: @text;
+	}
 }
 
 .pkpListPanel__loadMoreButton {
