@@ -132,7 +132,8 @@ export default {
 				url: this.fillUser,
 				data: {
 					type: 'new',
-					submissionId: $('[name="submissionId"]').val()
+					submissionId: $('[name="submissionId"]').val(),
+					publicationId: $('[name="submissionId"]').val()
 				},
 				type: 'POST',
 				success: function(r) {
@@ -181,6 +182,12 @@ export default {
 	bottom: 0;
 	padding: @half @base;
 	transition: opacity 0.3s;
+	cursor: pointer;
+
+	&:hover,
+	&:focus {
+		color: @text;
+	}
 }
 
 .pkpListPanel__loadMoreButton {

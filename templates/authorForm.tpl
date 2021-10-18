@@ -6,7 +6,7 @@
 		//$('#editAuthor .section .checkbox_and_radiobutton').css('display','none');
 	{rdelim});
 </script>
-<form class="pkp_form" id="editAuthor" method="post">
+<form class="pkp_form search" id="editAuthor" method="post">
 	{csrf}
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="authorFormNotification"}
 
