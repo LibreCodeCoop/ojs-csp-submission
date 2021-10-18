@@ -802,7 +802,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$operation = $request->getRouter()->getRequestedOp($request);
 			switch ($operation) {
 				case 'addAuthor':
-					if ($request->getUserVar('userId')) {
+					if ($request->getUserVar('userId') or $request->getUserVar('type') == 'new') {
 						$args[4] = $templateMgr->fetch($this->getTemplateResource('authorFormAdd.tpl'));
 						return true;
 					}
@@ -1187,7 +1187,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($reviewStageId or $request->_router->_op == "addQuery" or $request->_router->_op == "editQuery" or $request->_router->_op == "updateQuery") {
 			return;
 		}
-		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') || strpos($_SERVER["HTTP_REFERER"], 'workflow/index')) {
+		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') || strpos($_SERVER["HTTP_REFERER"], 'workflow/index') || strpos($_SERVER["HTTP_REFERER"], 'authorDashboard/submission')) {
 			$refObject   = new ReflectionObject($args[1]);
 			$refColumns = $refObject->getProperty('columns');
 			$refColumns->setAccessible( true );
