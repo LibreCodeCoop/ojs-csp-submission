@@ -75,8 +75,8 @@ msgstr "Título curto"
 msgid "plugins.generic.CspSubmission.Subtitle.Description"
 msgstr "Até 70 caracteres"
 
-msgid "plugins.generic.CspSubmission.InclusaoAutores.Description"
-msgstr "Em caso de dificuldades com o processo, entre em contado com o suporte do SAGAS através do e-mail csp-artigos@ensp.fiocruz.br"
+msgid "plugins.generic.CspSubmission.submission.help"
+msgstr "Em caso de dificuldades com o processo, entre em contato com o suporte do SAGAS através do e-mail <b>csp-artigos@ensp.fiocruz.br</b>"
 
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
 msgstr "A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
