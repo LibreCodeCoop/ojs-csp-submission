@@ -116,10 +116,6 @@
 				{fbvElement type="text" label="user.phone" name="phone" id="phone" value=$phone maxlength="24" inline=true size=$fbvStyles.size.SMALL}
 			{/if}
 		{/fbvFormSection}
-		{fbvFormSection for="orcid" title="user.orcid" required=true}
-			{fbvElement type="text" name="orcid" id="orcid" value=$orcid inline=true size=$fbvStyles.size.MEDIUM required=true}
-		{/fbvFormSection}
-
 		{if !$disableLocaleSection && count($availableLocales) > 1}
 			{fbvFormSection title="user.workingLanguages" list=true}
 				{foreach from=$availableLocales key=localeKey item=localeName}
