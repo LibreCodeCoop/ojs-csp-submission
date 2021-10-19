@@ -25,7 +25,19 @@
 	<input type="hidden" name="submissionId" value="{$submissionId|escape}" />
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="submitStep3FormNotification"}
 
-	{fbvFormSection class="req" title="plugins.generic.CspSubmission.InclusaoAutores.Description"}{/fbvFormSection}
+	<div class="pkp_notification">
+		<div id="pkp_notification_upgradeWarning-616ef7591d8e7" class="notifyWarning">
+		<span class="title">
+			{translate key="common.warning"}
+		</span>
+		<p class="description">
+			{translate key="submission.rights.tip"}
+		</p>
+		<p class="description">
+			{translate key="plugins.generic.CspSubmission.submission.help"}
+		</p>
+		</div>
+	</div>
 
 	{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFields.tpl"}
 
