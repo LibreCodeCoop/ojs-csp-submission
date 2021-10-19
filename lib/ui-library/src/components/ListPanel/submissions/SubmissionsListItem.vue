@@ -13,7 +13,7 @@
 							<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
 								{{
 								localizeSubmission(
-									currentPublication.fullTitle,
+									currentPublication.title,
 									currentPublication.locale
 								)
 							}}
