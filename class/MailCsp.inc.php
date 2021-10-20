@@ -27,6 +27,7 @@ class MailCsp extends AbstractPlugin
 		if ($args[0]->emailKey == "EDITOR_DECISION_DECLINE" or $args[0]->emailKey == "EDITOR_DECISION_INITIAL_DECLINE") {
 			import('plugins.generic.cspSubmission.class.CspDeclinedSubmissions');
 			(new CspDeclinedSubmissions())->saveDeclinedSubmission($submissionId, $args[0]);
+			$args[0]->setData('recipients',[array("name" => 'noreply', "email" => 'noreply@fiocruz.br')]);
 			return true;
 		}
 		if ($stageId == 3) {
