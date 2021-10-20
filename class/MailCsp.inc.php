@@ -10,7 +10,16 @@ class MailCsp extends AbstractPlugin
 		$submissionId = $request->getUserVar('submissionId');
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
-
+		/** Se for envio de notificação de pendência técnica, somente autor recebe email */
+		if($args[0]->emailKey == 'NOTIFICATION' && $request->_requestVars["subject"] == '[CSP] Pendencia técnica'){
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
+			$publication = $submission->getCurrentPublication();
+			$authors = $publication->getData('authors');
+			if($args[0]->_data["recipients"][0]["email"] <> $authors[0]->_data["email"]){
+				$args[0]->setData('recipients',[array("name" => 'noreply', "email" => 'noreply@fiocruz.br')]);
+			}
+		}
 		if ($args[0]->emailKey == "SUBMISSION_ACK_NOT_USER") {
 			$args[0]->_data["body"] = str_replace('{$coAuthorName}', $args[0]->_data["recipients"][0]["name"], $args[0]->_data["body"]);
 		}
