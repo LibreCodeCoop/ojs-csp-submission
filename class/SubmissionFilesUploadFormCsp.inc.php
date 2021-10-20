@@ -243,7 +243,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					);
 					break;
 				}
-				if($genreId == 1){
+				if($genreId == 1 && $args[0]->_stageId == 1){
 					$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
 					$submissionFiles = $submissionFileDao->getBySubmissionId($args[0]->getData('submissionId'));
 					foreach ($submissionFiles as $submissionFile) {
