@@ -1306,14 +1306,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					LEFT JOIN (SELECT COUNT(*) AS assigns, user_id
 					FROM stage_assignments a
 					JOIN submissions s
-					ON s.submission_id = a.submission_id AND s.stage_id <= 3
+					ON s.submission_id = a.submission_id AND s.stage_id <= 3 and s.status < 3
 					WHERE a.user_group_id = ?
 					GROUP BY a.user_id) q2
 					ON q1.user_id = q2.user_id
 					QUERY;
 		$args[1][] = $args[1][10];
-
-
 	}
 
 	function user_getProperties_values($hookName, $args)
