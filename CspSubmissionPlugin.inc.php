@@ -1454,16 +1454,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 	function fileManager_downloadFile($hookName, $args)
 	{
 		$request = \Application::get()->getRequest();
-		$fileVersion = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
+		if($request->_router->_page != "article"){
+			$fileVersion = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
+			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+			$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
+			$submissionIdCsp = $submission->getData('codigoArtigo');
+			$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
+			$args[4] = $localizedName;
+		}
 
-		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-		$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
-
-		$submissionDAO = Application::getSubmissionDAO();
-		$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
-		$submissionIdCsp = $submission->getData('codigoArtigo');
-
-		$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
-		$args[4] = $localizedName;
 	}
 }
