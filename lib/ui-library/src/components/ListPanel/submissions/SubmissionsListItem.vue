@@ -31,7 +31,7 @@
 								<list-item>
 									{{ currentStageLabel }}
 								</list-item>
-								<list-item v-if="notice || noticeActionLabels[index]">
+								<list-item v-if="currentUserCanViewInfoCenter && (notice || noticeActionLabels[index])">
 									{{ notice }}
 									{{ noticeActionLabels[index] }}
 								</list-item>
@@ -63,7 +63,7 @@
 										</a>
 									</div>
 								</list-item>
-								<list-item v-if="isReviewStage && completedReviewsCount != 0">
+								<list-item v-if="isReviewStage && completedReviewsCount != 0 && currentUserCanViewInfoCenter">
 										{{ completedReviewsCount }}/{{ currentReviewAssignments.length }}
 										{{ i18n.reviewsCompleted }}
 								</list-item>

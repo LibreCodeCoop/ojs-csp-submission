@@ -59,19 +59,18 @@ class TemplateManagerCsp extends AbstractPlugin {
 
 				if ($role == 'Ed. chefe' or $role == 'Gerente') {
 					$stages['Pré-avaliação']["'pre_aguardando_editor_chefe'"][1] = "Aguardando decisão (" .$this->countStatus("'pre_aguardando_editor_chefe'",date('Y-m-d H:i:s'),1).")";
-					$stages['Avaliação']["'ava_aguardando_editor_chefe'"][1] = "Aguardando decisão (" .$this->countStatus("'ava_aguardando_editor_chefe'",date('Y-m-d H:i:s'),1).")";
 					$stages['Avaliação']["'ava_consulta_editor_chefe'"][1] = "Consulta ao editor chefe (" .$this->countStatus("'ava_consulta_editor_chefe'",date('Y-m-d H:i:s'),1).")";
 				}
 				if ($role == 'Ed. associado' or $role == 'Gerente') {
-					$status = "'ava_aguardando_editor_chefe','ava_consulta_editor_chefe'";
-					$stages['Avaliação'][$status][1] = "Aguardando decisão da editoria (" .$this->countStatus($status,date('Y-m-d H:i:s'),1).")";
-					$stages['Avaliação']["'ava_com_editor_associado'"][1] = "Com o editor associado (" .$this->countStatus("'ava_com_editor_associado'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_editor_chefe'"][1] = "Aguardando decisão da editoria (" .$this->countStatus("'ava_aguardando_editor_chefe'",date('Y-m-d H:i:s'),1).")";
+					$status = "'ava_com_editor_associado','ava_aguardando_avaliacao'";
+					$stages['Avaliação'][$status][1] = "Com o editor associado (" .$this->countStatus($status,date('Y-m-d H:i:s'),1).")";
 					$stages['Avaliação']["'ava_aguardando_autor'"][1] = "Aguardando autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s'),1).")";
 					$stages['Avaliação']["'ava_aguardando_autor_mais_60_dias'"][1] = "Há mais de 60 dias com o autor (" .$this->countStatus("'ava_aguardando_autor'",date('Y-m-d H:i:s', strtotime('-2 months')),1).")";
 					$stages['Avaliação']["'ava_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'ava_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";
 				}
 				if ($role == 'Avaliador') {
-					$stages['Avaliação']["'ava_com_editor_associado'"][1] = "Aguardando avaliacao (" .$this->countStatus("'ava_com_editor_associado'",date('Y-m-d H:i:s'),1).")";
+					$stages['Avaliação']["'ava_aguardando_avaliacao'"][1] = "Aguardando avaliacao (" .$this->countStatus("'ava_aguardando_avaliacao'",date('Y-m-d H:i:s'),1).")";
 				}
 				if ($role == 'Secretaria' or $role == 'Gerente') {
 					$stages['Pré-avaliação']["'pre_aguardando_secretaria'"][1] = "Aguardando secretaria (" .$this->countStatus("'pre_aguardando_secretaria'",date('Y-m-d H:i:s'),1).")";

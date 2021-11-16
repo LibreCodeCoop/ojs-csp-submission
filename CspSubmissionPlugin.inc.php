@@ -403,6 +403,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$assigned++;
 		}
 		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
+
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$userDao->retrieve(
+			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			array((string)'ava_aguardando_avaliacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$args[0]->_submission->getData('id'))
+		);
+
 	}
 	private function getReviewersInQueue(int $reviewRoundId) {
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
