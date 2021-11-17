@@ -6,8 +6,8 @@ class MailCsp extends AbstractPlugin
 	function send($args)
 	{
 		$request = \Application::get()->getRequest();
-		$stageId = $request->getUserVar('stageId');
-		$submissionId = $request->getUserVar('submissionId');
+		$stageId = $request->getUserVar('stageId') ? null : $args[0]->submission->_data["stageId"];
+		$submissionId = $request->getUserVar('submissionId') ? null: $args[0]->submission->_data["id"];
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 		/** Se for envio de notificação de pendência técnica, somente autor recebe email */
@@ -19,6 +19,13 @@ class MailCsp extends AbstractPlugin
 			if($args[0]->_data["recipients"][0]["email"] <> $authors[0]->_data["email"]){
 				$args[0]->setData('recipients',[array("name" => 'noreply', "email" => 'noreply@fiocruz.br')]);
 			}
+		}
+		if ($args[0]->emailKey == "REVIEW_DECLINE") {
+			$userGroupId = 5; // Editor associado
+			$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO');
+			$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
+			unset($args[0]->_data["recipients"]);
+			$args[0]->_data["recipients"][0]["email"] = $users->records->fields["email"];
 		}
 		if ($args[0]->emailKey == "SUBMISSION_ACK_NOT_USER") {
 			$args[0]->_data["body"] = str_replace('{$coAuthorName}', $args[0]->_data["recipients"][0]["name"], $args[0]->_data["body"]);
