@@ -23,6 +23,48 @@ class MailCsp extends AbstractPlugin
 		if ($args[0]->emailKey == "SUBMISSION_ACK_NOT_USER") {
 			$args[0]->_data["body"] = str_replace('{$coAuthorName}', $args[0]->_data["recipients"][0]["name"], $args[0]->_data["body"]);
 		}
+		if ($args[0]->emailKey == "EDITOR_DECISION_REVISIONS") {
+			$deadline = (new DateTimeImmutable())->add(new DateInterval('P30D'))->format('d/m/Y');
+			$publication = $args[0]->submission->getCurrentPublication();
+			$sectionId = $publication->_data["sectionId"];
+			switch($sectionId) {
+				case 1: // Artigo
+				case 4: // Debate
+				case 8: //  Questões Metodológicas
+				case 10: // Entrevista
+					$palavras = 6000;
+				break;
+				case 2: // Editorial
+				case 9: // Comunicação breve
+					$palavras = 2000;
+				break;
+				case 3: // Perspectivas
+					$palavras = 2200;
+				break;
+				case 6: // Revisão
+				case 7: // Ensaio
+					$palavras = 8000;
+				break;
+				case 5: // Espaço Temático
+					$palavras = 4000;
+				break;
+				case 11: // Carta
+				case 15: // Comentários
+					$palavras = 1300;
+				break;
+				case 12: // Resenhas
+					$palavras = 1300;
+				break;
+				case 13: // Obtuário
+					$palavras = 1000;
+				break;
+				case 14: // Errata
+					$palavras = 700;
+				break;
+			}
+			$args[0]->_data["body"] = str_replace('{$deadline}', $deadline, $args[0]->_data["body"]);
+			$args[0]->_data["body"] = str_replace('{$palavras}', $palavras, $args[0]->_data["body"]);
+		}
 		if ($args[0]->emailKey == "COPYEDIT_REQUEST") {
 			$context = $request->getContext();
 			$userGroupId = 8; /* Id da Secretaria */
@@ -114,6 +156,12 @@ class MailCsp extends AbstractPlugin
 				$fileManager->deleteByPath($temporaryBasePath . $tempId . '.odt');
 
 				$args[0]->AddAttachment($temporaryBasePath . 'declaracao_parecer' . $tempId . '.pdf', 'declaracao_parecer' . $tempId . '.pdf', 'application/pdf');
+
+				$strings = ['{$reviewerName}', '{$submissionTitle}', '{$contextName}'];
+				$context = $request->getContext();
+				$submissionDAO = Application::getSubmissionDAO();
+				$replaces = [$reviewerName, $submissionDAO->getById($submissionId)->getCurrentPublication()->getLocalizedTitle($locale), $context->getLocalizedName()];
+				$args[0]->_data["body"] = str_replace($strings, $replaces, $args[0]->_data["body"]);
 			}
 		}
 
