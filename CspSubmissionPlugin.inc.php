@@ -875,8 +875,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 				array_keys($inQueue)
 			);
 
+			$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+			$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
+
+			if ($lastReviewRound->_data["round"] > 1) {
+				$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK_SUBSEQUENT');
+			}else{
+				$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
+			}
 			$submissionIdCSP = $submission->getData('codigoArtigo');
-			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
 			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
 			$templateBody['REVIEW_REQUEST_ONECLICK'] = $mail->_data["body"];
 			$publication = $submission->getCurrentPublication();
