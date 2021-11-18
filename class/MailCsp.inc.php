@@ -20,7 +20,7 @@ class MailCsp extends AbstractPlugin
 				$args[0]->setData('recipients',[array("name" => 'noreply', "email" => 'noreply@fiocruz.br')]);
 			}
 		}
-		if ($args[0]->emailKey == "REVIEW_DECLINE") {
+		if ($args[0]->emailKey == "REVIEW_DECLINE" or $args[0]->emailKey == "REVIEW_CONFIRM") {
 			$userGroupId = 5; // Editor associado
 			$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO');
 			$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
