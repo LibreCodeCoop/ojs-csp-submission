@@ -156,7 +156,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			$genreDao = \DAORegistry::getDAO('GenreDAO');
 			$genre = $genreDao->getByKey('AVAL_AUTOR_ALTERACOES', $context->getId());
 			$templateMgr->_data["submissionFileGenres"][$genre->getData('id')] = $genre->getLocalizedName();
-			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
+			$templateMgr->setData('alert', __('plugins.generic.CspSubmission.submission.newVersion.alert'));
 		}elseif ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 		}elseif ($fileStage == 18) {  // Upload no box de discussão
