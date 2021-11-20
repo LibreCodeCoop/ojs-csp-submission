@@ -42,10 +42,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
 
-			HookRegistry::register('authorform::readuservars', array($this, 'authorformReadUserVars'));
+			HookRegistry::register('authorform::initdata', array($this, 'AuthorformCsp_initData'));
+			HookRegistry::register('authorform::readuservars', array($this, 'AuthorformCsp_readUserVars'));
+			HookRegistry::register('authorform::execute', array($this, 'AuthorformCsp_execute'));
 
 			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
-			HookRegistry::register('authorform::execute', array($this, 'authorformExecute'));
 
 			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'SubmissionSubmitStep3FormCsp_constructor'));
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'SubmissionSubmitStep3FormCsp_initData'));
@@ -63,7 +64,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('User::getMany::queryObject', array($this, 'pkp_services_pkpuserservice_getmany'));
 			HookRegistry::register('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
 			HookRegistry::register('User::getProperties::values', array($this, 'user_getProperties_values'));
-			HookRegistry::register('authorform::initdata', array($this, 'authorform_initdata'));
 
 			// This hook is used to register the components this plugin implements to
 			// permit administration of custom block plugins.
@@ -1338,51 +1338,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 	}
 
-	public function authorform_initdata($hookName, $args)
-	{
-		$locale = AppLocale::getLocale();
-		$request = \Application::get()->getRequest();
-		$type = $request->getUserVar('type');
-		$form = $args[0];
-		if ($type == 'ojs') {
-			$userId = $request->getUserVar('userId');
-			$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-			$user = $userDao->getById($userId);
-			$form->setData('givenName', [$locale => $user->getlocalizedGivenName()]);
-			$form->setData('familyName', [$locale => $user->getlocalizedfamilyName()]);
-			$form->setData('affiliation', [$locale =>  $user->getlocalizedAffiliation()]);
-			$form->setData('email',  $user->getEmail());
-			$form->setData('orcid',  $user->getOrcid());
-			$form->setData('country',  $user->getCountry());
-		}elseif ($type == 'csp') {
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$userCsp = $userDao->retrieve(
-				<<<QUERY
-				SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
-						TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
-						email, orcid,
-						TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
-					FROM csp.Pessoa p
-					WHERE p.idPessoa = ?
-				QUERY,
-				[(int) $request->getUserVar('userId')]
-			)->GetRowAssoc(0);
-			$form->setData('givenName', [$locale => $userCsp['given_name']]);
-			$form->setData('familyName', [$locale => $userCsp['family_name']]);
-			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
-			$form->setData('email', $userCsp['email']);
-			$form->setData('orcid', $userCsp['orcid']);
-		}elseif($form->getAuthor() != null){
-			$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
-			$author = $form->_author;
-			$form->setData('authorContribution', $author->getData('authorContribution'));
-			$form->setData('affiliation2', $author->getData('affiliation2'));
-		}else{
-			return;
-		}
-		$args[0] = $form;
-	}
-
 	/**
 	 * Insert Campo1 field into author submission step 3 and metadata edit form
 	 */
@@ -1417,14 +1372,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	function authorformReadUserVars($hookName, $params) {
-		$userVars =& $params[1];
-		$userVars[] = 'authorContribution';
-		$userVars[] = 'affiliation2';
-
-		return false;
-	}
-
 	function submissionFilesMetadataReadUserVars($hookName, $params) {
 		$userVars =& $params[1];
 		$userVars[] = 'comentario';
@@ -1453,15 +1400,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'pre_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$params[0]->submissionId)
 		);
-		return false;
-	}
-
-	function authorformExecute($hookName, $params) {
-		$form =& $params[0];
-		$author = $form->_author;
-		$author->setData('authorContribution', $form->getData('authorContribution'));
-		$author->setData('affiliation2', $form->getData('affiliation2'));
-
 		return false;
 	}
 
