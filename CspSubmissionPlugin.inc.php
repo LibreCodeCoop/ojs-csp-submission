@@ -105,6 +105,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('identityform::execute', array($this, 'IdentityFormCsp_execute'));
 
 			HookRegistry::register('EditorAction::recordDecision', array($this, 'EditorActionCsp_recordDecision'));
+
+			HookRegistry::register('Schema::get::author', array($this, 'SchemaGetAuthorCsp_getAuthor'));
 		}
 		return $success;
 	}
