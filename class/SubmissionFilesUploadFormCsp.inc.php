@@ -493,33 +493,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
-			break;        
-			case '60': // Template PT
-			case '61': // Template ES
-			case '62': // Template EN
-				// Quando é feito upload de template, diagramadores recebem email de convite para produzir PDF
-				$userGroupId = 12; // Diagrmador
-				$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
-				import('lib.pkp.classes.mail.MailTemplate');
-				while ($user = $users->next()) {
-					$mail = new MailTemplate('LAYOUT_REQUEST');
-					$mail->addRecipient($user->getData('email'));
-					$indexUrl = $request->getIndexUrl();
-					$contextPath = $request->getRequestedContextPath();
-					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
-												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
-												"submissionId=$submissionId".
-												"&userGroupId=$userGroupId".
-												"&userIdSelected=".$user->getData('id').
-												"&stageId=5&accept=1";
-					if (!$mail->send()) {
-						import('classes.notification.NotificationManager');
-						$notificationMgr = new NotificationManager();
-						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-					}
-				}
-			break;        
+			break;
 			// Quando editor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
 				$stageId = $request->getUserVar('stageId');
