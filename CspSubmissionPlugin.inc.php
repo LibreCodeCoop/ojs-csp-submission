@@ -107,6 +107,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('EditorAction::recordDecision', array($this, 'EditorActionCsp_recordDecision'));
 
 			HookRegistry::register('Schema::get::author', array($this, 'SchemaGetAuthorCsp_getAuthor'));
+
+			HookRegistry::register('managefinaldraftfilesform::validate', array($this, 'managefinaldraftfilesformvalidate'));
+
 		}
 		return $success;
 	}
@@ -134,6 +137,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 		call_user_func(array($class, $matches["method"]),$arguments[1]);
 	}
 
+	// Quando é inserido um arquivo aberto em Arquivos de Versão Final o status é alterado para Envio de Carta de aprovação
+	public function managefinaldraftfilesformvalidate($hookName, $args){
+		$fileId = $args[0]->_data["selectedFiles"][0];
+		$request = \Application::get()->getRequest();
+		$context = $request->getContext();
+		import('lib.pkp.classes.file.SubmissionFileManager');
+		$submissionFileManager = new SubmissionFileManager($context->_data["id"], $args[0]->_submissionId);
+		$file = $submissionFileManager->_getFile($fileId);
+		$filetype = $file->_data["filetype"];
+		if (in_array($filetype, ['image/svg+xml','image/svg','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$userDao->retrieve(
+				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+			);
+		}
+
+	}
 	public function newreviewroundform_validate($hookName, $args) {
 		$stageId = $args[0]->_submission->_data["stageId"];
 		$submissionId = $args[0]->_submission->_data["id"];

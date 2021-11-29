@@ -19,6 +19,30 @@ class SubmissionFilesMetadataFormCsp extends AbstractPlugin
 	}
 
 	function execute($params) {
+		// Quando é inserido um arquivo aberto em Arquivos de Versão Final o status é alterado para "Envio de Carta de aprovação"
+		if ($params[0]->_submissionFile->_data["fileStage"] == 6) {
+			$file = $params[0]->_submissionFile->_data["filetype"];
+			if (in_array($file, ['image/svg+xml','image/svg','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
+				$stageId = $params[0]->_stageId;
+				import('lib.pkp.classes.mail.MailTemplate');
+				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
+				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 4);
+				while ($user = $users->next()) {
+					$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
+					$mail->addRecipient($user->getEmail(), $user->getFullName());
+					if (!$mail->send()) {
+						import('classes.notification.NotificationManager');
+						$notificationMgr = new NotificationManager();
+						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
+					}
+				}
+				$userDao = DAORegistry::getDAO('UserDAO');
+				$userDao->retrieve(
+					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+				);
+			}
+		}
 		$name = $params[0]->_data["name"][$params[0]->requiredLocale];
 		if (substr($name,0,38) == "Arquivo_padronizado_para_diagramação") {
 			// Quando é feito upload de Arquivo padronizado para diagramção, diagramadores são designados e recebem email para produzir PDF

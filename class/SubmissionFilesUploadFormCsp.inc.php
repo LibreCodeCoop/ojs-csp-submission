@@ -69,17 +69,6 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
-		}elseif ($fileStage == 6) { // Envio de  arquivo de versão final
-			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-			$userInGroup = $userGroupDao->userInGroup($userId, 10); // Revisor de figura
-			if($userInGroup){
-				$genreDao = \DAORegistry::getDAO('GenreDAO');
-				$genre = $genreDao->getByKey('EDICAO_TEXTO_FIG_ALT', $context->getId());
-				$genre =  array($genre->getData('id') => $genre->getLocalizedName());
-				$templateMgr->setData('submissionFileGenres', $genre);
-			}else{
-				$templateMgr->setData('isReviewAttachment', TRUE); // Seta variável para true pois é verificada no template para não exibir os componentes de arquivo
-			}			
 		}elseif ($fileStage == 9) { // Upload de arquivo em box de arquivos de revisão de texto
 			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 			$userInGroup = $userGroupDao->userInGroup($userId, 7); // Revisor / tradutor
@@ -445,27 +434,6 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				$userDao->retrieve(
 					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ed_texto_traducao_metadados', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
-				);
-			break;
-			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto, editores assistentes são notificados
-			case '54': // Figura alterada
-				$stageId = $request->getUserVar('stageId');
-				import('lib.pkp.classes.mail.MailTemplate');
-				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 4);
-				while ($user = $users->next()) {
-					$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
-					$mail->addRecipient($user->getEmail(), $user->getFullName());
-					if (!$mail->send()) {
-						import('classes.notification.NotificationManager');
-						$notificationMgr = new NotificationManager();
-						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-					}
-				}
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 			case '57': // PDF para publicação PT
