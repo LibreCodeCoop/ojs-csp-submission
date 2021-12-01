@@ -34,7 +34,7 @@ class SubmissionCsp extends AbstractPlugin
 		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
 
 		$userDao->retrieve(
-			'INSERT INTO status_csp (submission_id, status, date_status) VALUES (?,?,?)',
+			'INSERT INTO csp_status (submission_id, status, date_status) VALUES (?,?,?)',
 			array((int)$args[0]->getData('id'), (string)'em_progresso',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'))
 		);
 		return false;
@@ -44,7 +44,7 @@ class SubmissionCsp extends AbstractPlugin
 	{
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$userDao->retrieve(
-			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'deletada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$args[0]->getData('id'))
 		);
 	}
@@ -73,7 +73,7 @@ class SubmissionCsp extends AbstractPlugin
 
 			if ($substage) {
 				$substages = explode(',', str_replace("'", "", $substage));
-				$qb->leftJoin('status_csp as sc', 'sc.submission_id', '=', 's.submission_id');
+				$qb->leftJoin('csp_status as sc', 'sc.submission_id', '=', 's.submission_id');
 				$qb->whereIn('sc.status', $substages);
 
 				if ($substage == 'ava_aguardando_autor_mais_60_dias') {

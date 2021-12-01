@@ -88,7 +88,7 @@ class NotifyWaitingForAuthor extends ScheduledTask
         $aMonthAndAWeekAgo = $aMonthAgo->modify('- 1 week');
 
         $result = $this->userDao->retrieve(
-            'SELECT sc.submission_id, sc.date_status, sa.user_id, nsc.notification FROM status_csp AS sc 
+            'SELECT sc.submission_id, sc.date_status, sa.user_id, nsc.notification FROM csp_status AS sc 
             INNER JOIN stage_assignments AS sa
                 ON sa.submission_id = sc.submission_id 
             AND sa.user_group_id = ?

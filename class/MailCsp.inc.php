@@ -6,8 +6,8 @@ class MailCsp extends AbstractPlugin
 	function send($args)
 	{
 		$request = \Application::get()->getRequest();
-		$stageId = $request->getUserVar('stageId');
-		$submissionId = $request->getUserVar('submissionId');
+		$stageId = $request->getUserVar('stageId') ? null : $args[0]->submission->_data["stageId"];
+		$submissionId = $request->getUserVar('submissionId') ? null: $args[0]->submission->_data["id"];
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 		/** Se for envio de notificação de pendência técnica, somente autor recebe email */
@@ -20,8 +20,57 @@ class MailCsp extends AbstractPlugin
 				$args[0]->setData('recipients',[array("name" => 'noreply', "email" => 'noreply@fiocruz.br')]);
 			}
 		}
+		if ($args[0]->emailKey == "REVIEW_DECLINE" or $args[0]->emailKey == "REVIEW_CONFIRM") {
+			$userGroupId = 5; // Editor associado
+			$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO');
+			$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, $userGroupId);
+			unset($args[0]->_data["recipients"]);
+			$args[0]->_data["recipients"][0]["email"] = $users->records->fields["email"];
+		}
 		if ($args[0]->emailKey == "SUBMISSION_ACK_NOT_USER") {
 			$args[0]->_data["body"] = str_replace('{$coAuthorName}', $args[0]->_data["recipients"][0]["name"], $args[0]->_data["body"]);
+		}
+		if ($args[0]->emailKey == "EDITOR_DECISION_REVISIONS") {
+			$deadline = (new DateTimeImmutable())->add(new DateInterval('P30D'))->format('d/m/Y');
+			$publication = $args[0]->submission->getCurrentPublication();
+			$sectionId = $publication->_data["sectionId"];
+			switch($sectionId) {
+				case 1: // Artigo
+				case 4: // Debate
+				case 8: //  Questões Metodológicas
+				case 10: // Entrevista
+					$palavras = 6000;
+				break;
+				case 2: // Editorial
+				case 9: // Comunicação breve
+					$palavras = 2000;
+				break;
+				case 3: // Perspectivas
+					$palavras = 2200;
+				break;
+				case 6: // Revisão
+				case 7: // Ensaio
+					$palavras = 8000;
+				break;
+				case 5: // Espaço Temático
+					$palavras = 4000;
+				break;
+				case 11: // Carta
+				case 15: // Comentários
+					$palavras = 1300;
+				break;
+				case 12: // Resenhas
+					$palavras = 1300;
+				break;
+				case 13: // Obtuário
+					$palavras = 1000;
+				break;
+				case 14: // Errata
+					$palavras = 700;
+				break;
+			}
+			$args[0]->_data["body"] = str_replace('{$deadline}', $deadline, $args[0]->_data["body"]);
+			$args[0]->_data["body"] = str_replace('{$palavras}', $palavras, $args[0]->_data["body"]);
 		}
 		if ($args[0]->emailKey == "COPYEDIT_REQUEST") {
 			$context = $request->getContext();
@@ -51,7 +100,7 @@ class MailCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ava_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			}
@@ -63,7 +112,7 @@ class MailCsp extends AbstractPlugin
 				/* Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe" */
 				if ($isManager) {
 					$userDao->retrieve(
-						'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+						'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 						array((string)'ava_consulta_editor_chefe', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 					);
 					$args[0]->_data["recipients"][0]["email"] = "noreply@fiocruz.br";
@@ -114,6 +163,12 @@ class MailCsp extends AbstractPlugin
 				$fileManager->deleteByPath($temporaryBasePath . $tempId . '.odt');
 
 				$args[0]->AddAttachment($temporaryBasePath . 'declaracao_parecer' . $tempId . '.pdf', 'declaracao_parecer' . $tempId . '.pdf', 'application/pdf');
+
+				$strings = ['{$reviewerName}', '{$submissionTitle}', '{$contextName}'];
+				$context = $request->getContext();
+				$submissionDAO = Application::getSubmissionDAO();
+				$replaces = [$reviewerName, $submissionDAO->getById($submissionId)->getCurrentPublication()->getLocalizedTitle($locale), $context->getLocalizedName()];
+				$args[0]->_data["body"] = str_replace($strings, $replaces, $args[0]->_data["body"]);
 			}
 		}
 
@@ -163,7 +218,7 @@ class MailCsp extends AbstractPlugin
 			$args[0]->AddAttachment($temporaryBasePath . 'declaracao_aprovacao' . $tempId . '.pdf', 'declaracao_aprovacao' . $tempId . '.pdf', 'application/pdf');
 
 			$userDao->retrieve(
-				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ed_text_para_revisao_traducao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
 		}
@@ -211,7 +266,7 @@ class MailCsp extends AbstractPlugin
 			$args[0]->AddAttachment('files/usageStats/declaracoes/termos_condicoes.pdf', 'termos_condicoes.pdf', 'application/pdf');
 
 			$userDao->retrieve(
-				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'edit_em_prova_prelo', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
 		}

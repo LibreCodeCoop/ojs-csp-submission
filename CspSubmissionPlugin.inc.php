@@ -42,10 +42,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
 
-			HookRegistry::register('authorform::readuservars', array($this, 'authorformReadUserVars'));
+			HookRegistry::register('authorform::initdata', array($this, 'AuthorformCsp_initData'));
+			HookRegistry::register('authorform::readuservars', array($this, 'AuthorformCsp_readUserVars'));
+			HookRegistry::register('authorform::execute', array($this, 'AuthorformCsp_execute'));
 
 			HookRegistry::register('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
-			HookRegistry::register('authorform::execute', array($this, 'authorformExecute'));
 
 			HookRegistry::register('submissionsubmitstep3form::Constructor', array($this, 'SubmissionSubmitStep3FormCsp_constructor'));
 			HookRegistry::register('submissionsubmitstep3form::initdata', array($this, 'SubmissionSubmitStep3FormCsp_initData'));
@@ -63,7 +64,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('User::getMany::queryObject', array($this, 'pkp_services_pkpuserservice_getmany'));
 			HookRegistry::register('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
 			HookRegistry::register('User::getProperties::values', array($this, 'user_getProperties_values'));
-			HookRegistry::register('authorform::initdata', array($this, 'authorform_initdata'));
 
 			// This hook is used to register the components this plugin implements to
 			// permit administration of custom block plugins.
@@ -79,10 +79,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
 
-			// Hook para adicionar o campo comentário no upload de arquivos
-			HookRegistry::register('submissionfilesmetadataform::readuservars', array($this, 'submissionFilesMetadataReadUserVars'));
 			HookRegistry::register('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
-			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'submissionFilesMetadataExecute'));
+
+			HookRegistry::register('submissionfilesmetadataform::readuservars', array($this, 'SubmissionFilesMetadataFormCsp_readUserVars'));
+			HookRegistry::register('submissionfilesmetadataform::execute', array($this, 'SubmissionFilesMetadataFormCsp_execute'));
 
 			// Displays extra fields in the workflow metadata area
 			HookRegistry::register('Form::config::after', array($this, 'formConfigAfter'));
@@ -105,6 +105,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('identityform::execute', array($this, 'IdentityFormCsp_execute'));
 
 			HookRegistry::register('EditorAction::recordDecision', array($this, 'EditorActionCsp_recordDecision'));
+
+			HookRegistry::register('Schema::get::author', array($this, 'SchemaGetAuthorCsp_getAuthor'));
+
+			HookRegistry::register('managefinaldraftfilesform::validate', array($this, 'managefinaldraftfilesformvalidate'));
+
 		}
 		return $success;
 	}
@@ -132,6 +137,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 		call_user_func(array($class, $matches["method"]),$arguments[1]);
 	}
 
+	// Quando é inserido um arquivo aberto em Arquivos de Versão Final o status é alterado para Envio de Carta de aprovação
+	public function managefinaldraftfilesformvalidate($hookName, $args){
+		$fileId = $args[0]->_data["selectedFiles"][0];
+		$request = \Application::get()->getRequest();
+		$context = $request->getContext();
+		import('lib.pkp.classes.file.SubmissionFileManager');
+		$submissionFileManager = new SubmissionFileManager($context->_data["id"], $args[0]->_submissionId);
+		$file = $submissionFileManager->_getFile($fileId);
+		$filetype = $file->_data["filetype"];
+		if (in_array($filetype, ['image/svg+xml','image/svg','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
+			$userDao = DAORegistry::getDAO('UserDAO');
+			$userDao->retrieve(
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+			);
+		}
+
+	}
 	public function newreviewroundform_validate($hookName, $args) {
 		$stageId = $args[0]->_submission->_data["stageId"];
 		$submissionId = $args[0]->_submission->_data["id"];
@@ -150,7 +173,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$userDao->retrieve(
-			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 		);
 	}
@@ -403,6 +426,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$assigned++;
 		}
 		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
+
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$userDao->retrieve(
+			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
+			array((string)'ava_aguardando_avaliacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$args[0]->_submission->getData('id'))
+		);
+
 	}
 	private function getReviewersInQueue(int $reviewRoundId) {
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -496,7 +526,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$submissionId = $request->getUserVar('submissionId');
 						$userDao->retrieve(
-							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 							array((string)'edit_em_diagramacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 						);
 					break;
@@ -537,7 +567,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
-				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
 		}
@@ -545,7 +575,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$submissionId = $request->getUserVar('submissionId');
 			$userDao->retrieve(
-				'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ed_text_em_revisao_traducao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
 		}
@@ -868,8 +898,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 				array_keys($inQueue)
 			);
 
+			$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
+			$lastReviewRound = $reviewRoundDao->getLastReviewRoundBySubmissionId($submission->getId());
+
+			if ($lastReviewRound->_data["round"] > 1) {
+				$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK_SUBSEQUENT');
+			}else{
+				$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
+			}
 			$submissionIdCSP = $submission->getData('codigoArtigo');
-			$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
 			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
 			$templateBody['REVIEW_REQUEST_ONECLICK'] = $mail->_data["body"];
 			$publication = $submission->getCurrentPublication();
@@ -1306,14 +1343,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					LEFT JOIN (SELECT COUNT(*) AS assigns, user_id
 					FROM stage_assignments a
 					JOIN submissions s
-					ON s.submission_id = a.submission_id AND s.stage_id <= 3
+					ON s.submission_id = a.submission_id AND s.stage_id <= 3 and s.status < 3
 					WHERE a.user_group_id = ?
 					GROUP BY a.user_id) q2
 					ON q1.user_id = q2.user_id
 					QUERY;
 		$args[1][] = $args[1][10];
-
-
 	}
 
 	function user_getProperties_values($hookName, $args)
@@ -1324,51 +1359,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$values['type'] = $type;
 			$values['instituicao'] = $user->getData('instituicao');
 		}
-	}
-
-	public function authorform_initdata($hookName, $args)
-	{
-		$locale = AppLocale::getLocale();
-		$request = \Application::get()->getRequest();
-		$type = $request->getUserVar('type');
-		$form = $args[0];
-		if ($type == 'ojs') {
-			$userId = $request->getUserVar('userId');
-			$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-			$user = $userDao->getById($userId);
-			$form->setData('givenName', [$locale => $user->getlocalizedGivenName()]);
-			$form->setData('familyName', [$locale => $user->getlocalizedfamilyName()]);
-			$form->setData('affiliation', [$locale =>  $user->getlocalizedAffiliation()]);
-			$form->setData('email',  $user->getEmail());
-			$form->setData('orcid',  $user->getOrcid());
-			$form->setData('country',  $user->getCountry());
-		}elseif ($type == 'csp') {
-			$userDao = DAORegistry::getDAO('UserDAO');
-			$userCsp = $userDao->retrieve(
-				<<<QUERY
-				SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
-						TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
-						email, orcid,
-						TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
-					FROM csp.Pessoa p
-					WHERE p.idPessoa = ?
-				QUERY,
-				[(int) $request->getUserVar('userId')]
-			)->GetRowAssoc(0);
-			$form->setData('givenName', [$locale => $userCsp['given_name']]);
-			$form->setData('familyName', [$locale => $userCsp['family_name']]);
-			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
-			$form->setData('email', $userCsp['email']);
-			$form->setData('orcid', $userCsp['orcid']);
-		}elseif($form->getAuthor() != null){
-			$form->setTemplate($this->getTemplateResource('authorFormAdd.tpl'));
-			$author = $form->_author;
-			$form->setData('authorContribution', $author->getData('authorContribution'));
-			$form->setData('affiliation2', $author->getData('affiliation2'));
-		}else{
-			return;
-		}
-		$args[0] = $form;
 	}
 
 	/**
@@ -1405,21 +1395,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	function authorformReadUserVars($hookName, $params) {
-		$userVars =& $params[1];
-		$userVars[] = 'authorContribution';
-		$userVars[] = 'affiliation2';
-
-		return false;
-	}
-
-	function submissionFilesMetadataReadUserVars($hookName, $params) {
-		$userVars =& $params[1];
-		$userVars[] = 'comentario';
-
-		return false;
-	}
-
 	function submissionfiledaodelegateAdditionalFieldNames($hookName, $params) {
 		$additionalFieldNames =& $params[1];
 		$additionalFieldNames[] = 'comentario';
@@ -1427,45 +1402,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 		return false;
 	}
 
-	function submissionFilesMetadataExecute($hookName, $params) {
-		$form =& $params[0];
-		$submissionFile = $form->_submissionFile;
-		$submissionFile->setData('comentario', $form->getData('comentario'));
-
-		return false;
-	}
-
 	function metadataExecuteStep4($hookName, $params) {
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$userDao->retrieve(
-			'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'pre_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$params[0]->submissionId)
 		);
-		return false;
-	}
-
-	function authorformExecute($hookName, $params) {
-		$form =& $params[0];
-		$author = $form->_author;
-		$author->setData('authorContribution', $form->getData('authorContribution'));
-		$author->setData('affiliation2', $form->getData('affiliation2'));
-
 		return false;
 	}
 
 	function fileManager_downloadFile($hookName, $args)
 	{
 		$request = \Application::get()->getRequest();
-		$fileVersion = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
+		if($request->_router->_page != "article"){
+			$fileVersion = $request->_requestVars["fileId"].'-'.$request->_requestVars["revision"];
+			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+			$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
+			$submissionIdCsp = $submission->getData('codigoArtigo');
+			$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
+			$args[4] = $localizedName;
+		}
 
-		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-		$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
-
-		$submissionDAO = Application::getSubmissionDAO();
-		$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
-		$submissionIdCsp = $submission->getData('codigoArtigo');
-
-		$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
-		$args[4] = $localizedName;
 	}
 }

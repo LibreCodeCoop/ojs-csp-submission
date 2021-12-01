@@ -179,7 +179,16 @@
 
 		{if $showGenreSelector}
 			{fbvFormSection required=true}
-				{capture assign="defaultLabel"}{translate key="submission.upload.selectComponent"}{/capture}{$alert}
+				{capture assign="defaultLabel"}{translate key="submission.upload.selectComponent"}{/capture}
+				{if $alert}
+					<div class="pkp_notification">
+						<div id="pkp_notification_upgradeWarning-616ef7591d8e7" class="notifyWarning">
+							<p class="description">
+								{translate key="plugins.generic.CspSubmission.submission.newVersion.alert"}
+							</p>
+						</div>
+					</div>
+				{/if}
 				{fbvElement type="select" name="genreId" id="genreId" from=$submissionFileGenres translate=false defaultLabel=$defaultLabel defaultValue="" required="true" selected=$genreId required=true}
 			{/fbvFormSection}
 		{/if}

@@ -203,3 +203,6 @@ msgstr "Número do registro"
 
 msgid "plugins.generic.CspSubmission.submission.ensaiosClinicos.orgao"
 msgstr "Órgão"
+
+msgid "plugins.generic.CspSubmission.submission.newVersion.alert"
+msgstr "It is mandatory to submit a letter to the associated editor by choosing the <b>Changes made</b> component"

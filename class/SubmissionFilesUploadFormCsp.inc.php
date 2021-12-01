@@ -69,17 +69,6 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
-		}elseif ($fileStage == 6) { // Envio de  arquivo de versão final
-			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-			$userInGroup = $userGroupDao->userInGroup($userId, 10); // Revisor de figura
-			if($userInGroup){
-				$genreDao = \DAORegistry::getDAO('GenreDAO');
-				$genre = $genreDao->getByKey('EDICAO_TEXTO_FIG_ALT', $context->getId());
-				$genre =  array($genre->getData('id') => $genre->getLocalizedName());
-				$templateMgr->setData('submissionFileGenres', $genre);
-			}else{
-				$templateMgr->setData('isReviewAttachment', TRUE); // Seta variável para true pois é verificada no template para não exibir os componentes de arquivo
-			}			
 		}elseif ($fileStage == 9) { // Upload de arquivo em box de arquivos de revisão de texto
 			$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
 			$userInGroup = $userGroupDao->userInGroup($userId, 7); // Revisor / tradutor
@@ -156,7 +145,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			$genreDao = \DAORegistry::getDAO('GenreDAO');
 			$genre = $genreDao->getByKey('AVAL_AUTOR_ALTERACOES', $context->getId());
 			$templateMgr->_data["submissionFileGenres"][$genre->getData('id')] = $genre->getLocalizedName();
-			$templateMgr->setData('alert', 'É obrigatória a submissão de uma carta ao editor associado escolhendo o componete "Alterações realizadas"');
+			$templateMgr->setData('alert', __('plugins.generic.CspSubmission.submission.newVersion.alert'));
 		}elseif ($fileStage == 17) { // ARQUIVOS DEPENDENTES EM PUBLICAÇÃO
 			$templateMgr->setData('isReviewAttachment', TRUE); // SETA A VARIÁVEL PARA TRUE POIS ELA É VERIFICADA NO TEMPLATE PARA NÃO EXIBIR OS COMPONENTES
 		}elseif ($fileStage == 18) {  // Upload no box de discussão
@@ -414,7 +403,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 							}
 						}
 						$userDao->retrieve(
-							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 							array((string)'pre_aguardando_editor_chefe',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'),(int)$submissionId)
 						);
 					}
@@ -443,29 +432,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ed_texto_traducao_metadados', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
-				);
-			break;
-			// Quando revisor de figura faz upload de figura alterada no box arquivos para edição de texto, editores assistentes são notificados
-			case '54': // Figura alterada
-				$stageId = $request->getUserVar('stageId');
-				import('lib.pkp.classes.mail.MailTemplate');
-				$userStageAssignmentDao = DAORegistry::getDAO('UserStageAssignmentDAO'); /* @var $userStageAssignmentDao UserStageAssignmentDAO */
-				$users = $userStageAssignmentDao->getUsersBySubmissionAndStageId($submissionId, $stageId, 4);
-				while ($user = $users->next()) {
-					$mail = new MailTemplate('EDICAO_TEXTO_FIG_APROVD');
-					$mail->addRecipient($user->getEmail(), $user->getFullName());
-					if (!$mail->send()) {
-						import('classes.notification.NotificationManager');
-						$notificationMgr = new NotificationManager();
-						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-					}
-				}
-				$userDao = DAORegistry::getDAO('UserDAO');
-				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
 			case '57': // PDF para publicação PT
@@ -493,33 +461,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 					}
 				}
-			break;        
-			case '60': // Template PT
-			case '61': // Template ES
-			case '62': // Template EN
-				// Quando é feito upload de template, diagramadores recebem email de convite para produzir PDF
-				$userGroupId = 12; // Diagrmador
-				$userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-				$users = $userGroupDao->getUsersById($userGroupId, $context->getId());
-				import('lib.pkp.classes.mail.MailTemplate');
-				while ($user = $users->next()) {
-					$mail = new MailTemplate('LAYOUT_REQUEST');
-					$mail->addRecipient($user->getData('email'));
-					$indexUrl = $request->getIndexUrl();
-					$contextPath = $request->getRequestedContextPath();
-					$mail->params["acceptLink"] = $indexUrl."/".$contextPath[0].
-												"/$$\$call$$$/grid/users/stage-participant/stage-participant-grid/save-participant/submission?".
-												"submissionId=$submissionId".
-												"&userGroupId=$userGroupId".
-												"&userIdSelected=".$user->getData('id').
-												"&stageId=5&accept=1";
-					if (!$mail->send()) {
-						import('classes.notification.NotificationManager');
-						$notificationMgr = new NotificationManager();
-						$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
-					}
-				}
-			break;        
+			break;
 			// Quando editor de figura faz upload de figura formatada no box arquivos para edição de texto
 			case '64': // Figura formatada
 				$stageId = $request->getUserVar('stageId');
@@ -539,7 +481,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'edit_pdf_padronizado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
@@ -568,7 +510,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'edit_em_formatacao_figura', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
@@ -638,7 +580,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			case '77': // XML publicação ES
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
