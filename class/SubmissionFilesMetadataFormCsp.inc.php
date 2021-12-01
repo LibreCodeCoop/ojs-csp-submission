@@ -38,7 +38,7 @@ class SubmissionFilesMetadataFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			}

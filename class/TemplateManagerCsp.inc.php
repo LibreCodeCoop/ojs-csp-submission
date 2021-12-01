@@ -207,9 +207,9 @@ class TemplateManagerCsp extends AbstractPlugin {
 				$sql .= " and sa.user_group_id = 14";
 			}
 		}
-		$sql .= " and s.submission_id in (select DISTINCT status_csp.submission_id
-											from status_csp
-											where status_csp.status in (".trim($subStage).")
+		$sql .= " and s.submission_id in (select DISTINCT csp_status.submission_id
+											from csp_status
+											where csp_status.status in (".trim($subStage).")
 											and date_status <= '$date')";
 
 		$result = $userDao->retrieve($sql);

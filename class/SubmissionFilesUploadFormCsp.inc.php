@@ -403,7 +403,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 							}
 						}
 						$userDao->retrieve(
-							'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+							'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 							array((string)'pre_aguardando_editor_chefe',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'),(int)$submissionId)
 						);
 					}
@@ -432,7 +432,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'ed_texto_traducao_metadados', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
@@ -481,7 +481,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'edit_pdf_padronizado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
@@ -510,7 +510,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'edit_em_formatacao_figura', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
@@ -580,7 +580,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			case '77': // XML publicação ES
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
 				$userDao->retrieve(
-					'UPDATE status_csp SET status = ?, date_status = ? WHERE submission_id = ?',
+					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 					array((string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 				);
 			break;
