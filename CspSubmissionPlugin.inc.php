@@ -110,6 +110,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('managefinaldraftfilesform::validate', array($this, 'managefinaldraftfilesformvalidate'));
 
+			HookRegistry::register('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
 		}
 		return $success;
 	}
