@@ -115,6 +115,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 				if($role){
 					$stages['Finalizadas']["'publicada'"][3] = "Publicadas (" .$this->countStatus("'publicada'",date('Y-m-d H:i:s'),3).")";
 					$stages['Finalizadas']["'rejeitada'"][4] = "Rejeitadas (" .$this->countStatus("'rejeitada'",date('Y-m-d H:i:s'),4).")";
+					$stages['Finalizadas']["'fin_consulta_editor_chefe'"][4] = "Consulta a Ed. Chefe (" .$this->countStatus("'fin_consulta_editor_chefe'",date('Y-m-d H:i:s'),4).")";
 				}
 				$array_sort = array('pre_aguardando_secretaria',
 									'pre_pendencia_tecnica',

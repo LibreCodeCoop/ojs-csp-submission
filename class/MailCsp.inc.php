@@ -6,8 +6,8 @@ class MailCsp extends AbstractPlugin
 	function send($args)
 	{
 		$request = \Application::get()->getRequest();
-		$stageId = $request->getUserVar('stageId') ? null : $args[0]->submission->_data["stageId"];
-		$submissionId = $request->getUserVar('submissionId') ? null: $args[0]->submission->_data["id"];
+		$stageId = $request->getUserVar('stageId') ? $request->getUserVar('stageId') : $args[0]->submission->_data["stageId"];
+		$submissionId = $request->getUserVar('submissionId') ? $request->getUserVar('submissionId') : $args[0]->submission->_data["id"];
 		$locale = AppLocale::getLocale();
 		$userDao = DAORegistry::getDAO('UserDAO');
 		/** Se for envio de notificação de pendência técnica, somente autor recebe email */

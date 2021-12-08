@@ -15,6 +15,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 	public function display($args)
 	{
 		$request = \Application::get()->getRequest();
+		$submissionId = $request->getUserVar('submissionId');
 		$fileStage = $request->getUserVar('fileStage');
 		$submissionDAO = Application::getSubmissionDAO();
 		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
