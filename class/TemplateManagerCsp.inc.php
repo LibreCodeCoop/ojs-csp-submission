@@ -24,6 +24,12 @@ class TemplateManagerCsp extends AbstractPlugin {
 			)
 		);
 
+		if($args[1] == "plugins-plugins-importexport-quickSubmit-importexport-quickSubmit:index.tpl"){
+			$args[1] = '../plugins/generic/cspSubmission/templates/quickSubmitIndex.tpl';
+			$templateManager->assign('abstractDisplay', true);
+			$templateManager->assign('sourceEnabled', false);
+			$templateManager->assign('agenciesEnabled', false);
+		}
 		if ($args[1] == "workflow/workflow.tpl" or $args[1] == "authorDashboard/authorDashboard.tpl") {
 			$path = $request->getRequestPath();
 			$pathItens = explode('/', $path);

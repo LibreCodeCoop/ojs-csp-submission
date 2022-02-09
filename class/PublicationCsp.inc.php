@@ -21,7 +21,7 @@ class PublicationCsp extends AbstractPlugin
 	function edit($params)
 	{
 		$router = $params[3]->getRouter();
-		if ($router->_page == 'submission') {
+		if ($router->_page == 'submission' or $router->_op == "importexport") {
 			$params[0]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 			$params[1]->setData('agradecimentos', $params[3]->_requestVars["agradecimentos"]);
 			$params[2]["agradecimentos"] = $params[3]->_requestVars["agradecimentos"];
@@ -49,6 +49,9 @@ class PublicationCsp extends AbstractPlugin
 			$params[0]->setData('orgao', $params[3]->_requestVars["orgao"]);
 			$params[1]->setData('orgao', $params[3]->_requestVars["orgao"]);
 			$params[2]["orgao"] = $params[3]->_requestVars["orgao"];
+			$params[0]->setData('pub-id::doi', $params[3]->_requestVars["doi"]);
+			$params[1]->setData('pub-id::doi', $params[3]->_requestVars["doi"]);
+			$params[2]["pub-id::doi"] = $params[3]->_requestVars["doi"];
 		}
 		return false;
 	}

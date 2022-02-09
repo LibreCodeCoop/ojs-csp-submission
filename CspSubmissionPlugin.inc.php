@@ -53,6 +53,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionsubmitstep3form::readuservars', array($this, 'SubmissionSubmitStep3FormCsp_readUserVars'));
 			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'SubmissionSubmitStep3FormCsp_execute'));
 
+			HookRegistry::register('quicksubmitform::validate', array($this, 'QuickSubmitFormCsp_validate'));
+
 			HookRegistry::register('submissionsubmitstep2form::Constructor', array($this, 'SubmissionSubmitStep2FormCsp_constructor'));
 
 			// Consider the new field for ArticleDAO for storage
@@ -111,6 +113,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('managefinaldraftfilesform::validate', array($this, 'managefinaldraftfilesformvalidate'));
 
 			HookRegistry::register('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
+
+			HookRegistry::register('LensGalleyPlugin::articleDownload', array($this, 'LensGalleyPluginArticleDownload'));
 		}
 		return $success;
 	}
@@ -136,6 +140,95 @@ class CspSubmissionPlugin extends GenericPlugin {
 		import('plugins.generic.cspSubmission.class.' . $matches['class']);
 		$class = new $matches['class']($this);
 		call_user_func(array($class, $matches["method"]),$arguments[1]);
+	}
+
+	public function string_between_two_string($str, $starting_word, $ending_word)
+	{
+		$subtring_start = strpos($str, $starting_word);
+		$subtring_start += strlen($starting_word);
+		$size = strpos($str, $ending_word, $subtring_start) - $subtring_start;
+		return substr($str, $subtring_start, $size);
+	}
+
+	public function LensGalleyPluginArticleDownload($hookName, $args){
+		$request = Application::get()->getRequest();
+		list($submission, $galley) = $args;
+		$hooks = HookRegistry::getHooks("ArticleHandler::download");
+		foreach ($hooks as $hookList) {
+			foreach ($hookList as $hook) {
+				if(is_a($hook[0], LensGalleyPlugin::class)){
+					$lensGalley = $hook[0];
+					break 2;
+				}
+			}
+		}
+		$sectionId = $args[0]->_data["publications"][0]->_data["sectionId"];
+		$locale = $args[1]->_data["locale"];
+		$xmlContents = $lensGalley->_getXMLContents($request, $galley);
+
+		if($sectionId == 1){
+			if($locale == "en_US"){
+				$articleTitle = $this->string_between_two_string($xmlContents, '<trans-title-group xml:lang="en">', '</trans-title-group>');
+				$titleGroup = $this->string_between_two_string($xmlContents, '<title-group>','</title-group>');
+				$xmlContents = str_replace($titleGroup, '<article-title>'.$articleTitle.'</article-title>', $xmlContents);
+
+				$abstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
+				$transAbstract = $this->string_between_two_string($xmlContents, '<trans-abstract xml:lang="en">','</trans-abstract>');
+				$xmlContents = str_replace($abstract, $transAbstract, $xmlContents);
+
+				$keyWords = $this->string_between_two_string($xmlContents, '</trans-abstract>', '<counts>');
+				$transKeyWord = $this->string_between_two_string($xmlContents, '<kwd-group xml:lang="en">','</kwd-group>');
+				$xmlContents = str_replace($keyWords, '<kwd-group xml:lang="en">'.$transKeyWord.'</kwd-group>', $xmlContents);
+			}
+			if($locale == "es_ES"){
+				$articleTitle = $this->string_between_two_string($xmlContents, '<trans-title-group xml:lang="es">', '</trans-title-group>');
+				$titleGroup = $this->string_between_two_string($xmlContents, '<title-group>','</title-group>');
+				$xmlContents = str_replace($titleGroup, '<article-title>'.$articleTitle.'</article-title>', $xmlContents);
+
+				$abstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
+				$transAbstract = $this->string_between_two_string($xmlContents, '<trans-abstract xml:lang="es">','</trans-abstract>');
+				$xmlContents = str_replace($abstract, $transAbstract, $xmlContents);
+
+				$keyWords = $this->string_between_two_string($xmlContents, '</trans-abstract>', '<counts>');
+				$transKeyWord = $this->string_between_two_string($xmlContents, '<kwd-group xml:lang="es">','</kwd-group>');
+				$xmlContents = str_replace($keyWords, '<kwd-group xml:lang="es">'.$transKeyWord.'</kwd-group>', $xmlContents);
+			}
+		}else{
+			if($locale == "en_US"){
+				$articleMeta = $this->string_between_two_string($xmlContents, '<article-meta>', '</article-meta>');
+				$articleFrontStubEN = $this->string_between_two_string($xmlContents, 'xml:lang="en">','<body>');
+				$bodyPT = $this->string_between_two_string($xmlContents, '</front>','<back>');
+				$bodyEN = $this->string_between_two_string($xmlContents, '</front-stub>','</sub-article>');
+
+				$xmlContents = str_replace($articleMeta, $articleFrontStubEN, $xmlContents);
+				$xmlContents = str_replace($bodyPT, $bodyEN, $xmlContents);
+			}
+			if($locale == "es_ES"){
+				$articleMeta = $this->string_between_two_string($xmlContents, '<article-meta>', '</article-meta>');
+				$articleFrontStubEN = $this->string_between_two_string($xmlContents, 'xml:lang="en">','<body>');
+				$bodyPT = $this->string_between_two_string($xmlContents, '</front>','<back>');
+				$bodyEN = $this->string_between_two_string($xmlContents, '</front-stub>','</sub-article>');
+
+				$xmlContents = str_replace($bodyEN, '', $xmlContents);
+				$xmlContents = str_replace($articleFrontStubEN, '', $xmlContents);
+
+				$articleFrontStubES = $this->string_between_two_string($xmlContents, 'xml:lang="es">','<body>');
+				$bodyES = $this->string_between_two_string($xmlContents, '</front-stub>','</sub-article>');
+
+				$xmlContents = str_replace($articleMeta, $articleFrontStubES, $xmlContents);
+				$xmlContents = str_replace($bodyPT, $bodyES, $xmlContents);
+			}
+		}
+
+		header('Content-Type: application/xml');
+		header('Content-Length: ' . strlen($xmlContents));
+		header('Content-Disposition: inline');
+		header('Cache-Control: private');
+		header('Pragma: public');
+		echo $xmlContents;
+		$returner = true;
+		HookRegistry::call('LensGalleyPlugin::articleDownloadFinished', array(&$returner));
+		return true;
 	}
 
 	// Quando é inserido um arquivo aberto em Arquivos de Versão Final o status é alterado para Envio de Carta de aprovação
@@ -1225,7 +1318,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($reviewStageId or $request->_router->_op == "addQuery" or $request->_router->_op == "editQuery" or $request->_router->_op == "updateQuery") {
 			return;
 		}
-		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') || strpos($_SERVER["HTTP_REFERER"], 'workflow/index') || strpos($_SERVER["HTTP_REFERER"], 'authorDashboard/submission')) {
+		$x = $_SERVER["HTTP_REFERER"];
+		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') ||
+			strpos($_SERVER["HTTP_REFERER"], 'workflow/index') ||
+			strpos($_SERVER["HTTP_REFERER"], 'authorDashboard/submission') ||
+			strpos($_SERVER["HTTP_REFERER"], 'QuickSubmitPlugin')) {
 			$refObject   = new ReflectionObject($args[1]);
 			$refColumns = $refObject->getProperty('columns');
 			$refColumns->setAccessible( true );
@@ -1386,13 +1483,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
 		}
 
-		$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
-		$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
-		$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
-		$output .= $smarty->fetch($this->getTemplateResource('consideracoesEticas.tpl'));
-		$output .= $smarty->fetch($this->getTemplateResource('ensaiosClinicos.tpl'));
-
-
+		if (strpos($request->getRequestPath(), 'QuickSubmitPlugin')) {
+			$output .= $smarty->fetch($this->getTemplateResource('doi.tpl'));
+		}else{
+			$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('consideracoesEticas.tpl'));
+			$output .= $smarty->fetch($this->getTemplateResource('ensaiosClinicos.tpl'));
+		}
 		return false;
 	}
 
