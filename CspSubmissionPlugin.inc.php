@@ -165,20 +165,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$sectionId = $args[0]->_data["publications"][0]->_data["sectionId"];
 		$locale = $args[1]->_data["locale"];
 		$xmlContents = $lensGalley->_getXMLContents($request, $galley);
-
-		if($sectionId == 1){
+		$sections = array(1, 4, 6, 7, 8, 9);
+		if(in_array($sectionId, $sections)){
 			if($locale == "en_US"){
-				$articleTitle = $this->string_between_two_string($xmlContents, '<trans-title-group xml:lang="en">', '</trans-title-group>');
-				$titleGroup = $this->string_between_two_string($xmlContents, '<title-group>','</title-group>');
-				$xmlContents = str_replace($titleGroup, '<article-title>'.$articleTitle.'</article-title>', $xmlContents);
+				if(strpos($xmlContents,'<sub-article article-type="translation" id="s1" xml:lang="en">')){
+					$EnglishContent = $this->string_between_two_string($xmlContents, '<sub-article article-type="translation" id="s1" xml:lang="en">', '</sub-article>');
+					$EnglishBoby = $this->string_between_two_string($EnglishContent, '<body>', '</body>');
+					$EnglishAcknowledgments = $this->string_between_two_string($EnglishContent, '<ack>', '</ack>');
+					$EnglishTitle = $this->string_between_two_string($EnglishContent, '<article-title>', '</article-title>');
+					$ENabstract = $this->string_between_two_string($EnglishContent, '<abstract>', '</abstract>');
+					$primaryLangBoby = $this->string_between_two_string($xmlContents, '<body>', '</body>');
+					$primaryLangAcknowledgments = $this->string_between_two_string($xmlContents, '<ack>', '</ack>');
+					$primaryLangTitle = $this->string_between_two_string($xmlContents, '<article-title>', '</article-title>');
+					$primaryLangAbstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
 
-				$abstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
-				$transAbstract = $this->string_between_two_string($xmlContents, '<trans-abstract xml:lang="en">','</trans-abstract>');
-				$xmlContents = str_replace($abstract, $transAbstract, $xmlContents);
+					$xmlContents = str_replace($primaryLangBoby, $EnglishBoby, $xmlContents);
+					$xmlContents = str_replace($primaryLangAcknowledgments, $EnglishAcknowledgments, $xmlContents);
+					$xmlContents = str_replace($primaryLangTitle, $EnglishTitle, $xmlContents);
+					$xmlContents = str_replace($primaryLangAbstract, $ENabstract, $xmlContents);
+				}else{
+					$abstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
+					$transAbstract = $this->string_between_two_string($xmlContents, '<trans-abstract xml:lang="en">','</trans-abstract>');
+					$xmlContents = str_replace($abstract, $transAbstract, $xmlContents);
 
-				$keyWords = $this->string_between_two_string($xmlContents, '</trans-abstract>', '<counts>');
-				$transKeyWord = $this->string_between_two_string($xmlContents, '<kwd-group xml:lang="en">','</kwd-group>');
-				$xmlContents = str_replace($keyWords, '<kwd-group xml:lang="en">'.$transKeyWord.'</kwd-group>', $xmlContents);
+					$keyWords = $this->string_between_two_string($xmlContents, '</trans-abstract>', '<counts>');
+					$transKeyWord = $this->string_between_two_string($xmlContents, '<kwd-group xml:lang="en">','</kwd-group>');
+					$xmlContents = str_replace($keyWords, '<kwd-group xml:lang="en">'.$transKeyWord.'</kwd-group>', $xmlContents);
+				}
 			}
 			if($locale == "es_ES"){
 				$articleTitle = $this->string_between_two_string($xmlContents, '<trans-title-group xml:lang="es">', '</trans-title-group>');
@@ -1336,7 +1349,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$join->on('u.email', '=', 'p.email');
 			});
 			$cspQuery->whereNull('u.email');
-			$cspQuery->whereIn('p.permissao', [0,2,3]);
+			$cspQuery->whereIn('p.permissao', [0,1,2,3]);
 
 			$refSearchPhrase = $refObject->getProperty('searchPhrase');
 			$refSearchPhrase->setAccessible( true );
