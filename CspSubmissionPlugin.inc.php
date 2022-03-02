@@ -1331,7 +1331,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($reviewStageId or $request->_router->_op == "addQuery" or $request->_router->_op == "editQuery" or $request->_router->_op == "updateQuery") {
 			return;
 		}
-		$x = $_SERVER["HTTP_REFERER"];
+
 		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') ||
 			strpos($_SERVER["HTTP_REFERER"], 'workflow/index') ||
 			strpos($_SERVER["HTTP_REFERER"], 'authorDashboard/submission') ||
@@ -1351,6 +1351,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$cspQuery->whereNull('u.email');
 			$cspQuery->whereIn('p.permissao', [0,1,2,3]);
 
+			$cspQueryAutor = Capsule::table(Capsule::raw('csp.Autor a'));
+			$cspQueryAutor->leftJoin('users as u', function ($join) {
+				$join->on('u.email', '=', 'a.email');
+			});
+
 			$refSearchPhrase = $refObject->getProperty('searchPhrase');
 			$refSearchPhrase->setAccessible( true );
 			$words = $refSearchPhrase->getValue($args[1]);
@@ -1362,6 +1367,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 							$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "%{$word}%")
 								->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "%{$word}%")
 								->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "%{$word}%");
+						});
+						$cspQueryAutor->where(function($q) use ($word) {
+							$q->where(Capsule::raw('lower(a.nome)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(a.email)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(a.orcid)'), 'LIKE', "%{$word}%");
 						});
 					}
 				}
@@ -1384,6 +1394,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$refCountOnly->setAccessible( true );
 				if ($refCountOnly->getValue($args[1])) {
 					$cspQuery->select(['p.idPessoa']);
+					$cspQueryAutor->select(['a.idAutor']);
 					$args[0]->select(['u.user_id'])
 						->groupBy('u.user_id');
 				}
@@ -1411,6 +1422,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 				foreach ($columnsNames as $name => $value) {
 					$cspQuery->addSelect(Capsule::raw($value . ' AS ' . $name));
 				}
+
+				// assign custom values to columns
+				$columnsNames['user_id'] = "CONCAT('CSP|',a.idAutor)";
+				$columnsNames['email'] = 'a.email';
+				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1)";
+				$columnsNames['user_family'] = "TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) )";
+				$columnsNames['instituicao'] = 'a.instituicao1';
+				$columnsNames['type'] = '\'csp\'';
+				foreach ($columnsNames as $name => $value) {
+					$cspQueryAutor->addSelect(Capsule::raw($value . ' AS ' . $name));
+				}
+
 				$args[0]->select($columns)
 					->groupBy('u.user_id', 'user_given', 'user_family');
 			}
@@ -1421,11 +1444,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 					{$args[0]->toSql()}
 					UNION
 					{$cspQuery->toSql()}
+					UNION
+					{$cspQueryAutor->toSql()}
 				) as u
 				QUERY
 			));
 			$subOjsQuery->mergeBindings($args[0]);
 			$subOjsQuery->mergeBindings($cspQuery);
+			$subOjsQuery->mergeBindings($cspQueryAutor);
 			$refColumns->setValue($args[1], ['*']);
 			$args[0] = $subOjsQuery;
 		}
