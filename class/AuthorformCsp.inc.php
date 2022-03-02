@@ -23,14 +23,35 @@ class AuthorformCsp extends AbstractPlugin
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$userCsp = $userDao->retrieve(
 				<<<QUERY
-				SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
+				SELECT
+					*
+				FROM
+					(
+					SELECT
+						SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
 						TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
-						email, orcid,
+						email,
+						orcid,
 						TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
-					FROM csp.Pessoa p
-					WHERE p.idPessoa = ?
+					FROM
+						csp.Pessoa p
+					WHERE
+						p.idPessoa = ?
+					UNION
+					SELECT
+						SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1) as given_name,
+						TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) ) family_name,
+						email,
+						orcid,
+						TRIM(CONCAT(a.instituicao1, ' ', a.instituicao2)) AS affiliation
+					FROM
+						csp.Autor a
+					WHERE
+						a.idAutor = ?
+				) AS u
+				LIMIT 1
 				QUERY,
-				[(int) $request->getUserVar('userId')]
+				[(int) $request->getUserVar('userId'), (int) $request->getUserVar('userId')]
 			)->GetRowAssoc(0);
 			$form->setData('givenName', [$locale => $userCsp['given_name']]);
 			$form->setData('familyName', [$locale => $userCsp['family_name']]);
