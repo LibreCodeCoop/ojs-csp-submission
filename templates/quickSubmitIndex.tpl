@@ -78,27 +78,21 @@
 				{fbvFormSection id='schedulePublicationDiv' list="false"}
 					{fbvFormArea id="schedulingInformation" title="editor.article.scheduleForPublication"}
 						{fbvFormSection for="schedule"}
-							{fbvElement type="select" required=true id="issueId" from=$issueOptions selected=$issueId translate=false label="editor.article.scheduleForPublication.toBeAssigned"}
+							{fbvElement type="select" required=true id="issueId" from=$issueOptions selected=$issueId translate=false}
 						{/fbvFormSection}
 					{/fbvFormArea}
 
-{* 					{fbvFormArea id="pagesInformation" title="editor.issues.pages"}
-						{fbvFormSection for="customExtras"}
-							{fbvElement type="text" id="pages" label="editor.issues.pages" value=$pages inline=true size=$fbvStyles.size.MEDIUM}
+					{fbvFormArea id="schedulingInformationDatePublished"}
+						{fbvFormSection for="dateSubmitted" title="plugins.themes.csp.dates.received" inline=true required=true}
+							{fbvElement type="text" required=true id="dateSubmitted" value=$dateSubmitted translate=false inline=true size=$fbvStyles.size.LARGE class="datepicker"}
 						{/fbvFormSection}
-					{/fbvFormArea} *}
-
-					{fbvFormArea id="schedulingInformationDatePublished" title="editor.issues.published"}
-						{fbvFormSection for="publishedDate"}
-							{fbvElement type="text" required=true id="datePublished" value=$datePublished translate=false label="editor.issues.published" inline=true size=$fbvStyles.size.MEDIUM class="datepicker"}
+						{fbvFormSection for="dateAccepted" title="plugins.themes.csp.dates.accepted" inline=true required=true}
+							{fbvElement type="text" required=true id="dateAccepted" value=$dateAccepted translate=false inline=true size=$fbvStyles.size.LARGE class="datepicker"}
+						{/fbvFormSection}
+						{fbvFormSection for="datePublished" title="editor.issues.published" inline=true required=true}
+							{fbvElement type="text" required=true id="datePublished" value=$datePublished translate=false inline=true size=$fbvStyles.size.LARGE class="datepicker"}
 						{/fbvFormSection}
 					{/fbvFormArea}
-
-{* 					{fbvFormArea id="permissions" title="submission.permissions"}
-						{fbvElement type="text" id="licenseUrl" label="submission.licenseURL" value=$licenseUrl}
-						{fbvElement type="text" id="copyrightHolder" label="submission.copyrightHolder" value=$copyrightHolder multilingual=true size=$fbvStyles.size.MEDIUM inline=true}
-						{fbvElement type="text" id="copyrightYear" label="submission.copyrightYear" value=$copyrightYear size=$fbvStyles.size.SMALL inline=true}
-					{/fbvFormArea} *}
 				{/fbvFormSection}
 
 			{/fbvFormSection}

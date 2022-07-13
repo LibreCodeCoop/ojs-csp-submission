@@ -35,4 +35,24 @@ class QuickSubmitFormCsp extends AbstractPlugin
 		}
 	}
 
+	function execute($params){
+		$request = Application::get()->getRequest();
+		$editorDecision = array(
+			'decision' => 1,
+			'dateDecided' => $request->getUserVar('dateAccepted')
+		);
+		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO'); /* @var $editDecisionDao EditDecisionDAO */
+		$editDecisionDao->updateEditorDecision($request->getUserVar('submissionId'), $editorDecision);
+
+		$params[1]->_data["dateSubmitted"] = $request->getUserVar('dateSubmitted');
+
+	}
+
+	function readuservars($params){
+		$request = Application::get()->getRequest();
+		$params[1][] = "dateAccepted";
+		$params[1][] = "dateSubmitted";
+
+	}
+
 }

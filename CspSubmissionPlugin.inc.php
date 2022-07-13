@@ -54,6 +54,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('submissionsubmitstep3form::execute', array($this, 'SubmissionSubmitStep3FormCsp_execute'));
 
 			HookRegistry::register('quicksubmitform::validate', array($this, 'QuickSubmitFormCsp_validate'));
+			HookRegistry::register('quicksubmitform::readuservars', array($this, 'QuickSubmitFormCsp_readuservars'));
+			HookRegistry::register('quicksubmitform::execute', array($this, 'QuickSubmitFormCsp_execute'));
 
 			HookRegistry::register('submissionsubmitstep2form::Constructor', array($this, 'SubmissionSubmitStep2FormCsp_constructor'));
 
@@ -115,6 +117,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
 
 			HookRegistry::register('LensGalleyPlugin::articleDownload', array($this, 'LensGalleyPluginArticleDownload'));
+
 		}
 		return $success;
 	}
