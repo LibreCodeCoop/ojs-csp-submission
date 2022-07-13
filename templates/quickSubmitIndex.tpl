@@ -56,8 +56,8 @@
 		{/if}
 
 		{include file="submission/form/section.tpl" readOnly=$formParams.readOnly}
-		{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFields.tpl"}
-		{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFields.tpl"}
+		{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFieldsQuickSubmit.tpl"}
+		{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFieldsQuickSubmit.tpl"}
 
 		{fbvFormArea id="contributors"}
 			<!--  Contributors -->
