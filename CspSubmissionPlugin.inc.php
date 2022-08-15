@@ -116,8 +116,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
 
-			HookRegistry::register('LensGalleyPlugin::articleDownload', array($this, 'LensGalleyPluginArticleDownload'));
-
 		}
 		return $success;
 	}
@@ -143,108 +141,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		import('plugins.generic.cspSubmission.class.' . $matches['class']);
 		$class = new $matches['class']($this);
 		call_user_func(array($class, $matches["method"]),$arguments[1]);
-	}
-
-	public function string_between_two_string($str, $starting_word, $ending_word)
-	{
-		$subtring_start = strpos($str, $starting_word);
-		$subtring_start += strlen($starting_word);
-		$size = strpos($str, $ending_word, $subtring_start) - $subtring_start;
-		return substr($str, $subtring_start, $size);
-	}
-
-	public function LensGalleyPluginArticleDownload($hookName, $args){
-		$request = Application::get()->getRequest();
-		list($submission, $galley) = $args;
-		$hooks = HookRegistry::getHooks("ArticleHandler::download");
-		foreach ($hooks as $hookList) {
-			foreach ($hookList as $hook) {
-				if(is_a($hook[0], LensGalleyPlugin::class)){
-					$lensGalley = $hook[0];
-					break 2;
-				}
-			}
-		}
-		$sectionId = $args[0]->_data["publications"][0]->_data["sectionId"];
-		$locale = $args[1]->_data["locale"];
-		$xmlContents = $lensGalley->_getXMLContents($request, $galley);
-		$sections = array(1, 4, 6, 7, 8, 9);
-		if(in_array($sectionId, $sections)){
-			if($locale == "en_US"){
-				if(strpos($xmlContents,'<sub-article article-type="translation" id="s1" xml:lang="en">')){
-					$EnglishContent = $this->string_between_two_string($xmlContents, '<sub-article article-type="translation" id="s1" xml:lang="en">', '</sub-article>');
-					$EnglishBoby = $this->string_between_two_string($EnglishContent, '<body>', '</body>');
-					$EnglishAcknowledgments = $this->string_between_two_string($EnglishContent, '<ack>', '</ack>');
-					$EnglishTitle = $this->string_between_two_string($EnglishContent, '<article-title>', '</article-title>');
-					$ENabstract = $this->string_between_two_string($EnglishContent, '<abstract>', '</abstract>');
-					$primaryLangBoby = $this->string_between_two_string($xmlContents, '<body>', '</body>');
-					$primaryLangAcknowledgments = $this->string_between_two_string($xmlContents, '<ack>', '</ack>');
-					$primaryLangTitle = $this->string_between_two_string($xmlContents, '<article-title>', '</article-title>');
-					$primaryLangAbstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
-
-					$xmlContents = str_replace($primaryLangBoby, $EnglishBoby, $xmlContents);
-					$xmlContents = str_replace($primaryLangAcknowledgments, $EnglishAcknowledgments, $xmlContents);
-					$xmlContents = str_replace($primaryLangTitle, $EnglishTitle, $xmlContents);
-					$xmlContents = str_replace($primaryLangAbstract, $ENabstract, $xmlContents);
-				}else{
-					$abstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
-					$transAbstract = $this->string_between_two_string($xmlContents, '<trans-abstract xml:lang="en">','</trans-abstract>');
-					$xmlContents = str_replace($abstract, $transAbstract, $xmlContents);
-
-					$keyWords = $this->string_between_two_string($xmlContents, '</trans-abstract>', '<counts>');
-					$transKeyWord = $this->string_between_two_string($xmlContents, '<kwd-group xml:lang="en">','</kwd-group>');
-					$xmlContents = str_replace($keyWords, '<kwd-group xml:lang="en">'.$transKeyWord.'</kwd-group>', $xmlContents);
-				}
-			}
-			if($locale == "es_ES"){
-				$articleTitle = $this->string_between_two_string($xmlContents, '<trans-title-group xml:lang="es">', '</trans-title-group>');
-				$titleGroup = $this->string_between_two_string($xmlContents, '<title-group>','</title-group>');
-				$xmlContents = str_replace($titleGroup, '<article-title>'.$articleTitle.'</article-title>', $xmlContents);
-
-				$abstract = $this->string_between_two_string($xmlContents, '<abstract>', '</abstract>');
-				$transAbstract = $this->string_between_two_string($xmlContents, '<trans-abstract xml:lang="es">','</trans-abstract>');
-				$xmlContents = str_replace($abstract, $transAbstract, $xmlContents);
-
-				$keyWords = $this->string_between_two_string($xmlContents, '</trans-abstract>', '<counts>');
-				$transKeyWord = $this->string_between_two_string($xmlContents, '<kwd-group xml:lang="es">','</kwd-group>');
-				$xmlContents = str_replace($keyWords, '<kwd-group xml:lang="es">'.$transKeyWord.'</kwd-group>', $xmlContents);
-			}
-		}else{
-			if($locale == "en_US"){
-				$articleMeta = $this->string_between_two_string($xmlContents, '<article-meta>', '</article-meta>');
-				$articleFrontStubEN = $this->string_between_two_string($xmlContents, 'xml:lang="en">','<body>');
-				$bodyPT = $this->string_between_two_string($xmlContents, '</front>','<back>');
-				$bodyEN = $this->string_between_two_string($xmlContents, '</front-stub>','</sub-article>');
-
-				$xmlContents = str_replace($articleMeta, $articleFrontStubEN, $xmlContents);
-				$xmlContents = str_replace($bodyPT, $bodyEN, $xmlContents);
-			}
-			if($locale == "es_ES"){
-				$articleMeta = $this->string_between_two_string($xmlContents, '<article-meta>', '</article-meta>');
-				$articleFrontStubEN = $this->string_between_two_string($xmlContents, 'xml:lang="en">','<body>');
-				$bodyPT = $this->string_between_two_string($xmlContents, '</front>','<back>');
-				$bodyEN = $this->string_between_two_string($xmlContents, '</front-stub>','</sub-article>');
-
-				$xmlContents = str_replace($bodyEN, '', $xmlContents);
-				$xmlContents = str_replace($articleFrontStubEN, '', $xmlContents);
-
-				$articleFrontStubES = $this->string_between_two_string($xmlContents, 'xml:lang="es">','<body>');
-				$bodyES = $this->string_between_two_string($xmlContents, '</front-stub>','</sub-article>');
-
-				$xmlContents = str_replace($articleMeta, $articleFrontStubES, $xmlContents);
-				$xmlContents = str_replace($bodyPT, $bodyES, $xmlContents);
-			}
-		}
-
-		header('Content-Type: application/xml');
-		header('Content-Length: ' . strlen($xmlContents));
-		header('Content-Disposition: inline');
-		header('Cache-Control: private');
-		header('Pragma: public');
-		echo $xmlContents;
-		$returner = true;
-		HookRegistry::call('LensGalleyPlugin::articleDownloadFinished', array(&$returner));
-		return true;
 	}
 
 	// Quando é inserido um arquivo aberto em Arquivos de Versão Final o status é alterado para Envio de Carta de aprovação
