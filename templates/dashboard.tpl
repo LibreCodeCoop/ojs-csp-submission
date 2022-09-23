@@ -1,28 +1,29 @@
 {**
  * templates/dashboard/index.tpl
  *
- * Copyright (c) 2014-2020 Simon Fraser University
- * Copyright (c) 2003-2020 John Willinsky
+ * Copyright (c) 2014-2021 Simon Fraser University
+ * Copyright (c) 2003-2021 John Willinsky
  * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
  *
  * Dashboard index.
  *}
  
 
-{include file="common/header.tpl" pageTitle=""}
+{extends file="layouts/backend.tpl"}
 
 {assign var="uuid" value=""|uniqid|escape}
 
+{block name="page"}
 <div id="dashboard-{$uuid}">
 	{if $substage}
-		<tabs>
+		<tabs :track-history="true">
 			<tab id="myQueue" label="{translate key="dashboard.myQueue"}" :badge="components.{$smarty.const.SUBMISSIONS_LIST_MY_QUEUE}.itemsMax">
 				{help file="submissions" class="pkp_help_tab"}
 				<submissions-list-panel v-bind="components.{$smarty.const.SUBMISSIONS_LIST_MY_QUEUE}"@set="set"/>
 			</tab>
 		</tabs>
 	{else}
-		<tabs>
+		<tabs :track-history="true">
 			<tab label="{translate key="dashboard.myQueue"}">
 			<div class="pkp_form">
 				<fieldset id="userFormCompactLeft">
@@ -71,4 +72,4 @@
 	pkp.registry.init('dashboard-{$uuid}', 'Container', {$containerData|json_encode});
 </script>
 
-{include file="common/footer.tpl"}
+{/block}
