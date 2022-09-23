@@ -30,7 +30,8 @@ class SubmissionCsp extends AbstractPlugin
 			WHERE YEAR(date_submitted) = YEAR(now())
 			QUERY
 		);
-		$args[0]->setData('codigoArtigo', $result->GetRowAssoc(false)['code']);
+		$row = $result->current();
+		$args[0]->_data["codigoArtigo"] = $row->code;
 		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
 
 		$userDao->retrieve(

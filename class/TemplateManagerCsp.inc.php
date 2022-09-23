@@ -220,7 +220,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 											and date_status <= '$date')";
 
 		$result = $userDao->retrieve($sql);
-		$count = $result->GetRowAssoc(false);
-		return $count["contador"];
+		$count = $result->current();
+		return $count->contador;
 	}
 }

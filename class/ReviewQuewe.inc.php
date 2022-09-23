@@ -55,7 +55,7 @@ class ReviewQuewe extends ScheduledTask
             SQL
         );
         while (!$result->EOF) {
-            $reviewAssignment = $this->reviewAssignmentDao->_fromRow($result->GetRowAssoc(false));
+            $reviewAssignment = $this->reviewAssignmentDao->_fromRow($result->current());
             if (!$reviewAssignment->getDateConfirmed()) {
                 $incrementedResponseDue = strtotime(
                     $reviewAssignment->getDateResponseDue() . ' + ' . $this->args['incrementDays'] . ' days'
@@ -159,7 +159,7 @@ class ReviewQuewe extends ScheduledTask
         );
         $return = [];
         while (!$result->EOF) {
-            $row = $result->GetRowAssoc(false);
+            $row = $result->current();
             $return[$row['review_round_id']][] = $row;
             $result->MoveNext();
         }
@@ -186,7 +186,7 @@ class ReviewQuewe extends ScheduledTask
         );
         $return = [];
         while (!$result->EOF) {
-            $row = $result->GetRowAssoc(false);
+            $row = $result->current();
             $return[$row['review_round_id']][] = $row;
             $result->MoveNext();
         }

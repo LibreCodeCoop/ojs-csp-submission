@@ -52,7 +52,7 @@ class AuthorformCsp extends AbstractPlugin
 				LIMIT 1
 				QUERY,
 				[(int) $request->getUserVar('userId'), (int) $request->getUserVar('userId')]
-			)->GetRowAssoc(0);
+			)->current();
 			$form->setData('givenName', [$locale => $userCsp['given_name']]);
 			$form->setData('familyName', [$locale => $userCsp['family_name']]);
 			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);

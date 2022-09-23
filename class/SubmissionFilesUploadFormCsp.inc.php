@@ -38,7 +38,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					array((string)$locale, (string)'SUBMISSAO_PDF')
 				);
 				while (!$result->EOF) {
-					$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+					$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
 					$result->MoveNext();
 				}
 				$templateMgr->setData('submissionFileGenres', $genreList);
@@ -65,7 +65,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				array((string)$locale, (string)'AVAL_AVALIADOR%')
 			);
 			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+				$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
 				$result->MoveNext();
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -93,7 +93,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				);
 			}
 			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+				$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
 				$result->MoveNext();
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -107,7 +107,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				array((string)$locale, (string)'EDITORACAO_DIAGRM%')
 			);
 			while (!$result->EOF) {
-				$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+				$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
 				$result->MoveNext();
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
@@ -174,7 +174,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					);
 				}
 				while (!$result->EOF) {
-					$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+					$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
 					$result->MoveNext();
 				}
 				$templateMgr->setData('submissionFileGenres', $genreList);
@@ -197,7 +197,7 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 						array((string)$locale,(string)'PEND_TEC_%')
 					);
 					while (!$result->EOF) {
-						$genreList[$result->GetRowAssoc(0)['genre_id']] = $result->GetRowAssoc(0)['setting_value'];
+						$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
 						$result->MoveNext();
 					}
 					$templateMgr->setData('submissionFileGenres', $genreList);

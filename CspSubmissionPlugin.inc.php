@@ -362,12 +362,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 				sha1($request->getUserVar('password'))
 			]
 		);
-		if (!$result->RecordCount()) {
+		if (!$result->current()) {
 			$args[0].= ' OR email = ?';
 			$args[1] = [$args[1][0], $args[1][0]];
 			return false;
 		}
-		$row = $result->GetRowAssoc(false);
+		$row = $result->current();
 		$user = $userDao->newDataObject(); /** @var User */
 		$user->setAllData($row);
 		$user->setGivenName($row['givenname'], $row['locales']);
@@ -413,7 +413,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			   AND review_round_id = ?
 			SQL,
 			[$reviewRoundId]
-		)->GetRowAssoc(false)['total'];
+		)->current()['total'];
 
 		$inQueue = $this->getReviewersInQueue($reviewRoundId);
 		$totalToAssingNow = 3 - $assigned - count($reviewerIds);
@@ -649,7 +649,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			import('plugins.generic.cspSubmission.controllers.grid.users.reviewer.ReviewerQueueGridRow');
 			$columns = $templateMgr->getVariable('columns');
 			while (!$result->EOF) {
-				$data = $result->GetRowAssoc(0);
+				$data = $result->current();
 				$user = $userDao->getById($data['user_id']);
 				$data['user'] = $user;
 
@@ -1028,8 +1028,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$i = 0;
 				while (!$result->EOF) {
 					$i++;
-					$templateSubject[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['subject'];
-					$templateBody[$result->GetRowAssoc(0)['email_key']] = $result->GetRowAssoc(0)['body'];
+					$templateSubject[$result->current()['email_key']] = $result->current()['subject'];
+					$templateBody[$result->current()['email_key']] = $result->current()['body'];
 
 					$result->MoveNext();
 				}
@@ -1308,7 +1308,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					array((string)'ojs', (string)'users')
 				);
 				while (!$result->EOF) {
-					$columnsNames[$result->GetRowAssoc(0)['column_name']] = 'null';
+					$columnsNames[$result->current()['column_name']] = 'null';
 					$result->MoveNext();
 				}
 				// assign custom values to columns
@@ -1401,7 +1401,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * Insert Campo1 field into author submission step 3 and metadata edit form
 	 */
 	function metadataFieldEdit($hookName, $params) {
-
 		$submissionDAO = Application::getSubmissionDAO();
 		$request = \Application::get()->getRequest();
 		/** @val Submission */
