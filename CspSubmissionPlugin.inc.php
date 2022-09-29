@@ -1401,9 +1401,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 * Insert Campo1 field into author submission step 3 and metadata edit form
 	 */
 	function metadataFieldEdit($hookName, $params) {
-		$submissionDAO = Application::getSubmissionDAO();
 		$request = \Application::get()->getRequest();
-		/** @val Submission */
+		if(!strpos($request->_requestPath, "QuickSubmitPlugin")){
+		$submissionDAO = Application::getSubmissionDAO();
 		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 		$publication = $submission->getCurrentPublication();
 		$sectionId = $publication->getData('sectionId');
@@ -1430,6 +1430,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$output .= $smarty->fetch($this->getTemplateResource('ensaiosClinicos.tpl'));
 		}
 		return false;
+		}
 	}
 
 	function submissionfiledaodelegateAdditionalFieldNames($hookName, $params) {

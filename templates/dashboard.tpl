@@ -68,8 +68,4 @@
 		</tabs>
 	{/if}
 </div>
-<script type="text/javascript">
-	pkp.registry.init('dashboard-{$uuid}', 'Container', {$containerData|json_encode});
-</script>
-
 {/block}

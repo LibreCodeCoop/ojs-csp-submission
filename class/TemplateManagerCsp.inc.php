@@ -23,8 +23,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 				'priority' => STYLE_SEQUENCE_LAST,
 			)
 		);
-
-		if($args[1] == "plugins-plugins-importexport-quickSubmit-importexport-quickSubmit:index.tpl"){
+		if(strpos($args[1], "quickSubmit")){
 			$args[1] = '../plugins/generic/cspSubmission/templates/quickSubmitIndex.tpl';
 			$templateManager->assign('abstractDisplay', true);
 			$templateManager->assign('sourceEnabled', false);
