@@ -31,10 +31,10 @@ class SubmissionCsp extends AbstractPlugin
 			QUERY
 		);
 		$row = $result->current();
-		$args[0]->_data["codigoArtigo"] = $row->code;
+		$args[0]->setData('codigoArtigo', $row->code);
 		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
 
-		$userDao->retrieve(
+		$userDao->update(
 			'INSERT INTO csp_status (submission_id, status, date_status) VALUES (?,?,?)',
 			array((int)$args[0]->getData('id'), (string)'em_progresso',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'))
 		);
@@ -44,7 +44,7 @@ class SubmissionCsp extends AbstractPlugin
 	public function delete($args)
 	{
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->retrieve(
+		$userDao->update(
 			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'deletada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$args[0]->getData('id'))
 		);

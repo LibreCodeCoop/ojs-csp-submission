@@ -21,13 +21,15 @@ class SubmissionSubmitStep2FormCsp extends AbstractPlugin
 	function constructor($params)
 	{
 		$request = \Application::get()->getRequest();
-		$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-		$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
 
-		if(!empty($submissionFiles)){
-			foreach ($submissionFiles as $submissionFile) {
-				$name = $submissionFile->getLocalizedName();
-				if(str_contains($name, 'Corpo_do_Texto')){
+		$submissionFilesIterator = Services::get('submissionFile')->getMany([
+			'submissionIds' => [$request->getUserVar('submissionId')],
+		]);
+
+		if(!empty($submissionFilesIterator)){
+			foreach ($submissionFilesIterator as $submissionFile) {
+				$genres = DAORegistry::getDAO('GenreDAO')->getById($submissionFile->getData('genreId'));
+				if(str_contains($genres->getLocalizedData('name'), "Corpo do Texto")){
 					$corpoTexto = true;
 				}
 			}
