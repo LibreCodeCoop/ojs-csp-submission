@@ -848,7 +848,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 						'CoautorListPanel',
 						__('plugins.generic.CspSubmission.searchForAuthor'),
 						[
-							'apiUrl' => $request->getDispatcher()->url($request, ROUTE_API, $request->getContext()->getPath(), 'users'),
 							'getParams' => [
 								'roleIds' => [ROLE_ID_AUTHOR],
 								'orderBy' => 'givenName',
@@ -880,7 +879,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$templateMgr->assign('title',$submission->getTitle(AppLocale::getLocale()));
 			import('lib.pkp.classes.linkAction.request.OpenWindowAction');
-			$templateMgr->tpl_vars['reviewerActions']->value[] = 
+			$templateMgr->tpl_vars['reviewerActions']->value[] =
 				new LinkAction(
 					'consultPubMed',
 					new OpenWindowAction(
@@ -1222,9 +1221,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function pkp_services_pkpuserservice_getmany($hookName, $args)
 	{
+		return;
 		$request = \Application::get()->getRequest();
-		$refObject   = new ReflectionObject($args[1]);
-		$refReviewStageId = $refObject->getProperty('reviewStageId');
+		$PKPUserQueryBuilder = new ReflectionObject($args[1]);
+		$refReviewStageId = $PKPUserQueryBuilder->getProperty('reviewStageId');
 		$refReviewStageId->setAccessible( true );
 		$reviewStageId = $refReviewStageId->getValue($args[1]);
 		if ($reviewStageId or $request->_router->_op == "addQuery" or $request->_router->_op == "editQuery" or $request->_router->_op == "updateQuery") {
@@ -1235,13 +1235,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			strpos($_SERVER["HTTP_REFERER"], 'workflow/index') ||
 			strpos($_SERVER["HTTP_REFERER"], 'authorDashboard/submission') ||
 			strpos($_SERVER["HTTP_REFERER"], 'QuickSubmitPlugin')) {
-			$refObject   = new ReflectionObject($args[1]);
+			$refObject   = new ReflectionObject($args[0]);
 			$refColumns = $refObject->getProperty('columns');
 			$refColumns->setAccessible( true );
-			$columns = $refColumns->getValue($args[1]);
+			$columns = $refColumns->getValue($args[0]);
 			$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
 			$columns[] = Capsule::raw('\'ojs\' AS type');
-			$refColumns->setValue($args[1], $columns);
+			$refColumns->setValue($args[0], $columns);
 
 			$cspQuery = Capsule::table(Capsule::raw('csp.Pessoa p'));
 			$cspQuery->leftJoin('users as u', function ($join) {
@@ -1255,7 +1255,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$join->on('u.email', '=', 'a.email');
 			});
 
-			$refSearchPhrase = $refObject->getProperty('searchPhrase');
+			$refSearchPhrase = $PKPUserQueryBuilder->getProperty('searchPhrase');
 			$refSearchPhrase->setAccessible( true );
 			$words = $refSearchPhrase->getValue($args[1]);
 			if ($words) {
@@ -1263,14 +1263,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (count($words)) {
 					foreach ($words as $word) {
 						$cspQuery->where(function($q) use ($word) {
-							$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "%{$word}%")
-								->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "%{$word}%")
-								->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "%{$word}%");
+							$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "'%{$word}%'")
+								->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "'%{$word}%'")
+								->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "'%{$word}%'");
 						});
 						$cspQueryAutor->where(function($q) use ($word) {
-							$q->where(Capsule::raw('lower(a.nome)'), 'LIKE', "%{$word}%")
-								->orWhere(Capsule::raw('lower(a.email)'), 'LIKE', "%{$word}%")
-								->orWhere(Capsule::raw('lower(a.orcid)'), 'LIKE', "%{$word}%");
+							$q->where(Capsule::raw('lower(a.nome)'), 'LIKE', "'%{$word}%'")
+								->orWhere(Capsule::raw('lower(a.email)'), 'LIKE', "'%{$word}%'")
+								->orWhere(Capsule::raw('lower(a.orcid)'), 'LIKE', "'%{$word}%'");
 						});
 					}
 				}
@@ -1307,9 +1307,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 					AND TABLE_NAME = ?',
 					array((string)'ojs', (string)'users')
 				);
-				while (!$result->EOF) {
-					$columnsNames[$result->current()['column_name']] = 'null';
-					$result->MoveNext();
+				foreach ($result as $row) {
+					$columnsNames[$row->COLUMN_NAME] = 'null';
 				}
 				// assign custom values to columns
 				$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";

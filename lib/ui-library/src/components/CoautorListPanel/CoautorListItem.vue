@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import ListPanelItem from '@/components/ListPanel/ListPanelItem.vue';
+import ListPanelItem from '@csp/components/ListPanel/ListPanelItem.vue';
 import List from '@/components/List/List.vue';
 import ListItem from '@/components/List/ListItem.vue';
 import Icon from '@/components/Icon/Icon.vue';
