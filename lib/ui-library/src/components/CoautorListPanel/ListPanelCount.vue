@@ -7,7 +7,7 @@
 <script>
 export default {
 	name: 'ListPanelCount',
-	props: ['count', 'total', 'i18n'],
+	props: ['count', 'total'],
 	computed: {
 		countString: function() {
 			if (this.total) {
@@ -16,9 +16,7 @@ export default {
 					total: this.total
 				});
 			} else {
-				return this.__('itemCount', {
-					count: this.count
-				});
+				return this.count + ' autores';
 			}
 		}
 	}

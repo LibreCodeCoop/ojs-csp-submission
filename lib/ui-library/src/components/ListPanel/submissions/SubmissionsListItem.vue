@@ -3,25 +3,37 @@
 		<div class="pkp_controllers_grid">
 			<table>
 				<tbody>
-					<tr id="component-grid-issues-backissuegrid-row-3" class="gridRow orderable">
+					<tr
+						id="component-grid-issues-backissuegrid-row-3"
+						class="gridRow orderable"
+					>
 						<td style="text-align: center; width:8%">
-							<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
+							<a
+								:href="item.urlWorkflow"
+								class="pkpListPanelItem--submission__link"
+							>
 								{{ item.codigoArtigo }}
 							</a>
 						</td>
 						<td style="width:30%">
-							<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
+							<a
+								:href="item.urlWorkflow"
+								class="pkpListPanelItem--submission__link"
+							>
 								{{
-								localizeSubmission(
-									currentPublication.title,
-									currentPublication.locale
-								)
-							}}
+									localizeSubmission(
+										currentPublication.title,
+										currentPublication.locale
+									)
+								}}
 							</a>
 						</td>
 						<td style="width:20%">
 							<span id="cell-3-numArticles" class="gridCellContainer">
-								<a :href="item.urlWorkflow" class="pkpListPanelItem--submission__link">
+								<a
+									:href="item.urlWorkflow"
+									class="pkpListPanelItem--submission__link"
+								>
 									{{ currentPublication.authorsStringShort }}
 								</a>
 							</span>
@@ -31,47 +43,87 @@
 								<list-item>
 									{{ currentStageLabel }}
 								</list-item>
-								<list-item v-if="currentUserCanViewInfoCenter && (notice || noticeActionLabels[index])">
+								<list-item
+									v-if="
+										currentUserCanViewInfoCenter &&
+											(notice || noticeActionLabels[index])
+									"
+								>
 									{{ notice }}
 									{{ noticeActionLabels[index] }}
 								</list-item>
 								<list-item v-if="currentUserIsReviewer">
-									<div class="pkpListPanelItem--submission__stage pkpListPanelItem--submission__stage--reviewer">
+									<div
+										class="pkpListPanelItem--submission__stage pkpListPanelItem--submission__stage--reviewer"
+									>
 										<a :href="item.urlWorkflow" tabindex="-1">
-											<div v-if="currentUserLatestReviewAssignment.responsePending" class="pkpListPanelItem--submission__dueDate">
-												<div :aria-labelledby="responseDueLabelId" class="pkpListPanelItem--submission__dueDateValue">
+											<div
+												v-if="currentUserLatestReviewAssignment.responsePending"
+												class="pkpListPanelItem--submission__dueDate"
+											>
+												<div
+													:aria-labelledby="responseDueLabelId"
+													class="pkpListPanelItem--submission__dueDateValue"
+												>
 													{{ currentUserLatestReviewAssignment.responseDue }}
 												</div>
-												<div :id="responseDueLabelId" class="pkpListPanelItem--submission__dueDateLabel">
+												<div
+													:id="responseDueLabelId"
+													class="pkpListPanelItem--submission__dueDateLabel"
+												>
 													{{ i18n.responseDue }}
 												</div>
 											</div>
-											<div v-if="currentUserLatestReviewAssignment.reviewPending" class="pkpListPanelItem--submission__dueDate">
-												<div :aria-labelledby="reviewDueLabelId" class="pkpListPanelItem--submission__dueDateValue">
+											<div
+												v-if="currentUserLatestReviewAssignment.reviewPending"
+												class="pkpListPanelItem--submission__dueDate"
+											>
+												<div
+													:aria-labelledby="reviewDueLabelId"
+													class="pkpListPanelItem--submission__dueDateValue"
+												>
 													{{ currentUserLatestReviewAssignment.due }}
 												</div>
-												<div :id="reviewDueLabelId" class="pkpListPanelItem--submission__dueDateLabel">
+												<div
+													:id="reviewDueLabelId"
+													class="pkpListPanelItem--submission__dueDateLabel"
+												>
 													{{ i18n.reviewDue }}
 												</div>
 											</div>
-											<div v-if="currentUserLatestReviewAssignment.reviewCancelled" class="pkpListPanelItem--submission__reviewCancelled">
+											<div
+												v-if="currentUserLatestReviewAssignment.reviewCancelled"
+												class="pkpListPanelItem--submission__reviewCancelled"
+											>
 												{{ i18n.reviewCancelled }}
 											</div>
-											<div v-if="currentUserLatestReviewAssignment.reviewComplete" class="pkpListPanelItem--submission__reviewComplete">
+											<div
+												v-if="currentUserLatestReviewAssignment.reviewComplete"
+												class="pkpListPanelItem--submission__reviewComplete"
+											>
 												{{ i18n.reviewComplete }}
 											</div>
 										</a>
 									</div>
 								</list-item>
-								<list-item v-if="isReviewStage && completedReviewsCount != 0 && currentUserCanViewInfoCenter">
-										{{ completedReviewsCount }}/{{ currentReviewAssignments.length }}
-										{{ i18n.reviewsCompleted }}
+								<list-item
+									v-if="
+										isReviewStage &&
+											completedReviewsCount != 0 &&
+											currentUserCanViewInfoCenter
+									"
+								>
+									{{ completedReviewsCount }}/{{
+										currentReviewAssignments.length
+									}}{{ i18n.reviewsCompleted }}
 								</list-item>
 								<list-item v-if="!isSubmissionStage && activeStage.files.count">
 									{{ activeStage.files.count }}
 									{{ activeStageFilesLabel }}
 								</list-item>
-								<list-item v-if="!item.submissionProgress && openQueryCount != 0">
+								<list-item
+									v-if="!item.submissionProgress && openQueryCount != 0"
+								>
 									{{ openQueryCount }}
 									{{ i18n.discussions }}
 								</list-item>
@@ -83,28 +135,42 @@
 						<td style="text-align: center; width:10%">
 							<list>
 								<list-item>
-									{{inactiveDays}}
+									{{ inactiveDays }}
 								</list-item>
 							</list>
 						</td>
 						<td>
-							<button v-if="!currentUserIsReviewer" @click="toggleExpanded" class="pkpListPanelItem__expander">
+							<button
+								v-if="!currentUserIsReviewer"
+								@click="toggleExpanded"
+								class="pkpListPanelItem__expander"
+							>
 								<icon v-if="isExpanded" icon="angle-up" />
 								<icon v-else icon="angle-down" />
 								<span v-if="isExpanded" class="-screenReader">
-									{{ __('viewLess', {name: currentPublication.authorsStringShort}) }}
+									{{
+										__('viewLess', {
+											name: currentPublication.authorsStringShort
+										})
+									}}
 								</span>
 								<span v-else class="-screenReader">
-									{{ __('viewMore', {name: currentPublication.authorsStringShort}) }}
+									{{
+										__('viewMore', {
+											name: currentPublication.authorsStringShort
+										})
+									}}
 								</span>
 							</button>
 						</td>
 					</tr>
 				</tbody>
 			</table>
-		</div>	
-		<div v-if="isExpanded" class="pkpListPanelItem__details pkpListPanelItem__details--submission">
-
+		</div>
+		<div
+			v-if="isExpanded"
+			class="pkpListPanelItem__details pkpListPanelItem__details--submission"
+		>
 			<div class="pkpListPanelItem__actions">
 				<pkp-button
 					element="a"
@@ -145,7 +211,7 @@
 </template>
 
 <script>
-import ListPanelItem from '@/components/ListPanel/ListPanelItem.vue';
+import ListPanelItem from '@csp/components/ListPanel/ListPanelItem.vue';
 import List from '@/components/List/List.vue';
 import ListItem from '@/components/List/ListItem.vue';
 import PkpButton from '@/components/Button/Button.vue';
@@ -257,20 +323,25 @@ export default {
 			return false;
 		},
 
-		inactiveDays(){
-			
+		inactiveDays() {
 			const _MS_PER_DAY = 1000 * 60 * 60 * 24;
-			
+
 			var date1 = new Date(this.item.dateLastActivity);
 			var date2 = new Date();
 
 			// Discard the time and time-zone information.
-			const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
-			const utc2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
+			const utc1 = Date.UTC(
+				date1.getFullYear(),
+				date1.getMonth(),
+				date1.getDate()
+			);
+			const utc2 = Date.UTC(
+				date2.getFullYear(),
+				date2.getMonth(),
+				date2.getDate()
+			);
 
 			return Math.floor((utc2 - utc1) / _MS_PER_DAY);
-
-
 		},
 		/**
 		 * The current stage
@@ -1007,11 +1078,11 @@ export default {
 	color: @yes;
 }
 .list {
-	border-top:unset !important;
+	border-top: unset !important;
 	box-shadow: unset !important;
 	border-radius: unset !important;
 }
-#myQueue .pkp_controllers_grid{
+#myQueue .pkp_controllers_grid {
 	margin-bottom: unset !important;
 }
 </style>

@@ -34,19 +34,8 @@ class CoautorListPanel extends ListPanel {
 
 		$config['getParams'] = $this->getParams;
 
-		$config['i18n'] = array_merge([
-			'title' => __($this->title),
-			'search' => __('common.search'),
-			'clearSearch' => __('common.clearSearch'),
-			'itemCount' => __('author.list.count'),
-			'itemsOfTotal' => __('author.list.itemsOfTotal'),
-			'loadMore' => __('grid.action.moreItems'),
-			'loading' => __('common.loading'),
-			'filter' => __('common.filter'),
-			'filterRemove' => __('common.filterRemove'),
-			'notFoundAndCreate' => __('plugins.generic.CspSubmission.authorNotFoundCreate'),
-			'informAName' => __('plugins.generic.CspSubmission.informAName'),
-		], $config['i18n']);
+		$config['searchPhrase'] = 'Buscando um troço';
+		$config['apiUrl'] = $request->getDispatcher()->url($request, ROUTE_API, $request->getContext()->getPath(), 'users');
 
 		// Attach a CSRF token for post requests
 		$config['csrfToken'] = $request->getSession()->getCSRFToken();

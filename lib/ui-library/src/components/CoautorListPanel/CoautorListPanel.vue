@@ -7,8 +7,8 @@
 			<template slot="actions">
 				<search
 					:searchPhrase="searchPhrase"
-					:searchLabel="i18n.search"
-					:clearSearchLabel="i18n.clearSearch"
+					:searchLabel="__('common.search')"
+					:clearSearchLabel="__('common.clearSearch')"
 					@search-phrase-changed="setSearchPhrase"
 				/>
 			</template>
@@ -25,7 +25,6 @@
 						@addFilter="addFilter"
 						:key="item.id"
 						:item="item"
-						:i18n="i18n"
 						:fillUser="fillUser"
 					/>
 				</template>
@@ -45,7 +44,7 @@
 				:class="classLoadingMore"
 			>
 				<a class="pkpListPanel__loadMoreButton">
-					{{ i18n.informAName }}
+					Informe um nome
 				</a>
 			</div>
 			<div
@@ -54,16 +53,15 @@
 				:class="classLoadingMore"
 			>
 				<a class="pkpListPanel__loadMoreButton" @click="newAuthor">
-					{{ i18n.notFoundAndCreate }}
+					Autor não encontrado, cadastrar
 				</a>
 			</div>
 			<list-panel-load-more
-				v-if="lastPage > 1"
+				v-if="items.length < itemsMax"
 				@loadMore="loadMore"
 				:isLoading="isLoading"
-				:i18n="i18n"
 			/>
-			<list-panel-count :count="items.length" :total="itemsMax" :i18n="i18n" />
+			<ListPanelCount :count="items.length" :total="itemsMax" />
 		</div>
 	</div>
 </template>
@@ -74,6 +72,7 @@ import ListPanelCount from '@csp/components/CoautorListPanel/ListPanelCount.vue'
 import ListPanelLoadMore from '@csp/components/CoautorListPanel/ListPanelLoadMore.vue';
 import Search from '@/components/Search/Search.vue';
 import CoautorListItem from '@csp/components/CoautorListPanel/CoautorListItem.vue';
+import fetch from '@/mixins/fetch';
 
 export default {
 	extends: ListPanel,
@@ -83,6 +82,7 @@ export default {
 		ListPanelLoadMore,
 		Search
 	},
+	mixins: [fetch],
 	props: {
 		minWordsToSearch: {
 			type: Number,
@@ -91,11 +91,22 @@ export default {
 		fillUser: {
 			type: String,
 			required: true
+		},
+		itemsMax: {
+			type: Number,
+			default() {
+				return 0;
+			}
+		},
+		apiUrl: {
+			type: String
 		}
 	},
 	data() {
 		return {
-			originalApiUrl: ''
+			originalApiUrl: '',
+			classes: '',
+			searchPhrase: ''
 		};
 	},
 	computed: {
@@ -104,27 +115,35 @@ export default {
 		}
 	},
 	methods: {
-		setSearchPhrase: function(value) {
-			if (value.length <= this.minWordsToSearch) {
-				if (!this.originalApiUrl) {
-					this.originalApiUrl = this.apiUrl;
-				}
-				this.$emit('set', this.id, {
-					apiUrl: null,
-					searchPhrase: value,
-					items: [],
-					itemsMax: 0
-				});
-			} else if (this.originalApiUrl.length) {
-				this.$emit('set', this.id, {
-					apiUrl: this.originalApiUrl,
-					searchPhrase: value
-				});
-			} else {
-				this.$emit('set', this.id, {
-					searchPhrase: value
-				});
-			}
+		// setSearchPhrase(searchPhrase) {
+		// 	// this.searchPhrase = searchPhrase;
+		// 	if (searchPhrase.length <= this.minWordsToSearch) {
+		// 		if (!this.originalApiUrl) {
+		// 			this.originalApiUrl = this.apiUrl;
+		// 		}
+		// 		this.$emit('set', this.id, {
+		// 			apiUrl: null,
+		// 			searchPhrase: searchPhrase,
+		// 			items: [],
+		// 			itemsMax: 0
+		// 		});
+		// 	} else if (this.originalApiUrl.length) {
+		// 		this.$emit('set', this.id, {
+		// 			apiUrl: this.originalApiUrl,
+		// 			searchPhrase: searchPhrase
+		// 		});
+		// 	} else {
+		// 		this.$emit('set', this.id, {
+		// 			searchPhrase: searchPhrase
+		// 		});
+		// 	}
+		// },
+		setItems(items, itemsMax) {
+			console.log([items, itemsMax]);
+			this.$emit('set', this.id, {
+				items,
+				itemsMax
+			});
 		},
 		newAuthor: function(e) {
 			e.preventDefault();
@@ -165,7 +184,7 @@ export default {
 <style lang="less">
 @import '../../styles/variables';
 .pkpListPanel__loadMore {
-	position: absolute;
+	position: unset;
 	top: 0;
 	left: 0;
 	right: 0;
@@ -175,7 +194,7 @@ export default {
 
 .pkpListPanel__loadMoreButton,
 .pkpListPanel__loadMoreNotice {
-	position: absolute;
+	position: unset;
 	top: 0;
 	left: 0;
 	right: 0;

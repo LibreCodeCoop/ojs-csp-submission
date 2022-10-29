@@ -2,11 +2,11 @@
 	<div class="pkpListPanel__loadMore" :class="classLoadingMore">
 		<a href="#" class="pkpListPanel__loadMoreButton" @click="loadMore">
 			<icon icon="chevron-down" :inline="true" />
-			{{ i18n.loadMore }}
+			{{ __('grid.action.moreItems') }}
 		</a>
 		<span class="pkpListPanel__loadMoreNotice">
 			<span class="pkpSpinner" aria-hidden="true"></span>
-			{{ i18n.loading }}
+			{{ __('common.loading') }}
 		</span>
 	</div>
 </template>
@@ -18,7 +18,11 @@ export default {
 	components: {
 		Icon
 	},
-	props: ['isLoading', 'i18n'],
+	props: {
+		isLoading: {
+			type: String
+		}
+	},
 	computed: {
 		classLoadingMore: function() {
 			return {
@@ -42,7 +46,7 @@ export default {
 
 <style lang="less">
 .pkpListPanel__loadMore {
-	position: absolute;
+	position: unset;
 	top: 0;
 	left: 0;
 	right: 0;
