@@ -19,6 +19,7 @@
 			<!-- Content -->
 			<div class="pkpListPanel__content" aria-live="polite">
 				<!-- Items -->
+				
 				<template v-if="items.length">
 					<coautor-list-item
 						v-for="item in items"
@@ -139,11 +140,8 @@ export default {
 		// 	}
 		// },
 		setItems(items, itemsMax) {
-			console.log([items, itemsMax]);
-			this.$emit('set', this.id, {
-				items,
-				itemsMax
-			});
+			this.items = items;
+			this.itemsMax = itemsMax;
 		},
 		newAuthor: function(e) {
 			e.preventDefault();
