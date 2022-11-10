@@ -53,11 +53,11 @@ class AuthorformCsp extends AbstractPlugin
 				QUERY,
 				[(int) $request->getUserVar('userId'), (int) $request->getUserVar('userId')]
 			)->current();
-			$form->setData('givenName', [$locale => $userCsp['given_name']]);
-			$form->setData('familyName', [$locale => $userCsp['family_name']]);
-			$form->setData('affiliation', [$locale => $userCsp['affiliation']]);
-			$form->setData('email', $userCsp['email']);
-			$form->setData('orcid', $userCsp['orcid']);
+			$form->setData('givenName', [$locale => $userCsp->given_name]);
+			$form->setData('familyName', [$locale => $userCsp->family_name]);
+			$form->setData('affiliation', [$locale => $userCsp->affiliation]);
+			$form->setData('email', $userCsp->email);
+			$form->setData('orcid', $userCsp->orcid);
 		}elseif($form->getAuthor() != null){
 			$form->setTemplate($this->plugin->getTemplateResource('authorFormAdd.tpl'));
 			$author = $form->_author;

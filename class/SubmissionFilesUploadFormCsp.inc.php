@@ -37,9 +37,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					WHERE locale = ? AND entry_key = ?',
 					array((string)$locale, (string)'SUBMISSAO_PDF')
 				);
-				while (!$result->EOF) {
-					$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
-					$result->MoveNext();
+				foreach ($result as $row) {
+					$genreList[$row->genre_id] = $row->setting_value;
 				}
 				$templateMgr->setData('submissionFileGenres', $genreList);
 				$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
@@ -64,9 +63,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'AVAL_AVALIADOR%')
 			);
-			while (!$result->EOF) {
-				$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
 			$templateMgr->setData('isReviewAttachment', false); // SETA A VARIÁVEL PARA FALSE POIS ELA É VERIFICADA NO TEMPLATE PARA EXIBIR OS COMPONENTES
@@ -92,9 +90,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					array((string)$locale, (string)'EDICAO_ASSIST_ED%')
 				);
 			}
-			while (!$result->EOF) {
-				$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
 		}elseif ($fileStage == 10) { // Upload de PDF para publicação
@@ -106,9 +103,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 				WHERE locale = ? AND entry_key LIKE ?',
 				array((string)$locale, (string)'EDITORACAO_DIAGRM%')
 			);
-			while (!$result->EOF) {
-				$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
-				$result->MoveNext();
+			foreach ($result as $row) {
+				$genreList[$row->genre_id] = $row->setting_value;
 			}
 			$templateMgr->setData('submissionFileGenres', $genreList);
 		}elseif ($fileStage == 11) { // Upload de arquivo em box "Arquivos prontos para layout"
@@ -173,9 +169,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 						array((string)$locale,(string)'EDITORACAO_ASSIST_ED%')
 					);
 				}
-				while (!$result->EOF) {
-					$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
-					$result->MoveNext();
+				foreach ($result as $row) {
+					$genreList[$row->genre_id] = $row->setting_value;
 				}
 				$templateMgr->setData('submissionFileGenres', $genreList);
 			}elseif($stageId == 4){
@@ -196,9 +191,8 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 						WHERE locale = ? AND entry_key LIKE ?',
 						array((string)$locale,(string)'PEND_TEC_%')
 					);
-					while (!$result->EOF) {
-						$genreList[$result->current()['genre_id']] = $result->current()['setting_value'];
-						$result->MoveNext();
+					foreach ($result as $row) {
+						$genreList[$row->genre_id] = $row->setting_value;
 					}
 					$templateMgr->setData('submissionFileGenres', $genreList);
 				}else{
