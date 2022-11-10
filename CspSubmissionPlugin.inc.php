@@ -546,12 +546,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($component == 'api.file.ManageFileApiHandler') {
 			$locale = AppLocale::getLocale();
 			$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
-			$reviewRound = $reviewRoundDao->getById($request->_requestVars["reviewRoundId"]);
+			$reviewRound = $reviewRoundDao->getById($request->getUserVar('reviewRoundId'));
 			$version = $reviewRound->_data["round"] == "" ? '1' : $reviewRound->_data["round"];
 
 			$submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-			$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
-			$fileVersion = $request->_requestVars["fileId"].'-1';
+			$submissionFiles = $submissionFileDao->getByBestId(null, $request->getUserVar('submissionId'));
+			$fileVersion = $request->getUserVar('fileId').'-1';
 			$originalFileName = $submissionFiles[$fileVersion]->_data["originalFileName"];
 			$originalFileNameArray = explode('.',$originalFileName);
 
@@ -1221,7 +1221,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function pkp_services_pkpuserservice_getmany($hookName, $args)
 	{
-		return;
 		$request = \Application::get()->getRequest();
 		$PKPUserQueryBuilder = new ReflectionObject($args[1]);
 		$refReviewStageId = $PKPUserQueryBuilder->getProperty('reviewStageId');
@@ -1230,7 +1229,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($reviewStageId or $request->_router->_op == "addQuery" or $request->_router->_op == "editQuery" or $request->_router->_op == "updateQuery") {
 			return;
 		}
-
+		$args[0]->orders = null;
 		if (strpos($_SERVER["HTTP_REFERER"], 'submission/wizard') ||
 			strpos($_SERVER["HTTP_REFERER"], 'workflow/index') ||
 			strpos($_SERVER["HTTP_REFERER"], 'authorDashboard/submission') ||
@@ -1263,14 +1262,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (count($words)) {
 					foreach ($words as $word) {
 						$cspQuery->where(function($q) use ($word) {
-							$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "'%{$word}%'")
-								->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "'%{$word}%'")
-								->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "'%{$word}%'");
+							$q->where(Capsule::raw('lower(p.nome)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(p.email)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(p.orcid)'), 'LIKE', "%{$word}%");
 						});
 						$cspQueryAutor->where(function($q) use ($word) {
-							$q->where(Capsule::raw('lower(a.nome)'), 'LIKE', "'%{$word}%'")
-								->orWhere(Capsule::raw('lower(a.email)'), 'LIKE', "'%{$word}%'")
-								->orWhere(Capsule::raw('lower(a.orcid)'), 'LIKE', "'%{$word}%'");
+							$q->where(Capsule::raw('lower(a.nome)'), 'LIKE', "%{$word}%")
+								->orWhere(Capsule::raw('lower(a.email)'), 'LIKE', "'{$word}%")
+								->orWhere(Capsule::raw('lower(a.orcid)'), 'LIKE', "%{$word}%");
 						});
 					}
 				}
@@ -1313,8 +1312,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				// assign custom values to columns
 				$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";
 				$columnsNames['email'] = 'p.email';
-				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
-				$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
+				//$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
+				//$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
 				$columnsNames['instituicao'] = 'p.instituicao1';
 				$columnsNames['type'] = '\'csp\'';
 				foreach ($columnsNames as $name => $value) {
@@ -1324,16 +1323,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 				// assign custom values to columns
 				$columnsNames['user_id'] = "CONCAT('CSP|',a.idAutor)";
 				$columnsNames['email'] = 'a.email';
-				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1)";
-				$columnsNames['user_family'] = "TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) )";
+				//$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1)";
+				//$columnsNames['user_family'] = "TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) )";
 				$columnsNames['instituicao'] = 'a.instituicao1';
 				$columnsNames['type'] = '\'csp\'';
 				foreach ($columnsNames as $name => $value) {
 					$cspQueryAutor->addSelect(Capsule::raw($value . ' AS ' . $name));
 				}
 
-				$args[0]->select($columns)
-					->groupBy('u.user_id', 'user_given', 'user_family');
+				$args[0]->select($columns)->groupBy('u.user_id');
 			}
 
 			$subOjsQuery = Capsule::table(Capsule::raw(
