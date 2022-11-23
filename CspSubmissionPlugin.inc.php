@@ -1238,6 +1238,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$refColumns = $refObject->getProperty('columns');
 			$refColumns->setAccessible( true );
 			$columns = $refColumns->getValue($args[0]);
+			$columns[] = Capsule::raw("COALESCE(ui1.setting_value, ui2.setting_value) AS user_given");
+			$columns[] = Capsule::raw(" CASE
+											WHEN ui1.setting_value <> '' THEN ui2.setting_value
+											ELSE ui1.setting_value
+										END AS user_family");
 			$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
 			$columns[] = Capsule::raw('\'ojs\' AS type');
 			$refColumns->setValue($args[0], $columns);
@@ -1312,8 +1317,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				// assign custom values to columns
 				$columnsNames['user_id'] = "CONCAT('CSP|',p.idPessoa)";
 				$columnsNames['email'] = 'p.email';
-				//$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
-				//$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
+				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
+				$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
 				$columnsNames['instituicao'] = 'p.instituicao1';
 				$columnsNames['type'] = '\'csp\'';
 				foreach ($columnsNames as $name => $value) {
@@ -1323,8 +1328,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 				// assign custom values to columns
 				$columnsNames['user_id'] = "CONCAT('CSP|',a.idAutor)";
 				$columnsNames['email'] = 'a.email';
-				//$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1)";
-				//$columnsNames['user_family'] = "TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) )";
+				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1)";
+				$columnsNames['user_family'] = "TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) )";
 				$columnsNames['instituicao'] = 'a.instituicao1';
 				$columnsNames['type'] = '\'csp\'';
 				foreach ($columnsNames as $name => $value) {
