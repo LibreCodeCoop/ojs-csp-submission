@@ -1404,27 +1404,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function metadataFieldEdit($hookName, $params) {
 		$request = \Application::get()->getRequest();
-		if(!strpos($request->_requestPath, "QuickSubmitPlugin")){
-		$submissionDAO = Application::getSubmissionDAO();
-		$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
-		$publication = $submission->getCurrentPublication();
-		$sectionId = $publication->getData('sectionId');
-
 		$smarty =& $params[1];
 		$output =& $params[2];
-
-		if($sectionId == 5){ // Espaço temático
-			$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
-			$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
-		}
-
-		if($sectionId == 15){ // Comentários
-			$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
-		}
-
 		if (strpos($request->getRequestPath(), 'QuickSubmitPlugin')) {
 			$output .= $smarty->fetch($this->getTemplateResource('doi.tpl'));
 		}else{
+			$submissionDAO = Application::getSubmissionDAO();
+			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
+			$publication = $submission->getCurrentPublication();
+			$sectionId = $publication->getData('sectionId');
+			if($sectionId == 5){ // Espaço temático
+				$output .= $smarty->fetch($this->getTemplateResource('tema.tpl'));
+				$output .= $smarty->fetch($this->getTemplateResource('codigoTematico.tpl'));
+			}
+			if($sectionId == 15){ // Comentários
+				$output .= $smarty->fetch($this->getTemplateResource('codigoArtigoRelacionado.tpl'));
+			}
 			$output .= $smarty->fetch($this->getTemplateResource('conflitoInteresse.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('agradecimentos.tpl'));
 			$output .= $smarty->fetch($this->getTemplateResource('InclusaoAutores.tpl'));
@@ -1432,7 +1427,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$output .= $smarty->fetch($this->getTemplateResource('ensaiosClinicos.tpl'));
 		}
 		return false;
-		}
 	}
 
 	function submissionfiledaodelegateAdditionalFieldNames($hookName, $params) {

@@ -25,8 +25,6 @@
 	</script>
 
 	<div id="quickSubmitPlugin" class="app__contentPanel">
-		<p>{translate key="plugins.importexport.quickSubmit.descriptionLong"}</p>
-
 		<form class="pkp_form" id="quickSubmitForm" method="post" action="{plugin_url path="saveSubmit"}">
 			<input type="hidden" name="reloadForm" id="reloadForm" value="0" />
 
