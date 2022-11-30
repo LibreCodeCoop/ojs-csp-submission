@@ -116,6 +116,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
 
+			HookRegistry::register('pkp\services\pkpsubmissionservice::_getmany', array($this, 'PkpSubmissionServiceCsp_getmany'));
+
 		}
 		return $success;
 	}
