@@ -81,11 +81,11 @@ class SubmissionCsp extends AbstractPlugin
 					$qb->where('sc.date_status', '<=', date('Y-m-d H:i:s', strtotime('-2 months')));
 				}
 			}
-			$qb->wheres[1]["values"][0] = $status;
+			// $qb->wheres[1]["values"][0] = $status;
 			$qb->bindings["where"][1] = $status;
-			if ($role == "Gerente") {
-				unset($qb->joins[0]->wheres[1]);
-			}
+			// if ($role == "Gerente") {
+			// 	unset($qb->joins[0]->wheres[1]);
+			// }
 			if ($role == "Autor") {
 				$qb->where('sa.user_group_id', '=', 14);
 			}

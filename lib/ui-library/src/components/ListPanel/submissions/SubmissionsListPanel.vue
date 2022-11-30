@@ -1,13 +1,11 @@
 <template>
 	<div class="submissionsListPanel">
-		yyyyyyy
 		<list-panel
 			:isSidebarVisible="isSidebarVisible"
 			:items="items"
 			class="listPanel--submissions"
 		>
 			<pkp-header slot="header">
-				header
 				<spinner v-if="isLoading" />
 				<template slot="actions">
 					<search
@@ -25,7 +23,6 @@
 			</pkp-header>
 
 			<template slot="sidebar">
-				sidebar
 				<pkp-header :isOneLine="false">
 					<h3>
 						<icon icon="filter" :inline="true" />
@@ -54,7 +51,6 @@
 			</template>
 
 			<template slot="itemsEmpty">
-				itemsEmpty
 				<template v-if="isLoading">
 					<spinner />
 					{{ __('common.loading') }}
@@ -65,7 +61,6 @@
 			</template>
 
 			<template v-slot:item="{item}">
-				{{ item }}
 				<slot name="item" :item="item">
 					<submissions-list-item
 						:key="item.id"
@@ -122,7 +117,8 @@ import PkpFilterSlider from '@/components/Filter/FilterSlider.vue';
 import PkpFilterAutosuggest from '@/components/Filter/FilterAutosuggest.vue';
 import PkpHeader from '@/components/Header/Header.vue';
 import Search from '@/components/Search/Search.vue';
-import SubmissionsListItem from '@csp/components/ListPanel/submissions/SubmissionsListItem.vue';
+// import SubmissionsListItem from '@csp/components/ListPanel/submissions/SubmissionsListItem.vue';
+import SubmissionsListItem from '@/components/ListPanel/submissions/SubmissionsListItem.vue';
 import fetch from '@/mixins/fetch';
 
 export default {
