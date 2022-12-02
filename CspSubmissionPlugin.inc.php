@@ -1356,7 +1356,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$subOjsQuery->mergeBindings($cspQuery);
 			$subOjsQuery->mergeBindings($cspQueryAutor);
 			$refColumns->setValue($args[1], ['*']);
+			$subOjsQuery->groupBy('u.instituicao');
+			$subOjsQuery->groupBy('u.user_given');
+			$subOjsQuery->groupBy('u.user_family');
 			$args[0] = $subOjsQuery;
+
 		}
 	}
 
