@@ -28,6 +28,8 @@ class TemplateManagerCsp extends AbstractPlugin {
 			$templateManager->assign('abstractDisplay', true);
 			$templateManager->assign('sourceEnabled', false);
 			$templateManager->assign('agenciesEnabled', false);
+			$templateManager->assign('subjectsEnabled', false);
+
 		}
 		if ($args[1] == "workflow/workflow.tpl" or $args[1] == "authorDashboard/authorDashboard.tpl") {
 			$path = $request->getRequestPath();

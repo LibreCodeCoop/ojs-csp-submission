@@ -20,11 +20,7 @@
 {else}
 	{assign var=citationsEnabled value=false}
 {/if}
-{if $coverageEnabled || $typeEnabled || $sourceEnabled || $rightsEnabled || $languagesEnabled || $subjectsEnabled || $keywordsEnabled || $citationsEnabled || $disciplinesEnabled}
-	{* {fbvFormSection title="submission.metadata"}
-		<p class="description">{translate key="submission.metadataDescription"}</p>
-	{/fbvFormSection} *}
-{/if}
+
 {if $coverageEnabled || $typeEnabled || $sourceEnabled || $rightsEnabled}
 	{fbvFormArea id="additionalDublinCore"}
 		{if $coverageEnabled}
