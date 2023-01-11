@@ -37,14 +37,28 @@ class QuickSubmitFormCsp extends AbstractPlugin
 
 	function execute($params){
 		$request = Application::get()->getRequest();
+		$dateDecided = $request->getUserVar('dateAccepted') ? $request->getUserVar('dateAccepted') : date('Y-m-d H:i:s');
+		$dateSubmitted = $request->getUserVar('dateSubmitted') ? $request->getUserVar('dateSubmitted') : date('Y-m-d H:i:s');
 		$editorDecision = array(
 			'decision' => 1,
-			'dateDecided' => $request->getUserVar('dateAccepted')
+			'dateDecided' => $dateDecided
 		);
 		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO'); /* @var $editDecisionDao EditDecisionDAO */
 		$editDecisionDao->updateEditorDecision($request->getUserVar('submissionId'), $editorDecision);
+		$params[1]->_data["dateSubmitted"] = $dateSubmitted;
 
-		$params[1]->_data["dateSubmitted"] = $request->getUserVar('dateSubmitted');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		if ($request->getUserVar('dateAccepted')) {
+			$userDao->update(
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'publicada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$request->getUserVar('submissionId'))
+			);
+		}else{
+			$userDao->update(
+				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
+				array((string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$request->getUserVar('submissionId'))
+			);
+		}
 
 	}
 
