@@ -546,6 +546,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 		if ($component == 'api.file.ManageFileApiHandler') {
+			return; // Desabilita temporariamente renomação de arquivos
 			$locale = AppLocale::getLocale();
 			$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO'); /* @var $reviewRoundDao ReviewRoundDAO */
 			$reviewRound = $reviewRoundDao->getById($request->getUserVar('reviewRoundId'));
@@ -1161,6 +1162,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
+			return; // Desabilita temporariamente renomação de arquivos
 			$tplvars = $templateMgr->getFBV();
 			$locale = AppLocale::getLocale();
 			$genreId = $tplvars->_form->_submissionFile->_data["genreId"];
