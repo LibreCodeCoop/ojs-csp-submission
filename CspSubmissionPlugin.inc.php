@@ -837,11 +837,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			return true;
 		} elseif ($args[1] == 'controllers/grid/users/author/form/authorForm.tpl') {
+			$locale = AppLocale::getLocale();
 			$request = \Application::get()->getRequest();
 			$operation = $request->getRouter()->getRequestedOp($request);
 			switch ($operation) {
 				case 'addAuthor':
 					if ($request->getUserVar('userId') or $request->getUserVar('type') == 'new') {
+						$givenName = $templateMgr->getTemplateVars('givenName');
+						$familyName = $templateMgr->getTemplateVars('familyName');
+						$affiliation = $templateMgr->getTemplateVars('affiliation');
+						$formLocale = $templateMgr->getTemplateVars('formLocale');
+						$givenName[$formLocale] = $givenName[$locale];
+						$familyName[$formLocale] = $familyName[$locale];
+						$affiliation[$formLocale] = $affiliation[$locale];
+						$templateMgr->assign(array(
+													'givenName' => $givenName,
+													'familyName' => $familyName,
+													'affiliation' => $affiliation,
+												));
 						$args[4] = $templateMgr->fetch($this->getTemplateResource('authorFormAdd.tpl'));
 						return true;
 					}
@@ -1162,6 +1175,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			return true;
 
 		} elseif ($args[1] == 'controllers/wizard/fileUpload/form/submissionFileMetadataForm.tpl'){
+			$submissionFile = $templateMgr->get_template_vars('submissionFile');
+			$fileName = $submissionFile->getLocalizedData('name');
+			$fileLocale = $submissionFile->getData('locale');
+			$submissionFile->setData('name', $fileName, $fileLocale);
+
 			return; // Desabilita temporariamente renomação de arquivos
 			$tplvars = $templateMgr->getFBV();
 			$locale = AppLocale::getLocale();
