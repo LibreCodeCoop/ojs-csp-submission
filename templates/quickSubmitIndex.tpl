@@ -102,9 +102,7 @@
 							{fbvFormSection for="dateAccepted" title="plugins.themes.csp.dates.accepted" inline=true required=true}
 								{fbvElement type="text" required=true id="dateAccepted" value=$dateAccepted translate=false inline=true size=$fbvStyles.size.LARGE class="datepicker"}
 							{/fbvFormSection}
-							{fbvFormSection for="datePublished" title="editor.issues.published" inline=true required=true}
-								{fbvElement type="text" required=true id="datePublished" value=$datePublished translate=false inline=true size=$fbvStyles.size.LARGE class="datepicker"}
-							{/fbvFormSection}
+							{fbvElement type="hidden" required=true id="datePublished" value=$smarty.now|date_format:"%Y-%m-%d %H:%M:%S" translate=false inline=true size=$fbvStyles.size.LARGE class="datepicker"}
 						{/fbvFormArea}
 
 					{/fbvFormSection}
