@@ -17,7 +17,7 @@ class SubmissionCsp extends AbstractPlugin
 {
 	public function getBackendListProperties($args)
 	{
-		$args[0][] = 'codigoArtigo';
+		$args[0][] = 'submissionIdCSP';
 	}
 
 	public function add($args)
@@ -31,8 +31,8 @@ class SubmissionCsp extends AbstractPlugin
 			QUERY
 		);
 		$row = $result->current();
-		$args[0]->setData('codigoArtigo', $row->code);
-		$args[1]->_requestVars["codigoArtigo"] =  $args[0]->getData('codigoArtigo');
+		$args[0]->setData('submissionIdCSP', $row->code);
+		$args[1]->_requestVars["submissionIdCSP"] =  $args[0]->getData('submissionIdCSP');
 
 		$userDao->update(
 			'INSERT INTO csp_status (submission_id, status, date_status) VALUES (?,?,?)',
@@ -94,7 +94,7 @@ class SubmissionCsp extends AbstractPlugin
 			}
 			if($request->_requestVars['searchPhrase']){
 				$qb->orwhere([
-					['ps.setting_name','=','codigoArtigo'],
+					['ps.setting_name','=','submissionIdCSP'],
 					['ps.setting_value','like','%'.$request->getUserVar('searchPhrase').'%'],
 					]);
 			}

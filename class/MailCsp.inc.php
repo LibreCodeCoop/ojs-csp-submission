@@ -133,7 +133,7 @@ class MailCsp extends AbstractPlugin
 				$submissionId = $pathItens[6];
 				$submissionDAO = Application::getSubmissionDAO();
 				$submission = $submissionDAO->getById($submissionId);
-				$submissionIdCsp = $submission->getData('codigoArtigo');
+				$submissionIdCsp = $submission->getData('submissionIdCSP');
 
 				$userDao = DAORegistry::getDAO('UserDAO');
 				$reviewer = $userDao->getUserByEmail($args[0]->_data["from"]["email"]);
@@ -283,7 +283,7 @@ class MailCsp extends AbstractPlugin
 			$submission = $args[0]->submission;
 		}
 		if ($submission) {
-			$submissionIdCSP = $submission->getData('codigoArtigo');
+			$submissionIdCSP = $submission->getData('submissionIdCSP');
 			$args[0]->_data["body"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["body"]);
 			$args[0]->_data["subject"] = str_replace('{$submissionIdCSP}', $submissionIdCSP, $args[0]->_data["subject"]);
 		}

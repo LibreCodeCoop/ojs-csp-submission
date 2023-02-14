@@ -12,7 +12,7 @@
 								:href="item.urlWorkflow"
 								class="pkpListPanelItem--submission__link"
 							>
-								{{ item.codigoArtigo }}
+								{{ item.submissionIdCSP }}
 							</a>
 						</td>
 						<td style="width:30%">
