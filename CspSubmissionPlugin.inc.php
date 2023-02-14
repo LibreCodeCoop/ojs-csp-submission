@@ -77,6 +77,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('addparticipantform::execute', array($this, 'addparticipantformExecute'));
 
+			HookRegistry::register('Schema::get::publication', array($this, 'PublicationCsp_addToSchema'));
 			HookRegistry::register('Publication::add', array($this, 'PublicationCsp_add'));
 			HookRegistry::register('Publication::edit', array($this, 'PublicationCsp_edit'));
 			HookRegistry::register('Publication::publish', array($this, 'PublicationCsp_publish'));
@@ -676,7 +677,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			if($request->_requestVars["decision"] == 9 or $request->_requestVars["decision"] == 4){ // Recusa imediata e Recusa após avaliação
 				$submissionDAO = Application::getSubmissionDAO();
 				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
-				$submissionIdCSP = $submission->getData('codigoArtigo');
+				$submissionIdCSP = $submission->getData('submissionIdCSP');
 				$templateMgr->assign('submissionIdCSP', $submissionIdCSP);
 			}else{
 				$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
@@ -927,7 +928,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}else{
 				$mail = new MailTemplate('REVIEW_REQUEST_ONECLICK');
 			}
-			$submissionIdCSP = $submission->getData('codigoArtigo');
+			$submissionIdCSP = $submission->getData('submissionIdCSP');
 			$templateSubject['REVIEW_REQUEST_ONECLICK'] = $mail->_data["subject"];
 			$templateBody['REVIEW_REQUEST_ONECLICK'] = $mail->_data["body"];
 			$publication = $submission->getCurrentPublication();
@@ -1137,7 +1138,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$contextName = $context->getLocalizedName();
 				$submissionDAO = Application::getSubmissionDAO();
 				$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
-				$submissionIdCSP = $submission->getData('codigoArtigo');
+				$submissionIdCSP = $submission->getData('submissionIdCSP');
 
 				$comment = str_replace(
 					[
@@ -1480,7 +1481,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$submissionFiles = $submissionFileDao->getBySubmissionId($request->_requestVars["submissionId"]);
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->_requestVars["submissionId"]);
-			$submissionIdCsp = $submission->getData('codigoArtigo');
+			$submissionIdCsp = $submission->getData('submissionIdCSP');
 			$localizedName = $submissionIdCsp.'_'.$submissionFiles[$fileVersion]->getLocalizedName();
 			$args[4] = $localizedName;
 		}

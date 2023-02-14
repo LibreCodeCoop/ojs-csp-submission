@@ -47,6 +47,8 @@ class QuickSubmitFormCsp extends AbstractPlugin
 		$editDecisionDao->updateEditorDecision($request->getUserVar('submissionId'), $editorDecision);
 		$params[1]->_data["dateSubmitted"] = $dateSubmitted;
 
+		$params[1]->setData('submissionIdCSP', $request->getUserVar('submissionIdCSP'));
+
 		$userDao = DAORegistry::getDAO('UserDAO');
 		if ($request->getUserVar('dateAccepted')) {
 			$userDao->update(
@@ -66,6 +68,7 @@ class QuickSubmitFormCsp extends AbstractPlugin
 		$request = Application::get()->getRequest();
 		$params[1][] = "dateAccepted";
 		$params[1][] = "dateSubmitted";
+		$params[1][] = "submissionIdCSP";
 
 	}
 

@@ -31,6 +31,7 @@
 			{if $submissionId}
 					<input type="hidden" name="submissionId" value="{$submissionId|escape}" />
 			{/if}
+
 			{if $issuesPublicationDates}
 					{fbvElement type="hidden" id="issuesPublicationDates" value=$issuesPublicationDates}
 			{/if}
@@ -58,6 +59,10 @@
 			{/if}
 
 			{include file="submission/form/section.tpl" readOnly=$formParams.readOnly}
+
+			{fbvFormSection title="plugins.generic.CspSubmission.submission.submit.submissionIdCSP" size=$fbvStyles.size.SMALL for="submissionIdCSP" required=true}
+				{fbvElement required="true" type="text" id="submissionIdCSP" value=$submissionIdCSP translate=false}
+			{/fbvFormSection}
 
 			{* {include file="core:submission/submissionMetadataFormTitleFields.tpl"} *}
 			{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFieldsQuickSubmit.tpl"}
