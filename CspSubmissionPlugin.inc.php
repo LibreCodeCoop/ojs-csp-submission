@@ -1267,6 +1267,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 											ELSE ui1.setting_value
 										END AS user_family");
 			$columns[] = Capsule::raw("trim(concat(ui1.setting_value, ' ', COALESCE(ui2.setting_value, ''))) AS instituicao");
+			$columns[] = Capsule::raw('\'users\' AS tabela');
 			$columns[] = Capsule::raw('\'ojs\' AS type');
 			$refColumns->setValue($args[0], $columns);
 
@@ -1343,6 +1344,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1)";
 				$columnsNames['user_family'] = "TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) )";
 				$columnsNames['instituicao'] = 'p.instituicao1';
+				$columnsNames['tabela'] = '\'Pessoa\'';
 				$columnsNames['type'] = '\'csp\'';
 				foreach ($columnsNames as $name => $value) {
 					$cspQuery->addSelect(Capsule::raw($value . ' AS ' . $name));
@@ -1354,6 +1356,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$columnsNames['user_given'] = "SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1)";
 				$columnsNames['user_family'] = "TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) )";
 				$columnsNames['instituicao'] = 'a.instituicao1';
+				$columnsNames['tabela'] = '\'Autor\'';
 				$columnsNames['type'] = '\'csp\'';
 				foreach ($columnsNames as $name => $value) {
 					$cspQueryAutor->addSelect(Capsule::raw($value . ' AS ' . $name));
@@ -1396,6 +1399,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$user->setData('givenName', [$locale => $row['user_given']]);
 			}
 			$user->setData('type', $row['type']);
+			$user->setData('tabela', $row['tabela']);
 			$user->setData('instituicao', $row['instituicao']);
 		}elseif(isset($row['assigns'])){
 			$user->setData('assigns', $row['assigns']);
@@ -1423,6 +1427,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if ($type) {
 			$values['type'] = $type;
 			$values['instituicao'] = $user->getData('instituicao');
+			$values['tabela'] = $user->getData('tabela');
 		}
 	}
 

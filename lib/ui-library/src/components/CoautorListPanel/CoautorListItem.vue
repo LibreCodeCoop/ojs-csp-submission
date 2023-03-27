@@ -91,6 +91,7 @@ export default {
 				data: {
 					userId: this.item.id,
 					type: this.item.type,
+					tabela: this.item.tabela,
 					submissionId: $('[name="submissionId"]').val(),
 					publicationId: $('[name="submissionId"]').val()
 				},

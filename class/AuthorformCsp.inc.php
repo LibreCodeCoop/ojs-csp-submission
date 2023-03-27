@@ -20,38 +20,23 @@ class AuthorformCsp extends AbstractPlugin
 			$form->setData('orcid',  $user->getOrcid());
 			$form->setData('country',  $user->getCountry());
 		}elseif ($type == 'csp') {
+			$campo = "id".$request->getUserVar('tabela');
+			$tabela = "csp.".$request->getUserVar('tabela');
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$userCsp = $userDao->retrieve(
 				<<<QUERY
-				SELECT
-					*
-				FROM
-					(
 					SELECT
-						SUBSTRING_INDEX(SUBSTRING_INDEX(p.nome, ' ', 1), ' ', -1) as given_name,
-						TRIM( SUBSTR(p.nome, LOCATE(' ', p.nome)) ) family_name,
+						SUBSTRING_INDEX(SUBSTRING_INDEX(nome, ' ', 1), ' ', -1) as given_name,
+						TRIM( SUBSTR(nome, LOCATE(' ', nome)) ) family_name,
 						email,
 						orcid,
-						TRIM(CONCAT(p.instituicao1, ' ', p.instituicao2)) AS affiliation
+						CASE WHEN ISNULL(instituicao1) THEN instituicao2 ELSE instituicao1 END affiliation
 					FROM
-						csp.Pessoa p
+						$tabela
 					WHERE
-						p.idPessoa = ?
-					UNION
-					SELECT
-						SUBSTRING_INDEX(SUBSTRING_INDEX(a.nome, ' ', 1), ' ', -1) as given_name,
-						TRIM( SUBSTR(a.nome, LOCATE(' ', a.nome)) ) family_name,
-						email,
-						orcid,
-						TRIM(CONCAT(a.instituicao1, ' ', a.instituicao2)) AS affiliation
-					FROM
-						csp.Autor a
-					WHERE
-						a.idAutor = ?
-				) AS u
-				LIMIT 1
+						$campo = ?
 				QUERY,
-				[(int) $request->getUserVar('userId'), (int) $request->getUserVar('userId')]
+				[(int) $request->getUserVar('userId')]
 			)->current();
 			$form->setData('givenName', [$locale => $userCsp->given_name]);
 			$form->setData('familyName', [$locale => $userCsp->family_name]);
