@@ -64,9 +64,19 @@ class PublicationCsp extends AbstractPlugin
 	{
 		$submissionId = $args[0]->getData('id');
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->retrieve(
+		$userDao->update(
 			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-			array((string)'publicada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+			[(string)'publicada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
+		);
+	}
+
+	public function unpublish($args)
+	{
+		$submissionId = $args[0]->getData('id');
+		$userDao = DAORegistry::getDAO('UserDAO');
+		$userDao->update(
+			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
+			[(string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 		);
 	}
 

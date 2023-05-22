@@ -99,9 +99,9 @@ class MailCsp extends AbstractPlugin
 					$args[0]->_data["recipients"][] =  array("name" => $user->getFullName(), "email" => $user->getEmail());
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ava_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+					[(string)'ava_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 				);
 			}
 
@@ -111,9 +111,9 @@ class MailCsp extends AbstractPlugin
 				$isManager = $recipient->hasRole(array(ROLE_ID_MANAGER), $context->getId());
 				/* Se o destinatário for editor chefe, status é alterado para "Consulta ao editor chefe" */
 				if ($isManager) {
-					$userDao->retrieve(
+					$userDao->update(
 						'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-						array((string)'ava_consulta_editor_chefe', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+						[(string)'ava_consulta_editor_chefe', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 					);
 					$args[0]->_data["recipients"][0]["email"] = "noreply@fiocruz.br";
 				}
@@ -217,9 +217,9 @@ class MailCsp extends AbstractPlugin
 
 			$args[0]->AddAttachment($temporaryBasePath . 'declaracao_aprovacao' . $tempId . '.pdf', 'declaracao_aprovacao' . $tempId . '.pdf', 'application/pdf');
 
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'ed_text_para_revisao_traducao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+				[(string)'ed_text_para_revisao_traducao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 			);
 		}
 		if ($stageId == 5 && strpos($args[0]->params["notificationContents"], "Prova de prelo")) {
@@ -265,9 +265,9 @@ class MailCsp extends AbstractPlugin
 			$args[0]->AddAttachment('files/usageStats/declaracoes/cessao_direitos_autorais.pdf', 'cessao_direitos_autorais.pdf', 'application/pdf');
 			$args[0]->AddAttachment('files/usageStats/declaracoes/termos_condicoes.pdf', 'termos_condicoes.pdf', 'application/pdf');
 
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'edit_em_prova_prelo', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+				[(string)'edit_em_prova_prelo', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 			);
 		}
 		$args[0]->_data["from"]["name"] = "Cadernos de Saúde Pública";

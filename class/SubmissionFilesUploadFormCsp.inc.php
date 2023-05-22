@@ -397,9 +397,9 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 								SubmissionLog::logEvent($request, $submission, SUBMISSION_LOG_ADD_PARTICIPANT, 'submission.event.participantAdded', array('name' => $assignedUser->getFullName(), 'username' => $assignedUser->getUsername(), 'userGroupName' => $userGroup->getLocalizedName()));
 							}
 						}
-						$userDao->retrieve(
+						$userDao->update(
 							'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-							array((string)'pre_aguardando_editor_chefe',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'),(int)$submissionId)
+							[(string)'pre_aguardando_editor_chefe',(string)(new DateTimeImmutable())->format('Y-m-d H:i:s'),(int)$submissionId]
 						);
 					}
 				}
@@ -426,9 +426,9 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_texto_traducao_metadados', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+					[(string)'ed_texto_traducao_metadados', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 				);
 			break;
 			case '57': // PDF para publicação PT
@@ -475,9 +475,9 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_pdf_padronizado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+					[(string)'edit_pdf_padronizado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 				);
 			break;
 			case '65': // Figura para formatar
@@ -504,9 +504,9 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 					}
 				}
 				$userDao = DAORegistry::getDAO('UserDAO');
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_em_formatacao_figura', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+					[(string)'edit_em_formatacao_figura', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 				);
 			break;
 			case '':
@@ -574,9 +574,9 @@ class SubmissionFilesUploadFormCsp extends AbstractPlugin
 			case '76': // XML publicação EN
 			case '77': // XML publicação ES
 				$userDao = DAORegistry::getDAO('UserDAO'); /* @var $userDao UserDAO */
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
+					[(string)'edit_aguardando_publicacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId]
 				);
 			break;
 		return true;

@@ -23,29 +23,29 @@ class EditorActionCsp extends AbstractPlugin
 		$userDao = DAORegistry::getDAO('UserDAO');
 		$dateDecided = $args[2]["dateDecided"];
 		if ($args[2]["decision"] == 4 or $args[2]["decision"] == 9) { // Submissão é rejeitada
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'rejeitada', (string)$dateDecided, (int)$args[0]->getData('id'))
+				[(string)'rejeitada', (string)$dateDecided, (int)$args[0]->getData('id')]
 			);
 		} elseif ($args[2]["decision"] == 8) { // Envia para avaliação
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'ava_aguardando_editor_chefe', (string)$dateDecided, (int)$args[0]->getData('id'))
+				[(string)'ava_aguardando_editor_chefe', (string)$dateDecided, (int)$args[0]->getData('id')]
 			);
 		} elseif ($args[2]["decision"] == 2) { // Solicita modificações ao ao autor
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'ava_aguardando_autor', (string)$dateDecided, (int)$args[0]->getData('id'))
+				[(string)'ava_aguardando_autor', (string)$dateDecided, (int)$args[0]->getData('id')]
 			);
 		} elseif (in_array($args[2]["decision"], array(11, 12, 14))) { // Editor associado faz recomendação
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'ava_aguardando_editor_chefe', (string)$dateDecided, (int)$args[0]->getData('id'))
+				[(string)'ava_aguardando_editor_chefe', (string)$dateDecided, (int)$args[0]->getData('id')]
 			);
 		} elseif ($args[2]["decision"] == 2) { // Submissão é enviada para editoração
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-				array((string)'edit_aguardando_padronizador', (string)$dateDecided, (int)$args[0]->getData('id'))
+				[(string)'edit_aguardando_padronizador', (string)$dateDecided, (int)$args[0]->getData('id')]
 			);
 			/* Quando submissõa é aceita, editores assistentes são designados */
 		} elseif ($args[2]["decision"] == 1) {
@@ -178,9 +178,9 @@ class EditorActionCsp extends AbstractPlugin
 						$assocId
 					);
 				}
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_text_em_avaliacao_ilustracao', (string)$dateDecided, (int)$args[0]->getData('id'))
+					[(string)'ed_text_em_avaliacao_ilustracao', (string)$dateDecided, (int)$args[0]->getData('id')]
 				);
 				/* Se não, assitentes editoriais são notificados e status é alterado para "Envio de carta de aprovação" */
 			} else {
@@ -196,9 +196,9 @@ class EditorActionCsp extends AbstractPlugin
 					$notificationMgr = new NotificationManager();
 					$notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, array('contents' => __('email.compose.error')));
 				}
-				$userDao->retrieve(
+				$userDao->update(
 					'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-					array((string)'ed_text_envio_carta_aprovacao', (string)$dateDecided, (int)$args[0]->getData('id'))
+					[(string)'ed_text_envio_carta_aprovacao', (string)$dateDecided, (int)$args[0]->getData('id')]
 				);
 			}
 		}

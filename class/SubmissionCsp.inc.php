@@ -44,10 +44,7 @@ class SubmissionCsp extends AbstractPlugin
 	public function delete($args)
 	{
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->update(
-			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
-			array((string)'deletada', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$args[0]->getData('id'))
-		);
+		$userDao->update('DELETE FROM csp_status WHERE submission_id = ?',[(int)$args[0]->getData('id')]);
 	}
 
 	public function getManyQueryBuilder($args)

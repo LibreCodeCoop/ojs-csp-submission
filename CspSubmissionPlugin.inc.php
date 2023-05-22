@@ -81,6 +81,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('Publication::add', array($this, 'PublicationCsp_add'));
 			HookRegistry::register('Publication::edit', array($this, 'PublicationCsp_edit'));
 			HookRegistry::register('Publication::publish', array($this, 'PublicationCsp_publish'));
+			HookRegistry::register('Publication::unpublish', array($this, 'PublicationCsp_unpublish'));
 
 			HookRegistry::register('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
 
@@ -157,7 +158,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$filetype = $file->_data["filetype"];
 		if (in_array($filetype, ['image/svg+xml','image/svg','image/x-eps', 'image/wmf', 'application/vnd.oasis.opendocument.text', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
 			$userDao = DAORegistry::getDAO('UserDAO');
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ed_text_envio_carta_aprovacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
@@ -181,7 +182,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->retrieve(
+		$userDao->update(
 			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 		);
@@ -437,7 +438,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$reviewerForm->setData('reviewerId', json_encode($reviewerIds));
 
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->retrieve(
+		$userDao->update(
 			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'ava_aguardando_avaliacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$args[0]->_submission->getData('id'))
 		);
@@ -534,7 +535,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					case '12': // Diagramador
 						$userDao = DAORegistry::getDAO('UserDAO');
 						$submissionId = $request->getUserVar('submissionId');
-						$userDao->retrieve(
+						$userDao->update(
 							'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 							array((string)'edit_em_diagramacao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 						);
@@ -576,7 +577,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($request->getUserVar("userGroupId") == 5){
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$submissionId = $request->getUserVar('submissionId');
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
@@ -584,7 +585,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($request->getUserVar("userGroupId") == 7){ // Quando designa revisor/tradutor status é alterado para "Em revisão tradução"
 			$userDao = DAORegistry::getDAO('UserDAO');
 			$submissionId = $request->getUserVar('submissionId');
-			$userDao->retrieve(
+			$userDao->update(
 				'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 				array((string)'ed_text_em_revisao_traducao', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 			);
@@ -1470,7 +1471,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	function metadataExecuteStep4($hookName, $params) {
 		$userDao = DAORegistry::getDAO('UserDAO');
-		$userDao->retrieve(
+		$userDao->update(
 			'UPDATE csp_status SET status = ?, date_status = ? WHERE submission_id = ?',
 			array((string)'pre_aguardando_secretaria', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$params[0]->submissionId)
 		);
