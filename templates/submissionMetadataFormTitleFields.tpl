@@ -17,7 +17,7 @@
 
 
 {fbvFormSection title="common.title" for="title" required=true}
-	{fbvElement type="text" multilingual=true name="title" id="title" value=$title readonly=$readOnly minlength="15" maxlength="180" required=true label="plugins.generic.CspSubmission.submission.Title.Tip"}
+	{fbvElement type="text" multilingual=true name="title" id="title" value=$title readonly=$readOnly minlength="15" maxlength="300" required=true label="plugins.generic.CspSubmission.submission.Title.Tip"}
 {/fbvFormSection}
 
 {fbvFormSection title="common.subtitle" for="subtitle"}
