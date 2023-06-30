@@ -65,9 +65,9 @@
 			{/fbvFormSection}
 
 			{* {include file="core:submission/submissionMetadataFormTitleFields.tpl"} *}
-			{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFieldsQuickSubmit.tpl"}
+			{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormTitleFields.tpl"}
 			{* {include file="submission/submissionMetadataFormFields.tpl"} *}
-			{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFieldsQuickSubmit.tpl"}
+			{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFields.tpl"}
 
 
 			{fbvFormArea id="contributors"}

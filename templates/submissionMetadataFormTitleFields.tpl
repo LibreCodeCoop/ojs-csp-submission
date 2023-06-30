@@ -21,7 +21,7 @@
 {/fbvFormSection}
 
 {fbvFormSection title="common.subtitle" for="subtitle"}
-	{fbvElement type="text" multilingual=true name="subtitle" id="subtitle" label="common.subtitle.tip" maxlength="70" value=$subtitle readonly=$readOnly}
+	{fbvElement type="text" multilingual=true name="subtitle" id="subtitle" label="common.subtitle.tip" maxlength="200" value=$subtitle readonly=$readOnly}
 {/fbvFormSection}
 
 {if $abstractDisplay}
