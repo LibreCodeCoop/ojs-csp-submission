@@ -187,7 +187,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			array((string)'ava_com_editor_associado', (string)(new DateTimeImmutable())->format('Y-m-d H:i:s'), (int)$submissionId)
 		);
 	}
-	public function formConfigAfter($hookName, $args) {
+	public function formConfigAfter($hookName, $args) { return;
 		$templateManager =& $args[0];
 		if ($templateManager["id"] == "titleAbstract"){
 			array_splice($templateManager["fields"],0,1);
@@ -1439,9 +1439,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = \Application::get()->getRequest();
 		$smarty =& $params[1];
 		$output =& $params[2];
-		if (strpos($request->getRequestPath(), 'QuickSubmitPlugin')) {
-			$output .= $smarty->fetch($this->getTemplateResource('doi.tpl'));
-		}else{
+		if (!strpos($request->getRequestPath(), 'QuickSubmitPlugin')){
 			$submissionDAO = Application::getSubmissionDAO();
 			$submission = $submissionDAO->getById($request->getUserVar('submissionId'));
 			$publication = $submission->getCurrentPublication();

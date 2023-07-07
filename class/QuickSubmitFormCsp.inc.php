@@ -15,23 +15,22 @@ class QuickSubmitFormCsp extends AbstractPlugin
 	{
 		$form = &$params[0];
 		$request = \Application::get()->getRequest();
-		$doi = $request->getUserVar('doi');
-
+		$doi = $request->getUserVar('source');
+		$contextId = $request->getContext()->getData('id');
 		import('plugins.pubIds.doi.DOIPubIdPlugin');
 		$DOIPubIdPlugin = new DOIPubIdPlugin();
-
-		$contextId = $request->getContext()->getData('id');
 		$doiPrefix = $DOIPubIdPlugin->getSetting($contextId, 'doiPrefix');
 
-		if (strpos($doi, $doiPrefix) !== 0) {
-			$doiErrors = __('plugins.pubIds.doi.editor.missingPrefix', ['doiPrefix' => $doiPrefix]);
-		}
-
-		if (!$DOIPubIdPlugin->checkDuplicate($doi, 'Publication', $request->getUserVar('submissionId'), $contextId)) {
-			$doiErrors = __('plugins.pubIds.doi.editor.doiSuffixCustomIdentifierNotUnique');
-		}
-		if (!empty($doiErrors)) {
-			$form->addError('doi', $doiErrors);
+		foreach ($doi as $key => $value) {
+			if (strpos($value, $doiPrefix) !== 0) {
+				$doiErrors = __('plugins.pubIds.doi.editor.missingPrefix', ['doiPrefix' => $doiPrefix]);
+			}
+			if (!$DOIPubIdPlugin->checkDuplicate($value, 'Publication', $request->getUserVar('submissionId'), $contextId)) {
+				$doiErrors = __('plugins.pubIds.doi.editor.doiSuffixCustomIdentifierNotUnique');
+			}
+			if (!empty($doiErrors)) {
+				$form->addError('doi', $doiErrors);
+			}
 		}
 	}
 
@@ -45,8 +44,7 @@ class QuickSubmitFormCsp extends AbstractPlugin
 		);
 		$editDecisionDao = DAORegistry::getDAO('EditDecisionDAO'); /* @var $editDecisionDao EditDecisionDAO */
 		$editDecisionDao->updateEditorDecision($request->getUserVar('submissionId'), $editorDecision);
-		$params[1]->_data["dateSubmitted"] = $dateSubmitted;
-
+		$params[1]->setData('dateSubmitted', $dateSubmitted);
 		$params[1]->setData('submissionIdCSP', $request->getUserVar('submissionIdCSP'));
 
 		$userDao = DAORegistry::getDAO('UserDAO');
@@ -69,7 +67,7 @@ class QuickSubmitFormCsp extends AbstractPlugin
 		$params[1][] = "dateAccepted";
 		$params[1][] = "dateSubmitted";
 		$params[1][] = "submissionIdCSP";
-
+		$params[1][] = "pub-id::doi";
 	}
 
 }

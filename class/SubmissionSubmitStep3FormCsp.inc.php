@@ -36,22 +36,6 @@ class SubmissionSubmitStep3FormCsp extends AbstractPlugin
 			$form->addCheck(new FormValidatorLength($form, 'codigoArtigoRelacionado', 'required', 'plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid', '>', 0));
 		}
 
-		$form->addCheck(new FormValidatorCustom($form, 'source', 'optional', 'plugins.generic.CspSubmission.doi.Valid', function ($doi) {
-			if (!filter_var($doi, FILTER_VALIDATE_URL)) {
-				if (strpos(reset($doi), 'doi.org') === false) {
-					$doi = 'http://dx.doi.org/' . reset($doi);
-				} elseif (strpos(reset($doi), 'http') === false) {
-					$doi = 'http://' . reset($doi);
-				} else {
-					return false;
-				}
-			}
-			$client = HttpClient::create();
-			$response = $client->request('GET', $doi);
-			$statusCode = $response->getStatusCode();
-			return in_array($statusCode, [303, 200]);
-		}));
-
 		if(!in_array($sectionId, [2, 3, 5, 10, 11, 12, 13, 14, 15])){
 			$keywords = $request->_requestVars["keywords"][$form->defaultLocale."-keywords"];
 			if(count($keywords) < 3 or count($keywords) > 5){

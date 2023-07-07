@@ -26,7 +26,6 @@ class TemplateManagerCsp extends AbstractPlugin {
 		if(strpos($args[1], "quickSubmit:index.tpl") ){
 			$args[1] = '../plugins/generic/cspSubmission/templates/quickSubmitIndex.tpl';
 			$templateManager->assign('abstractDisplay', true);
-			$templateManager->assign('sourceEnabled', false);
 			$templateManager->assign('agenciesEnabled', false);
 			$templateManager->assign('subjectsEnabled', false);
 
