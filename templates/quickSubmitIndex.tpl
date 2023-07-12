@@ -69,6 +69,9 @@
 			{* {include file="submission/submissionMetadataFormFields.tpl"} *}
 			{include file="../plugins/generic/cspSubmission/templates/submissionMetadataFormFields.tpl"}
 
+			{fbvFormSection label="metadata.property.displayName.doi" for="doi" required=true validation="required"}
+				{fbvElement type="text" multilingual=true name="pub-id::doi" id="doi" value=$doi['pub-id::doi'] required=true label="plugins.pubIds.doi.editor.doi.description"}
+			{/fbvFormSection}
 
 			{fbvFormArea id="contributors"}
 				<!--  Contributors -->

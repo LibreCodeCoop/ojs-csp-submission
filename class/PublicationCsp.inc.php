@@ -15,7 +15,7 @@ class PublicationCsp extends AbstractPlugin
 	public function add($args)
 	{
 		$args[0]->setData('submissionIdCSP', $args[1]->getUserVar('submissionIdCSP'));
-		$args[0]->setData('pub-id::doi', $args[1]->getUserVar('source'));
+		$args[0]->setData('pub-id::doi', $args[1]->getUserVar('pub-id::doi'));
 		return false;
 	}
 
@@ -51,12 +51,13 @@ class PublicationCsp extends AbstractPlugin
 			$params[0]->setData('orgao', $request->getUserVar('orgao'));
 			$params[1]->setData('orgao', $request->getUserVar('orgao'));
 			$params[2]["orgao"] = $request->getUserVar('orgao');
-			$params[0]->setData('pub-id::doi', $request->getUserVar('source'));
-			$params[1]->setData('pub-id::doi', $request->getUserVar('source'));
-			$params[2]["pub-id::doi"] = $request->getUserVar('source');
 			$params[0]->setData('submissionIdCSP', $request->getUserVar('submissionIdCSP'));
 			$params[1]->setData('submissionIdCSP', $request->getUserVar('submissionIdCSP'));
 			$params[2]["submissionIdCSP"] = $request->getUserVar('submissionIdCSP');
+			$params[0]->setData('pub-id::doi', $request->getUserVar('pub-id::doi'));
+			$params[1]->setData('pub-id::doi', $request->getUserVar('pub-id::doi'));
+			$params[2]["pub-id::doi"] = $request->getUserVar('pub-id::doi');
+
 		}
 		return false;
 	}
@@ -89,14 +90,6 @@ class PublicationCsp extends AbstractPlugin
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
-		$schema->properties->{"pub-id::doi"} = (object) [
-			'type' => 'string',
-			'apiSummary' => true,
-			'multilingual' => true,
-			'validation' => ['nullable']
-		];
-
-
 		return false;
   }
 

@@ -26,8 +26,10 @@ class TemplateManagerCsp extends AbstractPlugin {
 		if(strpos($args[1], "quickSubmit:index.tpl") ){
 			$args[1] = '../plugins/generic/cspSubmission/templates/quickSubmitIndex.tpl';
 			$templateManager->assign('abstractDisplay', true);
+			$templateManager->assign('sourceEnabled', false);
 			$templateManager->assign('agenciesEnabled', false);
 			$templateManager->assign('subjectsEnabled', false);
+			$templateManager->assign('doi', $request->getUserVars('pub-id::doi'));
 
 		}
 		if ($args[1] == "workflow/workflow.tpl" or $args[1] == "authorDashboard/authorDashboard.tpl") {

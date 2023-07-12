@@ -15,7 +15,7 @@ class QuickSubmitFormCsp extends AbstractPlugin
 	{
 		$form = &$params[0];
 		$request = \Application::get()->getRequest();
-		$doi = $request->getUserVar('source');
+		$doi = $request->getUserVar('pub-id::doi');
 		$contextId = $request->getContext()->getData('id');
 		import('plugins.pubIds.doi.DOIPubIdPlugin');
 		$DOIPubIdPlugin = new DOIPubIdPlugin();
@@ -67,7 +67,6 @@ class QuickSubmitFormCsp extends AbstractPlugin
 		$params[1][] = "dateAccepted";
 		$params[1][] = "dateSubmitted";
 		$params[1][] = "submissionIdCSP";
-		$params[1][] = "pub-id::doi";
 	}
 
 }
