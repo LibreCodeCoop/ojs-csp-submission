@@ -93,8 +93,8 @@
 	{else}
 		{assign var="countryRequired" value=false}
 	{/if}
-	{fbvFormSection for="country" title="common.country" required="true"}
-		{fbvElement type="select" name="country" id="country" required=$countryRequired defaultLabel="" defaultValue="" from=$countries selected=$country translate="0" size=$fbvStyles.size.MEDIUM}
+	{fbvFormSection for="country" title="common.country" required=false}
+		{fbvElement type="select" name="country" id="country" required=false defaultLabel="" defaultValue="" from=$countries selected=$country translate="0" size=$fbvStyles.size.MEDIUM}
 	{/fbvFormSection}
 
 	{if !$disableSendNotifySection}
@@ -135,8 +135,8 @@
 			{/fbvFormSection}
 		{/if}
 
-		{fbvFormSection for="affiliation" title="user.affiliation" required=true}
-			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE required=true}
+		{fbvFormSection for="affiliation" title="user.affiliation" required=false}
+			{fbvElement type="text" multilingual="true" name="affiliation" id="affiliation" value=$affiliation inline=true size=$fbvStyles.size.LARGE required=false}
 		{/fbvFormSection}
 
 		{fbvFormSection for="affiliation2" title="plugins.generic.CspSubmission.user.affiliation.2"}
