@@ -29,6 +29,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('advancedsearchreviewerform::validate', array($this, 'advancedsearchreviewerform_validate'));
 
 			HookRegistry::register('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
+			HookRegistry::register('Templates::Article::Main::Csp', array($this, 'TemplatesCsp_articleMain'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
 			HookRegistry::register('TemplateManager::display',array(&$this, 'TemplateManagerCsp_display'));
 			HookRegistry::register('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
@@ -119,6 +120,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			HookRegistry::register('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
 
 			HookRegistry::register('pkp\services\pkpsubmissionservice::_getmany', array($this, 'PkpSubmissionServiceCsp_getmany'));
+
+
+
 
 		}
 		return $success;
