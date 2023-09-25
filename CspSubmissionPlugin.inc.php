@@ -96,20 +96,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			HookRegistry::register('newreviewroundform::validate', array($this, 'newreviewroundform_validate'));
 
-			HookRegistry::register('registrationform::display', array($this, 'RegistrationFormCsp_display'));
-			HookRegistry::register('registrationform::readuservars', array($this, 'RegistrationFormCsp_readuservars'));
-			HookRegistry::register('registrationform::execute', array($this, 'RegistrationFormCsp_execute'));
-			HookRegistry::register('registrationform::Constructor', array($this, 'RegistrationFormCsp_constructor'));
-
 			HookRegistry::register('userdao::getAdditionalFieldNames', array($this, 'UserdaoCsp_getAdditionalFieldNames'));
-
-			HookRegistry::register('contactform::display', array($this, 'ContactFormCsp_display'));
-			HookRegistry::register('contactform::readuservars', array($this, 'ContactFormCsp_readuservars'));
-			HookRegistry::register('contactform::execute', array($this, 'ContactFormCsp_execute'));
-
-			HookRegistry::register('identityform::display', array($this, 'IdentityFormCsp_display'));
-			HookRegistry::register('identityform::readuservars', array($this, 'IdentityFormCsp_readuservars'));
-			HookRegistry::register('identityform::execute', array($this, 'IdentityFormCsp_execute'));
 
 			HookRegistry::register('EditorAction::recordDecision', array($this, 'EditorActionCsp_recordDecision'));
 
