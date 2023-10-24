@@ -23,7 +23,13 @@ use PKP\submission\GenreDAO;
 use PKP\core\JSONMessage;
 use APP\core\Services;
 use PKP\submissionFile\SubmissionFile;
+use PKP\components\forms\submission\ForTheEditors;
 use APP\facades\Repo;
+use PKP\components\forms\FieldTextarea;
+use PKP\components\forms\FieldText;
+use PKP\components\forms\FieldRadioInput;
+use PKP\security\Role;
+// use PKP\components\forms\FieldAutosuggestPreset;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
@@ -39,92 +45,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->addStyleSheet('CspSubmission', $url, ['contexts' => 'backend']);
 
-			// Hook::add('userdao::_getbyusername', array($this, 'userdao__getbyusername'));
-
-			// Hook::add('advancedsearchreviewerform::validate', array($this, 'advancedsearchreviewerform_validate'));
-
-			// Hook::add('Templates::Submission::SubmissionMetadataForm::AdditionalMetadata', array($this, 'metadataFieldEdit'));
-			// Hook::add('Templates::Article::Main::Csp', array($this, 'TemplatesCsp_articleMain'));
-			// Hook::add('TemplateManager::fetch', array($this, 'TemplateManager_fetch'));
-			// Hook::add('TemplateManager::display',array(&$this, 'TemplateManagerCsp_display'));
-			// Hook::add('FileManager::downloadFile',array($this, 'fileManager_downloadFile'));
-			// Hook::add('Mail::send', array($this,'MailCsp_send'));
-
-			// Hook::add('Submission::getBackendListProperties::properties', array($this, 'SubmissionCsp_getBackendListProperties'));
-			// Hook::add('Submission::getMany::queryObject', array($this,'SubmissionCsp_getManyQueryObject'));
-			// Hook::add('Submission::getMany::queryBuilder', array($this,'SubmissionCsp_getManyQueryBuilder'));
-			// Hook::add('Submission::delete', array($this, 'SubmissionCsp_delete'));
-			// Hook::add('Submission::add', array($this, 'SubmissionCsp_add'));
-
-			// Hook::add('APIHandler::endpoints', array($this,'APIHandler_endpoints'));
-
-			// Hook::add('authorform::initdata', array($this, 'AuthorformCsp_initData'));
-			// Hook::add('authorform::readuservars', array($this, 'AuthorformCsp_readUserVars'));
-			// Hook::add('authorform::execute', array($this, 'AuthorformCsp_execute'));
-
-			// Hook::add('submissionsubmitstep4form::execute', array($this, 'metadataExecuteStep4'));
-
-			// Hook::add('submissionsubmitstep3form::Constructor', array($this, 'SubmissionSubmitStep3FormCsp_constructor'));
-			// Hook::add('submissionsubmitstep3form::initdata', array($this, 'SubmissionSubmitStep3FormCsp_initData'));
-			// Hook::add('submissionsubmitstep3form::readuservars', array($this, 'SubmissionSubmitStep3FormCsp_readUserVars'));
-			// Hook::add('submissionsubmitstep3form::execute', array($this, 'SubmissionSubmitStep3FormCsp_execute'));
-
-			// Hook::add('quicksubmitform::validate', array($this, 'QuickSubmitFormCsp_validate'));
-			// Hook::add('quicksubmitform::readuservars', array($this, 'QuickSubmitFormCsp_readuservars'));
-			// Hook::add('quicksubmitform::execute', array($this, 'QuickSubmitFormCsp_execute'));
-
-			// Hook::add('submissionsubmitstep2form::Constructor', array($this, 'SubmissionSubmitStep2FormCsp_constructor'));
-
-			// // Consider the new field for ArticleDAO for storage
-			// Hook::add('articledao::getAdditionalFieldNames', array($this, 'metadataReadUserVars'));
-
 			Hook::add('SubmissionFile::validate', [$this, 'submissionFileValidate']);
-			
-
-			// Hook::add('User::getMany::queryObject', array($this, 'pkp_services_pkpuserservice_getmany'));
-			// Hook::add('UserDAO::_returnUserFromRowWithData', array($this, 'userDAO__returnUserFromRowWithData'));
-			// Hook::add('User::getProperties::values', array($this, 'user_getProperties_values'));
-
-			// // This hook is used to register the components this plugin implements to
-			// // permit administration of custom block plugins.
-			// Hook::add('LoadComponentHandler', array($this, 'LoadComponentHandler'));
-
-			// Hook::add('userstageassignmentdao::_filterusersnotassignedtostageinusergroup', array($this, 'userstageassignmentdao_filterusersnotassignedtostageinusergroup'));
-
-			// Hook::add('addparticipantform::execute', array($this, 'addparticipantformExecute'));
-
-			// Hook::add('Schema::get::publication', array($this, 'PublicationCsp_addToSchema'));
-			// Hook::add('Publication::add', array($this, 'PublicationCsp_add'));
-			// Hook::add('Publication::edit', array($this, 'PublicationCsp_edit'));
-			// Hook::add('Publication::publish', array($this, 'PublicationCsp_publish'));
-			// Hook::add('Publication::unpublish', array($this, 'PublicationCsp_unpublish'));
-
-			// Hook::add('reviewergridhandler::initfeatures', array($this, 'reviewergridhandler_initfeatures'));
-
-			// Hook::add('submissionfiledaodelegate::getAdditionalFieldNames', array($this, 'submissionfiledaodelegateAdditionalFieldNames'));
-
-			// Hook::add('submissionfilesmetadataform::readuservars', array($this, 'SubmissionFilesMetadataFormCsp_readUserVars'));
-			// Hook::add('submissionfilesmetadataform::execute', array($this, 'SubmissionFilesMetadataFormCsp_execute'));
-
-			// // Displays extra fields in the workflow metadata area
-			// Hook::add('Form::config::after', array($this, 'formConfigAfter'));
-
-			// Hook::add('newreviewroundform::validate', array($this, 'newreviewroundform_validate'));
-
-			// Hook::add('userdao::getAdditionalFieldNames', array($this, 'UserdaoCsp_getAdditionalFieldNames'));
-
-			// Hook::add('EditorAction::recordDecision', array($this, 'EditorActionCsp_recordDecision'));
-
-			// Hook::add('Schema::get::author', array($this, 'SchemaGetAuthorCsp_getAuthor'));
-
-			// Hook::add('managefinaldraftfilesform::validate', array($this, 'managefinaldraftfilesformvalidate'));
-
-			// Hook::add('queryform::readuservars', array($this, 'QueryFormCsp_readUservars'));
-
-			// Hook::add('pkp\services\pkpsubmissionservice::_getmany', array($this, 'PkpSubmissionServiceCsp_getmany'));
-
-
-
+			Hook::add('Schema::get::context', [$this, 'schemaGetContext']);
+			Hook::add('Form::config::before', [$this, 'formConfigBefore']);
+			Hook::add('Submission::validateSubmit', [$this, 'submissionValidateSubmit']);
 
 		}
 		return $success;
@@ -291,6 +215,163 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (!in_array($mimetype, ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg'])) {
 					$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')];
 				}
+			}
+		}
+	}
+
+    public function schemaGetContext(string $hookName, array $args){
+		$schema = $args[0]; /** @var stdClass */
+		$schema->properties->agradecimentos = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+
+		$schema->properties->codigoTematico = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		$schema->properties->codigoArtigoRelacionado = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		$schema->properties->conflitoInteresse = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		$schema->properties->consideracoesEticas = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		return false;
+    }
+
+	public function formConfigBefore($hookName, $args) {
+		$context = \Application::get()->getRequest()->getContext();
+		$request = \Application::get()->getRequest();
+
+		if($request->getRequestedPage() == 'submission'){
+
+			if($args->id == "startSubmission"){
+				$args->removeField('title');
+			}
+
+			if(in_array($args->id, ['titleAbstract', 'submissionFile', 'forTheEditors', 'commentsForTheEditors', 'commentsForTheEditors', 'contributor'])){
+				$submissionId = $request->getUserVar('id');
+				$submission = Repo::submission()->get((int) $submissionId);
+				$publication = Repo::publication()->get((int) $submissionId);
+				$section = Repo::section()->get((int) $publication->getData('sectionId'));
+				$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
+
+				if($args->id == "titleAbstract"){
+					if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
+						$keywords = $args->getField('keywords');
+						$keywords->isRequired = true;
+					}
+
+					if($sectionAbbrev == "ESP_TEMATICO") {
+						$args->addField(new FieldText('codigoTematico', [
+							'label' => __('plugins.generic.CspSubmission.codigoTematico'),
+							'groupId' => 'default',
+							'isRequired' => true,
+							'size' => 'small',
+							'value' => $context->getData('codigoTematico'),
+						]));
+					}
+
+					if($sectionAbbrev == "COMENTARIOS") {
+						$args->addField(new FieldText('codigoArtigoRelacionado', [
+							'label' => __('plugins.generic.CspSubmission.codigoArtigoRelacionado'),
+							'groupId' => 'default',
+							'isRequired' => true,
+							'size' => 'small',
+							'value' => $context->getData('codigoArtigoRelacionado'),
+						]));
+					}
+				}
+
+				if($args->id == 'submissionFile'){
+					$x = 1;
+					$args->removeField("genreId");
+				}
+
+				if($args->id == "forTheEditors"){
+					$args->addField(new FieldRadioInput('conflitoInteresse', [
+						'label' => __('plugins.generic.CspSubmission.conflitoInteresse'),
+						'groupId' => 'default',
+						'isRequired' => true,
+						'type' => 'radio',
+						'size' => 'small',
+						'options' => [
+							['value' => 'S', 'label' => __('common.yes')],
+							['value' => 'N', 'label' => __('common.no')],
+						],
+						'value' => $context->getData('conflitoInteresse'),
+					]));
+					$args->addField(new FieldRadioInput('consideracoesEticas', [
+						'label' => __('plugins.generic.CspSubmission.consideracoesEticas'),
+						'groupId' => 'default',
+						'isRequired' => true,
+						'type' => 'radio',
+						'size' => 'small',
+						'options' => [
+							['value' => 'S', 'label' => __('plugins.generic.CspSubmission.consideracoesEticas.checkbox.yes')],
+							['value' => 'N', 'label' => __('plugins.generic.CspSubmission.consideracoesEticas.checkbox.no')],
+						],
+						'value' => $context->getData('consideracoesEticas'),
+					]));
+					$args->fields[1]->size = "large";
+				}
+
+				if($args->id == "commentsForTheEditors"){
+					$args->addField(new FieldTextarea('agradecimentos', [
+						'label' => __('plugins.generic.CspSubmission.agradecimentos'),
+						'groupId' => 'default',
+						'isRequired' => false,
+						'size' => 'normal',
+						'value' => $context->getData('agradecimentos'),
+					]));
+				}
+
+				if($args->id == "contributor"){
+					$orcid = $args->getField('orcid');
+					$orcid->isRequired = true;
+
+					$familyName = $args->getField('familyName');
+					$familyName->isRequired = true;
+
+					$affiliation = $args->getField('affiliation');
+					$affiliation->description = __('user.affiliation.description');
+					$affiliation->size = "large";
+
+					$args->removeField('preferredPublicName');
+					$args->removeField('url');
+					$args->removeField('userGroupId');
+
+					$authorgroup = Repo::userGroup()->getByRoleIds([Role::ROLE_ID_AUTHOR], $context->getId(), true)->first();
+					$args->addHiddenField('userGroupId', $authorgroup->getData('id'));
+				}
+			}
+		}
+	}
+	public function submissionValidateSubmit($hookName, $args) {
+		$locale = $args[1]->getData('locale');
+		$context = \Application::get()->getRequest()->getContext();
+        $publication = $args[1]->getCurrentPublication();
+		$section = Repo::section()->get((int) $publication->getData('sectionId'));
+		$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
+		if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
+			if (!$publication->getData('keywords', $locale)) {
+				$args[0]["keywords"] = [$locale => [__('validator.required')]];
 			}
 		}
 	}
