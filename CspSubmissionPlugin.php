@@ -299,11 +299,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 
-				if($args->id == 'submissionFile'){
-					$x = 1;
-					$args->removeField("genreId");
-				}
-
 				if($args->id == "forTheEditors"){
 					$args->addField(new FieldRadioInput('conflitoInteresse', [
 						'label' => __('plugins.generic.CspSubmission.conflitoInteresse'),
@@ -367,10 +362,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$locale = $args[1]->getData('locale');
 		$context = \Application::get()->getRequest()->getContext();
         $publication = $args[1]->getCurrentPublication();
+		$keywords = count($publication->getData('keywords', $locale));
 		$section = Repo::section()->get((int) $publication->getData('sectionId'));
 		$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
 		if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
-			if (!$publication->getData('keywords', $locale)) {
+			if($keywords < 3 or $keywords > 5){
+				$args[0]["keywords"] = [$locale => [__('plugins.generic.CspSubmission.keywords.Notification')]];
+			}
+			if (!$keywords) {
 				$args[0]["keywords"] = [$locale => [__('validator.required')]];
 			}
 		}

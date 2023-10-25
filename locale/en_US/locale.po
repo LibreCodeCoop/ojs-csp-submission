@@ -123,9 +123,6 @@ msgstr "Informe um nome"
 msgid "plugins.generic.CspSubmission.smallTitle"
 msgstr "Título curto"
 
-msgid "plugins.generic.CspSubmission.keywords.tip"
-msgstr "Mínimo 3 e máximo 5 palavras (separadas pela tecla Enter)"
-
 msgid "plugins.generic.CspSubmission.supportingAgencies.tip"
 msgstr "Caso possível, informe o código de financiamento"
 
@@ -174,7 +171,7 @@ msgstr "É necessário inserir um arquivo Corpo do texto"
 msgid "plugins.generic.CspSubmission.submission.Title.Tip"
 msgstr "Limite mínimo 15, limite máximo 300 caracteres com espaços"
 
-msgid "plugins.generic.CspSubmission.submission.keywords.Notification"
+msgid "plugins.generic.CspSubmission.keywords.Notification"
 msgstr "São necessárias no mínimo 3 e no máximo 5 palavras-chave"
 
 msgid "plugins.generic.CspSubmission.submission.bodyTextFile.Twice"
