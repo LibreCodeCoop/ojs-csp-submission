@@ -370,16 +370,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$locale = $args[1]->getData('locale');
 		$context = \Application::get()->getRequest()->getContext();
         $publication = $args[1]->getCurrentPublication();
-		$keywords = count($publication->getData('keywords', $locale));
+		$keywords = count($publication->getData('keywords'));
 		$section = Repo::section()->get((int) $publication->getData('sectionId'));
 		$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
 		if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
-			if($keywords < 3 or $keywords > 5){
-				$args[0]["keywords"] = [$locale => [__('plugins.generic.CspSubmission.keywords.Notification')]];
-			}
 			if (!$keywords) {
 				$args[0]["keywords"] = [$locale => [__('validator.required')]];
+			}elseif(count($publication->getData('keywords', $locale)) < 3 or count($publication->getData('keywords', $locale)) > 5){
+				$args[0]["keywords"] = [$locale => [__('plugins.generic.CspSubmission.keywords.Notification')]];
 			}
+
 		}
 	}
 }
