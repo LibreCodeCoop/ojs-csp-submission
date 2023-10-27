@@ -22,8 +22,7 @@ module.exports = {
 		devtool: 'source-map',
 		entry: [
 			'@/styles/_global.less',
-			'./js/load.js',
-			'./lib/utils/update-reviewer.js'
+			'./js/load.js'
 		],
 		optimization: {
 			// Don't split vendor and app into separate JS files
