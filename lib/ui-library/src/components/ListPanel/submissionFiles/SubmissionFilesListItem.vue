@@ -43,7 +43,7 @@
 			</div>
 			<div v-if="!item.genreId" class="listPanel--submissionFiles__setGenre">
 				<span role="alert">
-					<icon icon="exclamation-triangle" :inline="true" />hasgdkjasgdha
+					<icon icon="exclamation-triangle" :inline="true" />
 					<span
 						:id="genrePromptId"
 						class="-linkButton listPanel--submissionFiles__setGenreLabel"

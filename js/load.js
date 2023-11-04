@@ -1,4 +1,9 @@
-import SubmissionFilesListItem from '@csp/components/ListPanel/submissionFiles/SubmissionFilesListItem.vue';
-import SubmissionFilesListPanel from '@csp/components/ListPanel/submissionFiles/SubmissionFilesListPanel.vue';
-window.pkp.controllers.Container.components.SubmissionFilesListItem = SubmissionFilesListItem;
-window.pkp.controllers.Container.components.SubmissionFilesListPanel = SubmissionFilesListPanel;
+import PkpLoad from '../../../../lib/pkp/js/load.js';
+
+import SubmissionWizardPage from '@csp/components/Conteiner/SubmissionWizardPage.vue';
+
+window.pkp = Object.assign(PkpLoad, {
+	controllers: {
+		SubmissionWizardPage
+	},
+});
