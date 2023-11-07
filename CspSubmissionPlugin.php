@@ -44,15 +44,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$url = $request->getBaseUrl() . '/' . $this->getPluginPath() . '/styles/style.css';
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->addStyleSheet('CspSubmission', $url, ['contexts' => 'backend']);
-			$templateMgr->addJavaScript(
-				'submissionfiles',
-				"{$request->getBaseUrl()}/{$this->getPluginPath()}/js/build.js",
-				[
-					'contexts' => ['submissionFile', 'backend'],
-					'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
-					'inline' => false,
-				]
-			);
+			// $templateMgr->addJavaScript(
+			// 	'submissionfiles',
+			// 	"{$request->getBaseUrl()}/{$this->getPluginPath()}/js/build.js",
+			// 	[
+			// 		'contexts' => ['submissionFile', 'backend'],
+			// 		'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
+			// 		'inline' => false,
+			// 	]
+			// );
 			Hook::add('SubmissionFile::validate', [$this, 'submissionFileValidate']);
 			Hook::add('Schema::get::context', [$this, 'schemaGetContext']);
 			Hook::add('Form::config::before', [$this, 'formConfigBefore']);
@@ -307,6 +307,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 				}
 
+				if($args->id == "submissionFile"){
+					$templateMgr = TemplateManager::getManager($request);
+					$templateMgr->addJavaScript(
+						'submissionfiles',
+						"{$request->getBaseUrl()}/{$this->getPluginPath()}/js/build.js",
+						[
+							'contexts' => ['submissionFile', 'backend'],
+							'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
+							'inline' => false,
+						]
+					);
+				}
+
 				if($args->id == "forTheEditors"){
 					$args->addField(new FieldRadioInput('conflitoInteresse', [
 						'label' => __('plugins.generic.CspSubmission.conflitoInteresse'),
@@ -366,6 +379,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 	}
+
 	public function submissionValidateSubmit($hookName, $args) {
 		$locale = $args[1]->getData('locale');
 		$context = \Application::get()->getRequest()->getContext();
