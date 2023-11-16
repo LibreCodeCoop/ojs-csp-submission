@@ -10,7 +10,7 @@ msgstr ""
 "Language: \n"
 
 msgid "plugins.generic.CspSubmission.displayName"
-msgstr "cspSubmission"
+msgstr "Sumisión CSP"
 
 msgid "plugins.generic.CspSubmission.description"
 msgstr "Personaliza el flujo de acuerdo con el flujo de los Cadernos de Saúde Pública de la Fiocruz."
