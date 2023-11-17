@@ -29,6 +29,7 @@ use PKP\components\forms\FieldTextarea;
 use PKP\components\forms\FieldText;
 use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
+use NcJoes\OfficeConverter\OfficeConverter;
 // use PKP\components\forms\FieldAutosuggestPreset;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
@@ -108,10 +109,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					$formato = explode('.', $args[1]->getLocalizedData('name'));
 					$formato = trim(strtolower(end($formato)));
 
-					$readers = array('docx' => 'Word2007', 'odt' => 'ODText', 'rtf' => 'RTF', 'doc' => 'ODText');
-					$doc = \PhpOffice\PhpWord\IOFactory::load('files/'.$args[1]->getData('path'), $readers[$formato]);
+					$converter = new OfficeConverter('files/'.$args[1]->getData('path'));
+					$htmlFile = $converter->convertTo(str_replace($formato, 'html', 'files/'.$args[1]->getData('path')));
+					$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
 					$html = new \PhpOffice\PhpWord\Writer\HTML($doc);
 					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
+					unlink($htmlFile);
 
 					$submission = Repo::submission()->get((int) $submissionId);
 					$publication = Repo::publication()->get((int) $submission->getData('currentPublicationId'));
