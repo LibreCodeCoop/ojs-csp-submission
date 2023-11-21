@@ -50,7 +50,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			Hook::add('Schema::get::context', [$this, 'schemaGetContext']);
 			Hook::add('Form::config::before', [$this, 'formConfigBefore']);
 			Hook::add('Submission::validateSubmit', [$this, 'submissionValidateSubmit']);
-
 		}
 		return $success;
 	}
@@ -230,8 +229,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
-
-		$schema->properties->codigoTematico = (object) [
+		$schema->properties->codigoFasciculoTematico = (object) [
 			'type' => 'string',
 			'apiSummary' => true,
 			'multilingual' => false,
@@ -255,13 +253,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+		$schema->properties->espacoTematico = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
 		return false;
     }
 
 	public function formConfigBefore($hookName, $args) {
 		$context = \Application::get()->getRequest()->getContext();
 		$request = \Application::get()->getRequest();
-
 		if($request->getRequestedPage() == 'submission'){
 
 			if($args->id == "startSubmission"){
@@ -282,12 +285,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}
 
 					if($sectionAbbrev == "ESP_TEMATICO") {
-						$args->addField(new FieldText('codigoTematico', [
-							'label' => __('plugins.generic.CspSubmission.codigoTematico'),
+						$args->addField(new FieldText('espacoTematico', [
+							'label' => __('plugins.generic.CspSubmission.espacoTematico'),
 							'groupId' => 'default',
 							'isRequired' => true,
-							'size' => 'small',
-							'value' => $context->getData('codigoTematico'),
+							'size' => 'medium',
+							'value' => $context->getData('espacoTematico'),
 						]));
 					}
 
@@ -300,6 +303,20 @@ class CspSubmissionPlugin extends GenericPlugin {
 							'value' => $context->getData('codigoArtigoRelacionado'),
 						]));
 					}
+
+					if($sectionAbbrev == "CARTA") {
+						$args->removeField('abstract');
+						$args->removeField('keywords');
+					}
+
+					$args->addField(new FieldText('codigoFasciculoTematico', [
+						'label' => __('plugins.generic.CspSubmission.codigoFasciculoTematico'),
+						'description' => __('plugins.generic.CspSubmission.codigoFasciculoTematico.description'),
+						'groupId' => 'default',
+						'isRequired' => false,
+						'size' => 'medium',
+						'value' => $context->getData('codigoFasciculoTematico'),
+					]));
 				}
 
 				// if($args->id == "submissionFile"){
@@ -388,7 +405,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}elseif(count($publication->getData('keywords', $locale)) < 3 or count($publication->getData('keywords', $locale)) > 5){
 				$args[0]["keywords"] = [$locale => [__('plugins.generic.CspSubmission.keywords.Notification')]];
 			}
-
 		}
 	}
 }

@@ -15,23 +15,20 @@ msgstr "Submissão CSP"
 msgid "plugins.generic.CspSubmission.description"
 msgstr "Customiza o fluxo de acordo como o fluxo do Cadernos de Saúde Pública da Fiocruz."
 
-msgid "plugins.generic.CspSubmission.Tema"
+msgid "plugins.generic.CspSubmission.espacoTematico"
 msgstr "Tema"
 
-msgid "plugins.generic.CspSubmission.Tema.Valid"
+msgid "plugins.generic.CspSubmission.espacoTematico.Valid"
 msgstr "Necessário informar o tema."
 
 msgid "plugins.generic.CspSubmission.conflitoInteresse"
 msgstr "Seu artigo possui conflito de interesse?"
 
-msgid "plugins.generic.CspSubmission.codigoTematico"
+msgid "plugins.generic.CspSubmission.codigoFasciculoTematico"
 msgstr "Código do fascículo temático"
 
-msgid "plugins.generic.CspSubmission.codigoTematico.description"
-msgstr "(Solicite o código ao editor convidado)"
-
-msgid "plugins.generic.CspSubmission.codigoTematico.Valid"
-msgstr "Necessário informar o código do fascículo temático"
+msgid "plugins.generic.CspSubmission.codigoFasciculoTematico.description"
+msgstr "Preencha este campo caso seu artigo pertença a um volume temático (solicite o código ao editor convidado)"
 
 msgid "plugins.generic.CspSubmission.agradecimentos"
 msgstr "Agradecimentos"
