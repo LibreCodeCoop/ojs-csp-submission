@@ -47,9 +47,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->addStyleSheet('CspSubmission', $url, ['contexts' => 'backend']);
 
 			Hook::add('SubmissionFile::validate', [$this, 'submissionFileValidate']);
-			Hook::add('Schema::get::context', [$this, 'schemaGetContext']);
+			Hook::add('Schema::get::submission', [$this, 'schemaGetSubmission']);
 			Hook::add('Form::config::before', [$this, 'formConfigBefore']);
 			Hook::add('Submission::validateSubmit', [$this, 'submissionValidateSubmit']);
+			Hook::add('Submission::edit', [$this, 'submissionEdit']);
+			Hook::add('Schema::get::publication', [$this, 'schemaGetPublication']);
 		}
 		return $success;
 	}
@@ -221,7 +223,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 	}
 
-    public function schemaGetContext(string $hookName, array $args){
+	public function schemaGetSubmission(string $hookName, array $args){
+		$schema = $args[0]; /** @var stdClass */
+		$schema->properties->submissionIdCSP = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		return false;
+    }
+
+    public function schemaGetPublication(string $hookName, array $args){
 		$schema = $args[0]; /** @var stdClass */
 		$schema->properties->agradecimentos = (object) [
 			'type' => 'string',
@@ -405,6 +418,24 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}elseif(count($publication->getData('keywords', $locale)) < 3 or count($publication->getData('keywords', $locale)) > 5){
 				$args[0]["keywords"] = [$locale => [__('plugins.generic.CspSubmission.keywords.Notification')]];
 			}
+		}
+	}
+	public function submissionEdit($hookName, $args) {
+		if($args[0]->_data["submissionProgress"] == "files"){
+			$args[0]->setData('espacoTematico', '$row->code');
+			$args[0]->setData('codigoFasciculoTematico', '$row->code');
+		}
+		if($args[0]->_data["submissionProgress"] == ""){
+			$contextDao = Application::getContextDao();
+			$result = $contextDao->retrieve(
+				<<<QUERY
+				SELECT CONCAT(LPAD(count(*)+1, CASE WHEN count(*) > 9999 THEN 5 ELSE 4 END, 0), '/', DATE_FORMAT(now(), '%y')) code
+				FROM submissions
+				WHERE YEAR(date_submitted) = YEAR(now())
+				QUERY
+			);
+			$row = $result->current();
+			$args[0]->setData('submissionIdCSP', $row->code);
 		}
 	}
 }
