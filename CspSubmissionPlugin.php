@@ -52,6 +52,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			Hook::add('Submission::validateSubmit', [$this, 'submissionValidateSubmit']);
 			Hook::add('Submission::edit', [$this, 'submissionEdit']);
 			Hook::add('Schema::get::publication', [$this, 'schemaGetPublication']);
+			Hook::add('TemplateManager::display', [$this, 'templateManagerDisplay']);
 		}
 		return $success;
 	}
@@ -231,6 +232,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+		$schema->properties->consideracoesEticas = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		$schema->properties->conflitoInteresse = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+
 		return false;
     }
 
@@ -249,18 +263,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'validation' => ['nullable']
 		];
 		$schema->properties->codigoArtigoRelacionado = (object) [
-			'type' => 'string',
-			'apiSummary' => true,
-			'multilingual' => false,
-			'validation' => ['nullable']
-		];
-		$schema->properties->conflitoInteresse = (object) [
-			'type' => 'string',
-			'apiSummary' => true,
-			'multilingual' => false,
-			'validation' => ['nullable']
-		];
-		$schema->properties->consideracoesEticas = (object) [
 			'type' => 'string',
 			'apiSummary' => true,
 			'multilingual' => false,
@@ -345,7 +347,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				// 	);
 				// }
 
-				if($args->id == "forTheEditors"){
+				if($args->id == "commentsForTheEditors"){
 					$args->addField(new FieldRadioInput('conflitoInteresse', [
 						'label' => __('plugins.generic.CspSubmission.conflitoInteresse'),
 						'groupId' => 'default',
@@ -370,10 +372,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 						],
 						'value' => $context->getData('consideracoesEticas'),
 					]));
-					$args->fields[1]->size = "large";
-				}
-
-				if($args->id == "commentsForTheEditors"){
 					$args->addField(new FieldTextarea('agradecimentos', [
 						'label' => __('plugins.generic.CspSubmission.agradecimentos'),
 						'groupId' => 'default',
@@ -420,12 +418,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 	}
+
 	public function submissionEdit($hookName, $args) {
-		if($args[0]->_data["submissionProgress"] == "files"){
-			$args[0]->setData('espacoTematico', '$row->code');
-			$args[0]->setData('codigoFasciculoTematico', '$row->code');
-		}
-		if($args[0]->_data["submissionProgress"] == ""){
+		if($args[0]->getData('submissionProgress') == ""){
 			$contextDao = Application::getContextDao();
 			$result = $contextDao->retrieve(
 				<<<QUERY
@@ -436,6 +431,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			);
 			$row = $result->current();
 			$args[0]->setData('submissionIdCSP', $row->code);
+		}
+	}
+	public function templateManagerDisplay($hookName, $args) {
+		if($args[1] == "submission/wizard.tpl"){
+			unset($args[0]->tpl_vars["locales"]->value["en"]);
+			unset($args[0]->tpl_vars["locales"]->value["es"]);
 		}
 	}
 }
