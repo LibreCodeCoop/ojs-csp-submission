@@ -4,7 +4,7 @@
 <!--
   * plugins/generic/cspSubmission/version.xml
   *
-  * Copyright (c) 2019-2021 LibreCode Coop
+  * Copyright (c) 2019-2023 LibreCode Coop
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Plugin version information.
@@ -12,8 +12,8 @@
 <version>
 	<application>cspSubmission</application>
 	<type>plugins.generic</type>
-	<release>1.2.0.0</release>
-	<date>2016-08-25</date>
+	<release>1.1.0.0</release>
+	<date>2023-11-30</date>
 	<lazy-load>1</lazy-load>
 	<class>CspSubmissionPlugin</class>
 </version>

@@ -13,7 +13,7 @@ msgid "plugins.generic.CspSubmission.displayName"
 msgstr "Sumisión CSP"
 
 msgid "plugins.generic.CspSubmission.description"
-msgstr "Personaliza el flujo de acuerdo con el flujo de los Cadernos de Saúde Pública de la Fiocruz."
+msgstr "Personaliza el envío de acuerdo con el flujo de los Cadernos de Saúde Pública de la Fiocruz."
 
 msgid "plugins.generic.CspSubmission.espacoTematico"
 msgstr "Tema"
