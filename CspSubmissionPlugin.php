@@ -30,7 +30,6 @@ use PKP\components\forms\FieldText;
 use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
-// use PKP\components\forms\FieldAutosuggestPreset;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
@@ -85,7 +84,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$genreKey = $genre->getKey();
 			$mimetype = $args[1]->getData('mimetype');
 			
-			if(in_array($genreKey, ['SUBMISSION', 'TABELA_QUADRO', 'LEGENDAS'])){
+			if(in_array($genreKey, ['SUBMISSION', 'TABELA_QUADRO', 'TRANSCRIPTS'])){
 				if (!in_array($mimetype,
 				['application/msword', 'application/wps-office.doc', /*Doc*/
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
@@ -431,6 +430,22 @@ class CspSubmissionPlugin extends GenericPlugin {
 			);
 			$row = $result->current();
 			$args[0]->setData('submissionIdCSP', $row->code);
+
+			$submissionFiles = Repo::submissionFile()
+			->getCollector()
+			->filterBySubmissionIds([$args[0]->getData('id')])
+			->getMany()
+			->toArray();
+
+			foreach ($submissionFiles as $file) {
+				$request = \Application::get()->getRequest();
+				$context = $request->getContext();
+				$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
+				$genre = $genreDao->getById($file->getData('genreId'), $context->getId());
+				$genreName = $genre->getName($args[0]->getData('locale'));
+				$file->setData('name', str_replace(' ', '_', $genreName) . '_csp_' . str_replace('/', '_', $row->code), $file->getData('locale') .'_1' );
+                Repo::submissionFile()->edit($file, $file->_data);
+            }
 		}
 	}
 	public function templateManagerDisplay($hookName, $args) {
