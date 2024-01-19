@@ -46,6 +46,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->addStyleSheet('CspSubmission', $url, ['contexts' => 'backend']);
 
 			Hook::add('SubmissionFile::validate', [$this, 'submissionFileValidate']);
+			Hook::add('SubmissionFile::edit', [$this, 'submissionFileEdit']);
 			Hook::add('Schema::get::submission', [$this, 'schemaGetSubmission']);
 			Hook::add('Form::config::before', [$this, 'formConfigBefore']);
 			Hook::add('Submission::validateSubmit', [$this, 'submissionValidateSubmit']);
@@ -219,6 +220,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if (!in_array($mimetype, ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg'])) {
 					$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')];
 				}
+			}
+		}
+	}
+
+	public function submissionFileEdit(string $hookName, array $args){
+		$request = \Application::get()->getRequest();
+		$submission = Repo::submission()->get((int) $args[0]->getData('submissionId'));
+		if($submission->getData('submissionProgress') == "start"){
+			$context = $request->getContext();
+			$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
+			$genre = $genreDao->getById($args[0]->getData('genreId'), $context->getId());
+			$genreName = $genre->getName($args[0]->getData('locale'));
+			$submissionFiles = Repo::submissionFile()
+			->getCollector()
+			->filterBySubmissionIds([$args[0]->getData('submissionId')])
+			->filterByGenreIds([$args[0]->getData('genreId')])
+			->getMany()
+			->toArray();
+			$args[0]->setData('name', $genreName, $args[0]->getData('locale'));
+			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO'])){
+				$args[0]->setData('name', $genreName . ' ' .(count($submissionFiles)+1), $args[0]->getData('locale'));
 			}
 		}
 	}
@@ -438,12 +460,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			->toArray();
 
 			foreach ($submissionFiles as $file) {
-				$request = \Application::get()->getRequest();
-				$context = $request->getContext();
-				$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
-				$genre = $genreDao->getById($file->getData('genreId'), $context->getId());
-				$genreName = $genre->getName($args[0]->getData('locale'));
-				$file->setData('name', str_replace(' ', '_', $genreName) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $file->getData('locale'));
+				$file->setData('name', str_replace(' ', '_', $file->getData('name',$file->getData('locale'))) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $file->getData('locale'));
                 Repo::submissionFile()->edit($file, $file->_data);
             }
 		}
