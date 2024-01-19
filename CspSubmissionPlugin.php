@@ -443,7 +443,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
 				$genre = $genreDao->getById($file->getData('genreId'), $context->getId());
 				$genreName = $genre->getName($args[0]->getData('locale'));
-				$file->setData('name', str_replace(' ', '_', $genreName) . '_csp_' . str_replace('/', '_', $row->code), $file->getData('locale') .'_1' );
+				$file->setData('name', str_replace(' ', '_', $genreName) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $file->getData('locale'));
                 Repo::submissionFile()->edit($file, $file->_data);
             }
 		}
