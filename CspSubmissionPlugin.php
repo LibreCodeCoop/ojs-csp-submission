@@ -30,6 +30,7 @@ use PKP\components\forms\FieldText;
 use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
+use PKP\facades\Locale;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
@@ -227,25 +228,33 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function submissionFileEdit(string $hookName, array $args){
 		$request = \Application::get()->getRequest();
 		$submission = Repo::submission()->get((int) $args[0]->getData('submissionId'));
+		$locale = $args[0]->getData('locale');
+		$context = $request->getContext();
+		$primaryLocale = $context->getData('primaryLocale');
+
 		if($request->_requestVars["revisedFileId"]){
 			$newName = $args[1]->getData('name',$args[1]->getData('locale'));
-			$args[0]->setData('name', $newName,  $args[0]->getData('locale'));
+			$args[0]->setData('name', $newName,  $locale);
+			$newName = $args[1]->getData('name',$primaryLocale);
+			$args[0]->setData('name', $newName,  $primaryLocale);
 			return true;
 		}
 		if($submission->getData('submissionProgress') == "start" && !$args[2]["notRename"]){
-			$context = $request->getContext();
 			$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
 			$genre = $genreDao->getById($args[0]->getData('genreId'), $context->getId());
-			$genreName = $genre->getName($args[0]->getData('locale'));
+			$genreNameLocale = $genre->getName($locale);
+			$genreNamePrimaryLocale = $genre->getName($primaryLocale);
 			$submissionFiles = Repo::submissionFile()
 			->getCollector()
 			->filterBySubmissionIds([$args[0]->getData('submissionId')])
 			->filterByGenreIds([$args[0]->getData('genreId')])
 			->getMany()
 			->toArray();
-			$args[0]->setData('name', $genreName, $args[0]->getData('locale'));
+			$args[0]->setData('name', $genreNameLocale, $locale);
+			$args[0]->setData('name', $genreNamePrimaryLocale, $primaryLocale);
 			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO'])){
-				$args[0]->setData('name', $genreName . ' ' .(count($submissionFiles)+1), $args[0]->getData('locale'));
+				$args[0]->setData('name', $genreName . ' ' .(count($submissionFiles)+1), $locale);
+				$args[0]->setData('name', $genreNamePrimaryLocale . ' ' .(count($submissionFiles)+1), $genreNamePrimaryLocale);
 			}
 		}
 	}
@@ -466,9 +475,11 @@ class CspSubmissionPlugin extends GenericPlugin {
 			->getMany()
 			->toArray();
 
+			$primaryLocale = Locale::getPrimaryLocale();
 			foreach ($submissionFiles as $file) {
 				$file->setData('notRename', true);
 				$file->setData('name', str_replace(' ', '_', $file->getData('name',$file->getData('locale'))) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $file->getData('locale'));
+				$file->setData('name', str_replace(' ', '_', $file->getData('name',$primaryLocale)) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $primaryLocale);
                 Repo::submissionFile()->edit($file, $file->_data);
             }
 		}
