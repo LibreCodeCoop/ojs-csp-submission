@@ -225,24 +225,27 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionFileEdit(string $hookName, array $args){
-		if(!$args[2]["notRename"]){
-			$request = \Application::get()->getRequest();
-			$submission = Repo::submission()->get((int) $args[0]->getData('submissionId'));
-			if($submission->getData('submissionProgress') == "start"){
-				$context = $request->getContext();
-				$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
-				$genre = $genreDao->getById($args[0]->getData('genreId'), $context->getId());
-				$genreName = $genre->getName($args[0]->getData('locale'));
-				$submissionFiles = Repo::submissionFile()
-				->getCollector()
-				->filterBySubmissionIds([$args[0]->getData('submissionId')])
-				->filterByGenreIds([$args[0]->getData('genreId')])
-				->getMany()
-				->toArray();
-				$args[0]->setData('name', $genreName, $args[0]->getData('locale'));
-				if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO'])){
-					$args[0]->setData('name', $genreName . ' ' .(count($submissionFiles)+1), $args[0]->getData('locale'));
-				}
+		$request = \Application::get()->getRequest();
+		$submission = Repo::submission()->get((int) $args[0]->getData('submissionId'));
+		if($request->_requestVars["revisedFileId"]){
+			$newName = $args[1]->getData('name',$args[1]->getData('locale'));
+			$args[0]->setData('name', $newName,  $args[0]->getData('locale'));
+			return true;
+		}
+		if($submission->getData('submissionProgress') == "start" && !$args[2]["notRename"]){
+			$context = $request->getContext();
+			$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
+			$genre = $genreDao->getById($args[0]->getData('genreId'), $context->getId());
+			$genreName = $genre->getName($args[0]->getData('locale'));
+			$submissionFiles = Repo::submissionFile()
+			->getCollector()
+			->filterBySubmissionIds([$args[0]->getData('submissionId')])
+			->filterByGenreIds([$args[0]->getData('genreId')])
+			->getMany()
+			->toArray();
+			$args[0]->setData('name', $genreName, $args[0]->getData('locale'));
+			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO'])){
+				$args[0]->setData('name', $genreName . ' ' .(count($submissionFiles)+1), $args[0]->getData('locale'));
 			}
 		}
 	}
