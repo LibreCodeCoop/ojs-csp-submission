@@ -185,3 +185,6 @@ msgstr "Não se aplica (estudo não envolve pesquisa com seres humanos ou animai
 
 msgid "plugins.generic.CspSubmission.submission.newVersion.alert"
 msgstr "Es obligatorio enviar una carta al editor asociado eligiendo el componente <b>Cambios realizados</b>"
+
+msgid "plugins.generic.CspSubmission.submission.title.description"
+msgstr "Límite mínimo 15, límite máximo 300 caracteres con espacios"

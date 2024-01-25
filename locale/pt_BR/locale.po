@@ -188,3 +188,6 @@ msgstr "É obrigatória a submissão de uma carta ao editor associado escolhendo
 
 msgid "plugins.generic.CspSubmission.submission.submit.submissionIdCSP"
 msgstr "ID do Sagas"
+
+msgid "plugins.generic.CspSubmission.submission.title.description"
+msgstr "Limite mínimo 15, limite máximo 300 caracteres com espaços"

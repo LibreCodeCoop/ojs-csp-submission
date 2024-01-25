@@ -307,7 +307,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$context = \Application::get()->getRequest()->getContext();
 		$request = \Application::get()->getRequest();
 		if($request->getRequestedPage() == 'submission'){
-
 			if($args->id == "startSubmission"){
 				$args->removeField('title');
 			}
@@ -320,6 +319,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
 
 				if($args->id == "titleAbstract"){
+					$title = $args->getField('title');
+					$title->description = __('plugins.generic.CspSubmission.submission.title.description');
+
 					if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
 						$keywords = $args->getField('keywords');
 						$keywords->isRequired = true;
