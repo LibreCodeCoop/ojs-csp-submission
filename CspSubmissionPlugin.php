@@ -104,7 +104,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					foreach ($submissionFiles as $submissionFile) {
 						$submissionFileGenre = $genreDao->getById($submissionFile->getData('genreId'), $context->getId());
 						if ($submissionFileGenre && $submissionFileGenre->getKey() == 'SUBMISSION'){
-							$args[0]['genreId'] = [__('plugins.generic.CspSubmission.submission.bodyTextFile.Twice')];
+							$args[0]['genreId'] = [__('plugins.generic.CspSubmission.submission.bodyTextFile.limit')];
 							return;
 						}
 					}
@@ -214,6 +214,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 						break;
 					}
 				}
+				if($genreKey == 'TRANSCRIPTS'){
+					$submissionFiles = Repo::submissionFile()
+					->getCollector()
+					->filterBySubmissionIds([$submissionId])
+					->getMany();
+					foreach ($submissionFiles as $submissionFile) {
+						$submissionFileGenre = $genreDao->getById($submissionFile->getData('genreId'), $context->getId());
+						if ($submissionFileGenre && $submissionFileGenre->getKey() == 'TRANSCRIPTS'){
+							$args[0]['genreId'] = [__('plugins.generic.CspSubmission.submission.transcriptsFile.limit')];
+							return;
+						}
+					}
+				}
 
 			}
 
@@ -253,8 +266,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[0]->setData('name', $genreNameLocale, $locale);
 			$args[0]->setData('name', $genreNamePrimaryLocale, $primaryLocale);
 			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO'])){
-				$args[0]->setData('name', $genreName . ' ' .(count($submissionFiles)+1), $locale);
-				$args[0]->setData('name', $genreNamePrimaryLocale . ' ' .(count($submissionFiles)+1), $genreNamePrimaryLocale);
+				$args[0]->setData('name', $genreNameLocale . ' ' .(count($submissionFiles)+1), $locale);
+				$args[0]->setData('name', $genreNamePrimaryLocale . ' ' .(count($submissionFiles)+1), $primaryLocale);
 			}
 		}
 	}
@@ -479,7 +492,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 			foreach ($submissionFiles as $file) {
 				$file->setData('notRename', true);
 				$file->setData('name', str_replace(' ', '_', $file->getData('name',$file->getData('locale'))) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $file->getData('locale'));
-				$file->setData('name', str_replace(' ', '_', $file->getData('name',$primaryLocale)) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $primaryLocale);
+				if($file->getData('locale') <> $primaryLocale){
+					$file->setData('name', str_replace(' ', '_', $file->getData('name',$primaryLocale)) . '_csp_' . str_replace('/', '_', $row->code) .'_V1', $primaryLocale);
+				}
                 Repo::submissionFile()->edit($file, $file->_data);
             }
 		}
