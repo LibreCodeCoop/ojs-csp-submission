@@ -171,8 +171,11 @@ msgstr "Limite mínimo 15, limite máximo 300 caracteres com espaços"
 msgid "plugins.generic.CspSubmission.keywords.Notification"
 msgstr "São necessárias no mínimo 3 e no máximo 5 palavras-chave"
 
-msgid "plugins.generic.CspSubmission.submission.bodyTextFile.Twice"
-msgstr "Só é permitido inseir um arquivo Corpo do texto"
+msgid "plugins.generic.CspSubmission.submission.bodyTextFile.limit"
+msgstr "Solo se permite un archivo de cuerpo de texto"
+
+msgid "plugins.generic.CspSubmission.submission.transcriptsFile.limit"
+msgstr "Sólo se permite un archivo de subtítulos"
 
 msgid "plugins.generic.CspSubmission.consideracoesEticas"
 msgstr "Considerações éticas e legais"
