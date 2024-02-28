@@ -478,6 +478,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionEdit($hookName, $args) {
 		if($args[0]->getData('submissionProgress') == ""){
+			// Atribui código CSP à nova submissão
 			$contextDao = Application::getContextDao();
 			$result = $contextDao->retrieve(
 				<<<QUERY
@@ -489,12 +490,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$row = $result->current();
 			$args[0]->setData('submissionIdCSP', $row->code);
 
+			// Renomeia arquivos de nova submissão com código CSP
 			$submissionFiles = Repo::submissionFile()
-			->getCollector()
-			->filterBySubmissionIds([$args[0]->getData('id')])
-			->getMany()
-			->toArray();
-
+				->getCollector()
+				->filterBySubmissionIds([$args[0]->getData('id')])
+				->getMany()
+				->toArray();
 			$primaryLocale = Locale::getPrimaryLocale();
 			foreach ($submissionFiles as $file) {
 				$file->setData('notRename', true);
@@ -505,7 +506,7 @@ class CspSubmissionPlugin extends GenericPlugin {
                 Repo::submissionFile()->edit($file, $file->_data);
             }
 
-			// Designa submissão para usuários com papel de Secretaria em conclusão de submissão
+			// Designa usuários com papel de Secretaria à nova submissão
 			$users = Repo::user()
 				->getCollector()
 				->filterByUserGroupIds([19])
