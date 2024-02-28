@@ -31,6 +31,13 @@ use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
 use PKP\facades\Locale;
+use PKP\controllers\grid\users\stageParticipant\form\AddParticipantForm;
+use APP\notification\NotificationManager;
+use PKP\notification\PKPNotification;
+use PKP\core\PKPApplication;
+use PKP\log\event\PKPSubmissionEventLogEntry;
+use PKP\security\Validation;
+use PKP\core\Core;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
@@ -497,6 +504,40 @@ class CspSubmissionPlugin extends GenericPlugin {
 				}
                 Repo::submissionFile()->edit($file, $file->_data);
             }
+
+			// Designa submissão para usuários com papel de Secretaria em conclusão de submissão
+			$users = Repo::user()
+				->getCollector()
+				->filterByUserGroupIds([19])
+				->filterByContextIds([1])
+				->getMany()
+				->toArray();
+			foreach ($users as $user) {
+				$submission = $args[1];
+				$stageId = 1;
+				$assignmentId = '';
+				$userGroup = Repo::userGroup()->get(19);
+				$form = new AddParticipantForm($submission, $user->getData('id'), $assignmentId);
+				$form->readInputData();
+				$form->setData('userGroupId', $userGroup->getData('id'));
+				$form->setData('userId', $user->getData('id'));
+				$form->setData('template', "DISCUSSION_NOTIFICATION_SUBMISSION");
+				$form->execute();
+
+				$eventLog = Repo::eventLog()->newDataObject([
+					'assocType' => PKPApplication::ASSOC_TYPE_SUBMISSION,
+					'assocId' => $submission->getId(),
+					'eventType' => PKPSubmissionEventLogEntry::SUBMISSION_LOG_ADD_PARTICIPANT,
+					'userId' => Validation::loggedInAs() ?? $user->getId(),
+					'message' => 'submission.event.participantAdded',
+					'isTranslated' => false,
+					'dateLogged' => Core::getCurrentDate(),
+					'userFullName' => $user->getFullName(),
+					'username' => $user->getUsername(),
+					'userGroupName' => $userGroup->getData('name')
+				]);
+				Repo::eventLog()->add($eventLog);
+			}
 		}
 	}
 	public function templateManagerDisplay($hookName, $args) {
