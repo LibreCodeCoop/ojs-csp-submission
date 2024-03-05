@@ -93,7 +93,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$genreKey = $genre->getKey();
 			$mimetype = $args[1]->getData('mimetype');
 			
-			if(in_array($genreKey, ['SUBMISSION', 'TABELA_QUADRO', 'TRANSCRIPTS'])){
+			if(in_array($genreKey, ['SUBMISSION', 'TABELA_QUADRO', 'TRANSCRIPTS', 'MATERIAL_SUPLEMENTAR'])){
 				if (!in_array($mimetype,
 				['application/msword', 'application/wps-office.doc', /*Doc*/
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
@@ -238,7 +238,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 			if(in_array($genreKey, ['IMAGE'])){
-				if (!in_array($mimetype, ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg'])) {
+				if (!in_array($mimetype, ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg','image/svg+xml'])) {
 					$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')];
 				}
 			}
@@ -272,7 +272,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			->toArray();
 			$args[0]->setData('name', $genreNameLocale, $locale);
 			$args[0]->setData('name', $genreNamePrimaryLocale, $primaryLocale);
-			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO'])){
+			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO','MATERIAL_SUPLEMENTAR'])){
 				$args[0]->setData('name', $genreNameLocale . ' ' .(count($submissionFiles)+1), $locale);
 				$args[0]->setData('name', $genreNamePrimaryLocale . ' ' .(count($submissionFiles)+1), $primaryLocale);
 			}
