@@ -80,6 +80,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionFileValidate($hookName, $args) {
+		xdebug_break();
 		if($args[1] instanceof \submissionFile){
 
 			$file = Services::get('file')->get($args[1]->_data["fileId"]);
@@ -519,7 +520,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$stageId = 1;
 				$assignmentId = '';
 				$userGroup = Repo::userGroup()->get(19);
-				$form = new AddParticipantForm($submission, $user->getData('id'), $assignmentId);
+				$form = new AddParticipantForm($submission, $stageId, $assignmentId);
 				$form->readInputData();
 				$form->setData('userGroupId', $userGroup->getData('id'));
 				$form->setData('userId', $user->getData('id'));
