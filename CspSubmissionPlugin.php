@@ -80,7 +80,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionFileValidate($hookName, $args) {
-		xdebug_break();
 		if($args[1] instanceof \submissionFile){
 
 			$file = Services::get('file')->get($args[1]->_data["fileId"]);
@@ -117,11 +116,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 						}
 					}
 
-					$formato = explode('.', $args[1]->getLocalizedData('name'));
+					$formato = explode('.', $args[1]->getData('path'));
 					$formato = trim(strtolower(end($formato)));
 
 					$converter = new OfficeConverter('files/'.$args[1]->getData('path'));
 					$htmlFile = $converter->convertTo(str_replace($formato, 'html', 'files/'.$args[1]->getData('path')));
+					$htmlContent = file_get_contents($htmlFile);
+					$htmlContent = preg_replace("/<img[^>]+\>/i", "(image) ", $htmlContent);
+					file_put_contents($htmlFile, $htmlContent);
 					$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
 					$html = new \PhpOffice\PhpWord\Writer\HTML($doc);
 					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
