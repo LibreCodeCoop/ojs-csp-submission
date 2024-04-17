@@ -139,7 +139,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						case 'DEBATE':
 						case 'QUEST_METOD':
 						case 'ENTREVISTA':
-							if ($contagemPalavras > 6000) {
+							if ($contagemPalavras > 6300) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 6000,
@@ -150,7 +150,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						break;
 						case 'EDITORIAL':
 						case 'COM_BREVE':
-							if ($contagemPalavras > 2000) {
+							if ($contagemPalavras > 2100) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 2000,
@@ -160,7 +160,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							}
 						break;
 						case 'PERSPECT':
-							if ($contagemPalavras > 2200) {
+							if ($contagemPalavras > 2310) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 2200,
@@ -171,7 +171,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						break;
 						case 'REVISAO':
 						case 'ENSAIO':
-							if ($contagemPalavras > 8000) {
+							if ($contagemPalavras > 8400) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 8000,
@@ -181,7 +181,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							}
 						break;
 						case 'ESP_TEMATICO':
-							if ($contagemPalavras > 4000) {
+							if ($contagemPalavras > 4200) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 4000,
@@ -193,7 +193,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						case 'CARTA':
 						case 'COMENTARIOS':
 						case 'RESENHA':
-							if ($contagemPalavras > 1300) {
+							if ($contagemPalavras > 1365) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 1300,
@@ -203,7 +203,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							}
 						break;
 						case 'OBTUARIO':
-							if ($contagemPalavras > 1000) {
+							if ($contagemPalavras > 1050) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 1000,
@@ -213,7 +213,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							}
 						break;
 						case 'ERRATA':
-							if ($contagemPalavras > 700) {
+							if ($contagemPalavras > 735) {
 								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 									'sectoin' => $section->getTitle($publication->getData('locale')),
 									'max'     => 70,
