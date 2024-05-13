@@ -262,6 +262,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$args[0]->setData('name', $newName,  $primaryLocale);
 			return true;
 		}
+		// Renomeia arquivo inserido na etapa de envio de arquivos da submissão, atribuindo o nome do gênero do arquivo
 		if($submission->getData('submissionProgress') == "start" && !$args[2]["notRename"]){
 			$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
 			$genre = $genreDao->getById($args[0]->getData('genreId'), $context->getId());
