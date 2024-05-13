@@ -84,7 +84,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$file = Services::get('file')->get($args[1]->_data["fileId"]);
 
-			$request = \Application::get()->getRequest();
+			$request = Application::get()->getRequest();
 			$submissionId = $request->getUserVar('submissionId');
 			$context = $request->getContext();
 			$genreId = $request->getUserVar('genreId');
@@ -249,7 +249,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionFileEdit(string $hookName, array $args){
-		$request = \Application::get()->getRequest();
+		$request = Application::get()->getRequest();
 		$submission = Repo::submission()->get((int) $args[0]->getData('submissionId'));
 		$locale = $args[0]->getData('locale');
 		$context = $request->getContext();
@@ -336,8 +336,8 @@ class CspSubmissionPlugin extends GenericPlugin {
     }
 
 	public function formConfigBefore($hookName, $args) {
-		$context = \Application::get()->getRequest()->getContext();
-		$request = \Application::get()->getRequest();
+		$context = Application::get()->getRequest()->getContext();
+		$request = Application::get()->getRequest();
 		if($request->getRequestedPage() == 'submission'){
 			if($args->id == "startSubmission"){
 				$args->removeField('title');
@@ -465,7 +465,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionValidateSubmit($hookName, $args) {
 		$locale = $args[1]->getData('locale');
-		$context = \Application::get()->getRequest()->getContext();
+		$context = Application::get()->getRequest()->getContext();
         $publication = $args[1]->getCurrentPublication();
 		$keywords = count($publication->getData('keywords'));
 		$section = Repo::section()->get((int) $publication->getData('sectionId'));
