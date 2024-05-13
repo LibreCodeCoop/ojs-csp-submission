@@ -275,7 +275,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			->toArray();
 			$args[0]->setData('name', $genreNameLocale, $locale);
 			$args[0]->setData('name', $genreNamePrimaryLocale, $primaryLocale);
-			if(in_array($genre->getData('key'),['IMAGE','TABELA_QUADRO','MATERIAL_SUPLEMENTAR'])){
+			if(in_array($genre->getData('key'),['IMAGE','SUBMISSION_TABLE','MATERIAL_SUPLEMENTAR'])){
 				$args[0]->setData('name', $genreNameLocale . ' ' .(count($submissionFiles)+1), $locale);
 				$args[0]->setData('name', $genreNamePrimaryLocale . ' ' .(count($submissionFiles)+1), $primaryLocale);
 			}
