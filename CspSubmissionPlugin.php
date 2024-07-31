@@ -20,10 +20,7 @@ use APP\core\Application;
 use APP\template\TemplateManager;
 use PKP\db\DAORegistry;
 use PKP\submission\GenreDAO;
-use PKP\core\JSONMessage;
 use APP\core\Services;
-use PKP\submissionFile\SubmissionFile;
-use PKP\components\forms\submission\ForTheEditors;
 use APP\facades\Repo;
 use PKP\components\forms\FieldTextarea;
 use PKP\components\forms\FieldText;
@@ -32,8 +29,6 @@ use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
 use PKP\facades\Locale;
 use PKP\controllers\grid\users\stageParticipant\form\AddParticipantForm;
-use APP\notification\NotificationManager;
-use PKP\notification\PKPNotification;
 use PKP\core\PKPApplication;
 use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\security\Validation;
@@ -81,9 +76,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function submissionFileValidate($hookName, $args) {
 		if($args[1] instanceof \submissionFile){
-
-			$file = Services::get('file')->get($args[1]->_data["fileId"]);
-
 			$request = Application::get()->getRequest();
 			$submissionId = $request->getUserVar('submissionId');
 			$context = $request->getContext();
@@ -394,20 +386,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 						'value' => $context->getData('codigoFasciculoTematico'),
 					]));
 				}
-
-				// if($args->id == "submissionFile"){
-				// 	$templateMgr = TemplateManager::getManager($request);
-				// 	$templateMgr->addJavaScript(
-				// 		'submissionfiles',
-				// 		"{$request->getBaseUrl()}/{$this->getPluginPath()}/js/build.js",
-				// 		[
-				// 			'contexts' => ['submissionFile', 'backend'],
-				// 			'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
-				// 			'inline' => false,
-				// 		]
-				// 	);
-				// }
-
 				if($args->id == "commentsForTheEditors"){
 					$args->addField(new FieldRadioInput('conflitoInteresse', [
 						'label' => __('plugins.generic.CspSubmission.conflitoInteresse'),
