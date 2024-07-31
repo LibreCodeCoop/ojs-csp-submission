@@ -285,12 +285,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 	public function schemaGetSubmission(string $hookName, array $args){
 		$schema = $args[0]; /** @var stdClass */
-		$schema->properties->submissionIdCSP = (object) [
-			'type' => 'string',
-			'apiSummary' => true,
-			'multilingual' => false,
-			'validation' => ['nullable']
-		];
 		$schema->properties->consideracoesEticas = (object) [
 			'type' => 'string',
 			'apiSummary' => true,
@@ -328,6 +322,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'validation' => ['nullable']
 		];
 		$schema->properties->espacoTematico = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
+		$schema->properties->submissionIdCSP = (object) [
 			'type' => 'string',
 			'apiSummary' => true,
 			'multilingual' => false,
@@ -492,7 +492,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 				QUERY
 			);
 			$row = $result->current();
-			$args[0]->setData('submissionIdCSP', $row->code);
+			$params['submissionIdCSP'] = $row->code;
+			$publication = $args[0]->getCurrentPublication();
+			Repo::publication()->edit($publication, $params);
 
 			// Renomeia arquivos de nova submissão com código CSP
 			$submissionFiles = Repo::submissionFile()
