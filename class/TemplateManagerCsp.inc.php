@@ -46,6 +46,7 @@ class TemplateManagerCsp extends AbstractPlugin {
 			$templateManager->assign('sectionLocalizedTitle', $sectionLocalizedTitle);
 		}
 		if ($args[1] == "dashboard/index.tpl") {
+			return;
 			if(!$request->getUserVar('substage')){
 				$currentUser = $request->getUser();
 				$context = $request->getContext();
