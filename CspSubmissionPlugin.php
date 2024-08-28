@@ -289,18 +289,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
-
-		return false;
-    }
-
-    public function schemaGetPublication(string $hookName, array $args){
-		$schema = $args[0]; /** @var stdClass */
 		$schema->properties->agradecimentos = (object) [
 			'type' => 'string',
 			'apiSummary' => true,
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+		return false;
+    }
+
+    public function schemaGetPublication(string $hookName, array $args){
+		$schema = $args[0]; /** @var stdClass */
 		$schema->properties->codigoFasciculoTematico = (object) [
 			'type' => 'string',
 			'apiSummary' => true,
@@ -459,7 +458,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionEdit($hookName, $args) {
-		if($args[0]->getData('submissionProgress') == ""){
+		if($args[0]->getData('submissionProgress') == "" && $args[1]->getData('submissionProgress') == "start"){
 			// Atribui código CSP à nova submissão
 			$contextDao = Application::getContextDao();
 			$result = $contextDao->retrieve(
