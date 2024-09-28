@@ -330,7 +330,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function formConfigBefore($hookName, $args) {
 		$context = Application::get()->getRequest()->getContext();
 		$request = Application::get()->getRequest();
-		if($request->getRequestedPage() == 'submission'){
+		if($request->_router->_page == 'submission'){
 			if($args->id == "startSubmission"){
 				$args->removeField('title');
 			}
