@@ -20,7 +20,6 @@ use APP\core\Application;
 use APP\template\TemplateManager;
 use PKP\db\DAORegistry;
 use PKP\submission\GenreDAO;
-use APP\core\Services;
 use APP\facades\Repo;
 use PKP\components\forms\FieldTextarea;
 use PKP\components\forms\FieldText;
@@ -28,11 +27,6 @@ use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
 use PKP\facades\Locale;
-use PKP\controllers\grid\users\stageParticipant\form\AddParticipantForm;
-use PKP\core\PKPApplication;
-use PKP\log\event\PKPSubmissionEventLogEntry;
-use PKP\security\Validation;
-use PKP\core\Core;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
