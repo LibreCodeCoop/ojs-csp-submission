@@ -85,7 +85,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$genreKey = $genre->getKey();
 			$mimetype = $args[1]->getData('mimetype');
 			
-			if(in_array($genreKey, ['SUBMISSION', 'TABELA_QUADRO', 'TRANSCRIPTS', 'MATERIAL_SUPLEMENTAR'])){
+			if(in_array($genreKey, ['SUBMISSION', 'SUBMISSION_TABLE', 'TRANSCRIPTS', 'MATERIAL_SUPLEMENTAR'])){
 				if (!in_array($mimetype,
 				['application/msword', 'application/wps-office.doc', /*Doc*/
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
