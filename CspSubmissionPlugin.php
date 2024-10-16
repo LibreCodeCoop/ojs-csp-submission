@@ -452,14 +452,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionEdit($hookName, $args) {
-		if($args[0]->getData('submissionProgress') == "" && $args[1]->getData('submissionProgress') == "start"){
+		if(isset($args[2]["submissionProgress"]) && $args[2]["submissionProgress"] == ""){
 			// Atribui código CSP à nova submissão
 			$contextDao = Application::getContextDao();
 			$result = $contextDao->retrieve(
 				<<<QUERY
 				SELECT CONCAT(LPAD(count(*)+1, CASE WHEN count(*) > 9999 THEN 5 ELSE 4 END, 0), '/', DATE_FORMAT(now(), '%y')) code
 				FROM submissions
-				WHERE YEAR(date_submitted) = YEAR(now())
+				WHERE submission_progress NOT IN ('start', 'details', 'files', 'contributors', 'editors', 'review')
+				AND YEAR(date_submitted) = YEAR(now())
 				QUERY
 			);
 			$row = $result->current();
