@@ -18,11 +18,8 @@ msgstr "Personaliza el envío de acuerdo con el flujo de los Cadernos de Saúde 
 msgid "plugins.generic.CspSubmission.espacoTematico"
 msgstr "Tema"
 
-msgid "plugins.generic.CspSubmission.espacoTematico.Valid"
-msgstr "Necessário informar o tema."
-
 msgid "plugins.generic.CspSubmission.conflitoInteresse"
-msgstr "Seu artigo possui conflito de interesse?"
+msgstr "¿Su artículo tiene un conflicto de intereses?"
 
 msgid "plugins.generic.CspSubmission.codigoFasciculoTematico"
 msgstr "Código de emisión temática"
@@ -31,145 +28,22 @@ msgid "plugins.generic.CspSubmission.codigoFasciculoTematico.description"
 msgstr "Rellena este campo si tu artículo pertenece a un volumen temático (solicita el código al editor invitado)"
 
 msgid "plugins.generic.CspSubmission.agradecimentos"
-msgstr "Agradecimentos"
-
-msgid "plugins.generic.CspSubmission.agradecimentos.description"
-msgstr "Deixe aqui seus agradecimentos"
-
-msgid "plugins.generic.CspSubmission.Revisao"
-msgstr "As revisões sistemáticas só serão encaminhadas se submetidas em inglês."
+msgstr "Gracias"
 
 msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado"
 msgstr "Código"
 
-msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado.Valid"
-msgstr "Necessário informar o código do artigo."
-
-msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado.Description"
-msgstr "Código do artigo ou do debate comentado."
-
-msgid "plugins.generic.CspSubmission.Metadados.Notification"
-msgstr "Todos os arquivos devem ter título. Imagens que não sejam de autoria dos próprios autores devem ter crédito."
-
-msgid "plugins.generic.CspSubmission.File.Title"
-msgstr "Especifique a ordem que você quer que apareça no artigo"
-
-msgid "plugins.generic.CspSubmission.File.Description"
-msgstr "Ex.: Figura 1, Figura 2, Tabela 1, Tabela 2"
-
-msgid "plugins.generic.CspSubmission.artworkFile.Title"
-msgstr "Título"
-
-msgid "plugins.generic.CspSubmission.artworkFile.Comment"
-msgstr "Comentário"
-
-msgid "plugins.generic.CspSubmission.commentsToEditor.Description"
-msgstr "Considerando que parte da demora na avaliação do artigo se deve à busca de consultores, agradecemos a indicação de ao menos dois nomes"
-
-msgid "plugins.generic.CspSubmission.Subtitle"
-msgstr "Título curto"
-
-msgid "plugins.generic.CspSubmission.Subtitle.Description"
-msgstr "Até 70 caracteres"
-
-msgid "plugins.generic.CspSubmission.submission.help"
-msgstr "En caso de dificultades con el proceso, comuníquese con el soporte de SAGAS a través del correo electrónico csp-artigos@ensp.fiocruz.br"
-
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
-msgstr "A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
+msgstr "La sección "{$section}" debe contener texto con un máximo de {$max} palabras. El archivo subido contiene {$count} palabras."
 
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx ou .odt"
+msgstr "¡Formato de archivo no válido! Formatos permitidos para este tipo de archivo: .doc, .docx ou .odt"
 
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Image"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .png, .jpeg, .bmp, .tiff, .xls, .xlsx ou .ods"
-
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Fluxograma"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx, .odt, .eps, .svg ou .wmf"
-
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Gráfico"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .xls, .xlsx, .ods, .eps, .svg ou .wmf"
-
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Mapa"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .eps, .svg ou .wmf"
-
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Fotografia"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .bmp ou .tiff"
-
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.PDF"
-msgstr "Formato de arquivo inválido! Este arquivo deve estar no formato PDF."
-
-msgid "plugins.generic.CspSubmission.doi.Valid"
-msgstr "DOI inválido"
-
-msgid "plugins.generic.CspSubmission.searchForAuthor"
-msgstr "Informe o nome do coautor"
-
-msgid "author.list.count"
-msgstr "{$count} autores"
-
-msgid "author.list.itemsOfTotal"
-msgstr "{$count} de {$total} autores"
-
-msgid "plugins.generic.CspSubmission.authorNotFoundCreate"
-msgstr "Autor não encontrado, cadastrar"
-
-msgid "plugins.generic.CspSubmission.informAName"
-msgstr "Informe um nome"
-
-msgid "plugins.generic.CspSubmission.smallTitle"
-msgstr "Título curto"
-
-msgid "plugins.generic.CspSubmission.supportingAgencies.tip"
-msgstr "Caso possível, informe o código de financiamento"
-
-msgid "plugins.generic.CspSubmission.AuthorContribution"
-msgstr "Contribuição do autor no trabalho"
-
-msgid "editor.submission.consultPubMed"
-msgstr "Consultar PubMed"
-
-msgid "grid.action.consultPubMed"
-msgstr "Consultar PubMed"
-
-msgid "editor.submission.addReviewerSagas"
-msgstr "Adicionar avaliador"
-
-msgid "grid.action.addReviewerSagas"
-msgstr "Adicionar avaliador"
-
-msgid "editor.review.reviewerId.emptyArray"
-msgstr "Selecione ao menos um revisor"
-
-msgid "plugins.generic.CspSubmission.unconsider"
-msgstr "Deconsiderar avaliação"
-
-msgid "plugins.generic.CspSubmission.reviewer.inQueue"
-msgstr "Na fila"
-
-msgid "plugins.generic.CspSubmission.reviewer.removeFromQueue"
-msgstr "Remover da fila"
-
-msgid "plugins.generic.CspSubmission.reviewer.removeFromQueueText"
-msgstr "Deseja realmente remover da fila?"
-
-msgid "plugins.generic.CspSubmission.newSubmission"
-msgstr "Nova submissão"
-
-msgid "plugins.generic.CspSubmission.Revisao.Notificacao"
-msgstr "Revisão sistemática somente será aceita em inglês e com registro no PROSPERO"
-
-msgid "plugins.generic.CspSubmission.user.affiliation.2"
-msgstr "Instituição/Afiliação 2"
-
-msgid "plugins.generic.CspSubmission.submission.Step2.MissingFile"
-msgstr "É necessário inserir um arquivo Corpo do texto"
-
-msgid "plugins.generic.CspSubmission.submission.Title.Tip"
-msgstr "Limite mínimo 15, limite máximo 300 caracteres com espaços"
+msgstr "¡Formato de archivo no válido! Formatos permitidos para este tipo de archivo: .png, .jpeg, .bmp, .tiff, .xls, .xlsx o .ods"
 
 msgid "plugins.generic.CspSubmission.keywords.Notification"
-msgstr "São necessárias no mínimo 3 e no máximo 5 palavras-chave"
+msgstr "Se requieren un mínimo de 3 y un máximo de 5 palabras clave"
 
 msgid "plugins.generic.CspSubmission.submission.bodyTextFile.limit"
 msgstr "Solo se permite un archivo de cuerpo de texto"
@@ -178,13 +52,13 @@ msgid "plugins.generic.CspSubmission.submission.transcriptsFile.limit"
 msgstr "Sólo se permite un archivo de subtítulos"
 
 msgid "plugins.generic.CspSubmission.consideracoesEticas"
-msgstr "Considerações éticas e legais"
+msgstr "Consideraciones éticas y legales"
 
 msgid "plugins.generic.CspSubmission.consideracoesEticas.checkbox.yes"
-msgstr "No caso de artigos que envolvem pesquisas com seres humanos, foram cumpridos os princípios contidos na Declaração de Helsinki, além de atendida a legislação específica do país no qual a pesquisa foi realizada. No caso de pesquisa envolvendo animais da fauna silvestre e/ou cobaias foram atendidas as legislações pertinentes."
+msgstr "En el caso de artículos que involucraran investigaciones con seres humanos, se cumplieron los principios contenidos en la Declaración de Helsinki, además de cumplir con la legislación específica del país en el que se realizó la investigación. En el caso de investigaciones con animales de fauna silvestre y/o cuyes, se cumplió con la legislación pertinente."
 
 msgid "plugins.generic.CspSubmission.consideracoesEticas.checkbox.no"
-msgstr "Não se aplica (estudo não envolve pesquisa com seres humanos ou animais)."
+msgstr "No aplicable (el estudio no implica investigación con humanos o animales)."
 
 msgid "plugins.generic.CspSubmission.submission.newVersion.alert"
 msgstr "Es obligatorio enviar una carta al editor asociado eligiendo el componente <b>Cambios realizados</b>"
