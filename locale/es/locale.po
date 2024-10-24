@@ -82,7 +82,7 @@ msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody"
 msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx ou .odt"
 
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Image"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .png, .jpeg, .bmp ou .tiff"
+msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .png, .jpeg, .bmp, .tiff, .xls, .xlsx ou .ods"
 
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Fluxograma"
 msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx, .odt, .eps, .svg ou .wmf"

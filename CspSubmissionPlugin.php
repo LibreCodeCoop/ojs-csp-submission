@@ -227,7 +227,16 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 
 			if(in_array($genreKey, ['IMAGE'])){
-				if (!in_array($mimetype, ['image/bmp', 'image/tiff', 'image/png', 'image/jpeg','image/svg+xml'])) {
+				if (!in_array($mimetype,[
+											'image/bmp',
+											'image/tiff',
+											'image/png',
+											'image/jpeg',
+											'image/svg+xml',
+											'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+											'application/vnd.oasis.opendocument.spreadsheet',
+											"application/vnd.ms-excel"
+										])) {
 					$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')];
 				}
 			}
