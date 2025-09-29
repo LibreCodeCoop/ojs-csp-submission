@@ -23,6 +23,7 @@ use PKP\submission\GenreDAO;
 use APP\facades\Repo;
 use PKP\components\forms\FieldTextarea;
 use PKP\components\forms\FieldText;
+use PKP\components\forms\FieldOptions;
 use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
@@ -311,6 +312,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+
 		return false;
     }
 
@@ -338,6 +340,31 @@ class CspSubmissionPlugin extends GenericPlugin {
 	public function formConfigBefore($hookName, $args) {
 		$context = Application::get()->getRequest()->getContext();
 		$request = Application::get()->getRequest();
+		if($args->id == "forTheEditors"){
+			$source = $args->getField('source');
+			$source->isRequired = true;
+			$source->description = __('plugins.generic.CspSubmission.preprint');
+			$source->size = 'large';
+
+			if($args->getField('dataAvailability')){
+				$dataAvailability = $args->getField('dataAvailability');
+				$dataAvailability->component='field-text';
+			}
+
+			$args->addField(new FieldOptions('dataAvailabilityOptions', [
+				'groupId' => 'default',
+				'isRequired' => false,
+				'size' => 'large',
+				'type' => 'checkbox',
+				'value' => [],
+                'options' => [
+                    ['value' => 'dadosDisponiveisMedianteSolicitacao', 'label' => __('plugins.generic.CspSubmission.checkbox.dadosDisponiveisMedianteSolicitacao'),],
+                    ['value' => 'fontesIndicadasNoCorpoDoArtigo', 'label' => __('plugins.generic.CspSubmission.checkbox.fontesIndicadasNoCorpoDoArtigo'),],
+                    ['value' => 'dadosNaoDisponiveis', 'label' => __('plugins.generic.CspSubmission.checkbox.dadosNaoDisponiveis'),],
+                    ['value' => 'naoSeAplica', 'label' => __('plugins.generic.CspSubmission.checkbox.naoSeAplica'),],
+                ],
+			]),[FIELD_POSITION_AFTER, 'dataAvailability']);
+		}
 		// Customiza formulário de autor/coautor
 		if($args->id == "contributor"){
 			$orcid = $args->getField('orcid');

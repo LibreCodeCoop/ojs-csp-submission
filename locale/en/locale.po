@@ -30,6 +30,18 @@ msgstr "Fill in this field if your article belongs to a thematic volume (request
 msgid "plugins.generic.CspSubmission.agradecimentos"
 msgstr "Acknowledgements"
 
+msgid "plugins.generic.CspSubmission.checkbox.dadosDisponiveisMedianteSolicitacao"
+msgstr "The research data are available upon request to the corresponding author."
+
+msgid "plugins.generic.CspSubmission.checkbox.fontesIndicadasNoCorpoDoArtigo"
+msgstr "The sources of information used in the study are indicated in the body of the article."
+
+msgid "plugins.generic.CspSubmission.checkbox.dadosNaoDisponiveis"
+msgstr "The research data are not available."
+
+msgid "plugins.generic.CspSubmission.checkbox.naoSeAplica"
+msgstr "Not applicable."
+
 msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado"
 msgstr "Code"
 
@@ -65,3 +77,9 @@ msgstr "It is mandatory to submit a letter to the associated editor by choosing 
 
 msgid "plugins.generic.CspSubmission.submission.title.description"
 msgstr "Minimum limit 15, maximum limit 300 characters with spaces"
+
+msgid "plugins.generic.CspSubmission.preprint"
+msgstr "Is your text deposited on a preprint server?<br> "
+"<input class='form-check-input' type='radio' name='preprint' value='Sim' id='preprintSim'> Yes <br> "
+"<input class='form-check-input' type='radio' name='preprint' value='Não' id='preprintNao' checked> No <br> "
+"Please inform the DOI assigned to the manuscript if it has been deposited on a preprint server:"
