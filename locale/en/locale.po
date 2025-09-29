@@ -57,6 +57,12 @@ msgstr "Invalid file format! Allowed formats for this file type: .png, .jpeg, .b
 msgid "plugins.generic.CspSubmission.keywords.Notification"
 msgstr "A minimum of 3 and a maximum of 5 keywords are required."
 
+msgid "plugins.generic.CspSubmission.authorBiography.Notification"
+msgstr "It is necessary to fill in the field \"Author's contribution to the work\" for all authors."
+
+msgid "plugins.generic.CspSubmission.authorAddress.Notification"
+msgstr "Address fields must be completed for all authors."
+
 msgid "plugins.generic.CspSubmission.submission.bodyTextFile.limit"
 msgstr "Only one text body file is allowed"
 

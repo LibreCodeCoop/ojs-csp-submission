@@ -57,6 +57,12 @@ msgstr "¡Formato de archivo no válido! Formatos permitidos para este tipo de a
 msgid "plugins.generic.CspSubmission.keywords.Notification"
 msgstr "Se requieren un mínimo de 3 y un máximo de 5 palabras clave"
 
+msgid "plugins.generic.CspSubmission.authorBiography.Notification"
+msgstr "Es necesario rellenar el campo \"Contribución del autor a la obra\" para todos los autores."
+
+msgid "plugins.generic.CspSubmission.authorAddress.Notification"
+msgstr "Los campos de dirección deben completarse para todos los autores."
+
 msgid "plugins.generic.CspSubmission.submission.bodyTextFile.limit"
 msgstr "Solo se permite un archivo de cuerpo de texto"
 
