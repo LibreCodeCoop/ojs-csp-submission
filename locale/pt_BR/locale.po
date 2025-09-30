@@ -95,3 +95,12 @@ msgstr "Seu texto está depositado em servidor preprint?<br> "
 "<input class='form-check-input' type='radio' name='preprint' value='Sim' id='preprintSim'> Sim <br> "
 "<input class='form-check-input' type='radio' name='preprint' value='Não' id='preprintNao' checked> Não <br> "
 "Informe o DOI atribuído ao manuscrito caso tenha sido depositado em servidor preprint:"
+
+msgid "plugins.generic.CspSubmission.monografDissertTese.label"
+msgstr "Monografia/Dissertação/Tese"
+
+msgid "plugins.generic.CspSubmission.monografDissertTese.description"
+msgstr "Seu texto está disponibilizado em repositório de Monografia/Dissertação/Tese?<br> "
+"<input class='form-check-input' type='radio' name='monografDissertTese' value='Sim' id='monografDissertTeseSim'> Sim <br> "
+"<input class='form-check-input' type='radio' name='monografDissertTese' value='Não' id='monografDissertTeseNao' checked> Não <br> "
+"Informe o link do repositório:"

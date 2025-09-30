@@ -312,6 +312,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+		$schema->properties->monografDissertTese = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
 
 		return false;
     }
@@ -347,6 +353,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$source->description = __('plugins.generic.CspSubmission.preprint');
 			$source->size = 'large';
 
+			$args->addField(new FieldText('monografDissertTese', [
+				'label' => __('plugins.generic.CspSubmission.monografDissertTese.label'),
+				'description' => __('plugins.generic.CspSubmission.monografDissertTese.description'),
+				'groupId' => 'default',
+				'isRequired' => true,
+				'size' => 'large',
+				'value' => $context->getData('monografDissertTese')
+			]),[FIELD_POSITION_AFTER, 'source']);
+
 			// Altera tipo de campo "Disponibilidade de Dados" para texto simples
 			if($args->getField('dataAvailability')){
 				$dataAvailability = $args->getField('dataAvailability');
@@ -367,6 +382,7 @@ class CspSubmissionPlugin extends GenericPlugin {
                     ['value' => 'naoSeAplica', 'label' => __('plugins.generic.CspSubmission.checkbox.naoSeAplica'),],
                 ],
 			]),[FIELD_POSITION_AFTER, 'dataAvailability']);
+
 		}
 		// Customiza formulário de autor/coautor
 		if($args->id == "contributor"){
