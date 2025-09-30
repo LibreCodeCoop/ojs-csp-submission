@@ -341,16 +341,19 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$context = Application::get()->getRequest()->getContext();
 		$request = Application::get()->getRequest();
 		if($args->id == "forTheEditors"){
+			// Customiza campo "Fonte" para adicionar caixas de seleção
 			$source = $args->getField('source');
 			$source->isRequired = true;
 			$source->description = __('plugins.generic.CspSubmission.preprint');
 			$source->size = 'large';
 
+			// Altera tipo de campo "Disponibilidade de Dados" para texto simples
 			if($args->getField('dataAvailability')){
 				$dataAvailability = $args->getField('dataAvailability');
 				$dataAvailability->component='field-text';
 			}
 
+			// Adiciona campo de caixas de seleção que serão gravados em campo Disponibilidade de Dados (dataAvailability)
 			$args->addField(new FieldOptions('dataAvailabilityOptions', [
 				'groupId' => 'default',
 				'isRequired' => false,
