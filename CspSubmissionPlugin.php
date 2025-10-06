@@ -43,6 +43,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr = TemplateManager::getManager($request);
 			$templateMgr->addStyleSheet('CspSubmission', $url, ['contexts' => 'backend']);
 
+			Hook::add('TemplateResource::getFilename', [$this, '_overridePluginTemplates']);
 			Hook::add('SubmissionFile::validate', [$this, 'submissionFileValidate']);
 			Hook::add('SubmissionFile::edit', [$this, 'submissionFileEdit']);
 			Hook::add('Schema::get::submission', [$this, 'schemaGetSubmission']);
@@ -352,21 +353,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$source->isRequired = true;
 			$source->description = __('plugins.generic.CspSubmission.preprint');
 			$source->size = 'large';
-
 			$args->addField(new FieldText('monografDissertTese', [
 				'label' => __('plugins.generic.CspSubmission.monografDissertTese.label'),
 				'description' => __('plugins.generic.CspSubmission.monografDissertTese.description'),
 				'groupId' => 'default',
 				'isRequired' => true,
 				'size' => 'large',
-				'value' => $context->getData('monografDissertTese')
+				'value' => $args->publication->getData('monografDissertTese')
 			]),[FIELD_POSITION_AFTER, 'source']);
-
-			// Altera tipo de campo "Disponibilidade de Dados" para texto simples
-			if($args->getField('dataAvailability')){
-				$dataAvailability = $args->getField('dataAvailability');
-				$dataAvailability->component='field-text';
-			}
 
 			// Adiciona campo de caixas de seleção que serão gravados em campo Disponibilidade de Dados (dataAvailability)
 			$args->addField(new FieldOptions('dataAvailabilityOptions', [
@@ -493,7 +487,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							['value' => 'S', 'label' => __('common.yes')],
 							['value' => 'N', 'label' => __('common.no')],
 						],
-						'value' => $context->getData('conflitoInteresse'),
+						'value' => $args->submission->getData('conflitoInteresse'),
 					]));
 					$args->addField(new FieldRadioInput('consideracoesEticas', [
 						'label' => __('plugins.generic.CspSubmission.consideracoesEticas'),
@@ -505,14 +499,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 							['value' => 'S', 'label' => __('plugins.generic.CspSubmission.consideracoesEticas.checkbox.yes')],
 							['value' => 'N', 'label' => __('plugins.generic.CspSubmission.consideracoesEticas.checkbox.no')],
 						],
-						'value' => $context->getData('consideracoesEticas'),
+						'value' => $args->submission->getData('consideracoesEticas'),
 					]));
 					$args->addField(new FieldTextarea('agradecimentos', [
 						'label' => __('plugins.generic.CspSubmission.agradecimentos'),
 						'groupId' => 'default',
 						'isRequired' => false,
 						'size' => 'normal',
-						'value' => $context->getData('agradecimentos'),
+						'value' => $args->submission->getData('agradecimentos'),
 					]));
 				}
 			}
