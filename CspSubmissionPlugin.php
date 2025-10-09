@@ -23,7 +23,6 @@ use PKP\submission\GenreDAO;
 use APP\facades\Repo;
 use PKP\components\forms\FieldTextarea;
 use PKP\components\forms\FieldText;
-use PKP\components\forms\FieldOptions;
 use PKP\components\forms\FieldRadioInput;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
@@ -319,6 +318,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+		$schema->properties->dataAvailabilityRadios = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
 
 		return false;
     }
@@ -353,6 +358,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$source->isRequired = true;
 			$source->description = __('plugins.generic.CspSubmission.preprint');
 			$source->size = 'large';
+
 			$args->addField(new FieldText('monografDissertTese', [
 				'label' => __('plugins.generic.CspSubmission.monografDissertTese.label'),
 				'description' => __('plugins.generic.CspSubmission.monografDissertTese.description'),
@@ -362,20 +368,21 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'value' => $args->publication->getData('monografDissertTese')
 			]),[FIELD_POSITION_AFTER, 'source']);
 
-			// Adiciona campo de caixas de seleção que serão gravados em campo Disponibilidade de Dados (dataAvailability)
-			$args->addField(new FieldOptions('dataAvailabilityOptions', [
+			$args->addField(new FieldRadioInput('dataAvailabilityRadios', [
+				'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.label'),
 				'groupId' => 'default',
-				'isRequired' => false,
+				'isRequired' => true,
 				'size' => 'large',
-				'type' => 'checkbox',
-				'value' => [],
+				'type' => 'radio',
+				'value' => $args->publication->getData('dataAvailabilityRadios'),
                 'options' => [
-                    ['value' => 'dadosDisponiveisMedianteSolicitacao', 'label' => __('plugins.generic.CspSubmission.checkbox.dadosDisponiveisMedianteSolicitacao'),],
-                    ['value' => 'fontesIndicadasNoCorpoDoArtigo', 'label' => __('plugins.generic.CspSubmission.checkbox.fontesIndicadasNoCorpoDoArtigo'),],
-                    ['value' => 'dadosNaoDisponiveis', 'label' => __('plugins.generic.CspSubmission.checkbox.dadosNaoDisponiveis'),],
-                    ['value' => 'naoSeAplica', 'label' => __('plugins.generic.CspSubmission.checkbox.naoSeAplica'),],
+                    ['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisNoRepo'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisNoRepo'),],
+					['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisMedianteSolicitacao'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisMedianteSolicitacao'),],
+                    ['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.fontesIndicadasNoCorpoDoArtigo'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.fontesIndicadasNoCorpoDoArtigo'),],
+                    ['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosNaoDisponiveis'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosNaoDisponiveis'),],
+                    ['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.naoSeAplica'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.naoSeAplica'),],
                 ],
-			]),[FIELD_POSITION_AFTER, 'dataAvailability']);
+			]),[FIELD_POSITION_BEFORE, 'dataAvailability']);
 
 		}
 		// Customiza formulário de autor/coautor

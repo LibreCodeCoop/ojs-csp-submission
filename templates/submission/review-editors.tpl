@@ -56,6 +56,7 @@
                 {include file="/submission/review-publication-field.tpl" prop="type" inLocale=$localeKey name="{translate key="common.type"}" type="string"}
             {/if}
             {if in_array($currentContext->getData('dataAvailability'), [$currentContext::METADATA_REQUEST, $currentContext::METADATA_REQUIRE])}
+                {include file="/submission/review-publication-field.tpl" prop="dataAvailabilityRadios" name="{translate key="plugins.generic.CspSubmission.dataAvailabilityRadios.label"}" type="html"}
                 {include file="/submission/review-publication-field.tpl" prop="dataAvailability" inLocale=$localeKey name="{translate key="submission.dataAvailability"}" type="html"}
             {/if}
                 {include file="/submission/review-publication-field.tpl" prop="monografDissertTese" name="{translate key="plugins.generic.CspSubmission.monografDissertTese.label"}" type="html"}

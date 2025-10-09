@@ -30,16 +30,22 @@ msgstr "Fill in this field if your article belongs to a thematic volume (request
 msgid "plugins.generic.CspSubmission.agradecimentos"
 msgstr "Acknowledgements"
 
-msgid "plugins.generic.CspSubmission.checkbox.dadosDisponiveisMedianteSolicitacao"
+msgid "plugins.generic.CspSubmission.dataAvailabilityRadios.label"
+msgstr "Data availability"
+
+msgid "plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisNoRepo"
+msgstr "The databases used in the study, including extraction codes, analyses, and results, are available in the repository below."
+
+msgid "plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisMedianteSolicitacao"
 msgstr "The research data are available upon request to the corresponding author."
 
-msgid "plugins.generic.CspSubmission.checkbox.fontesIndicadasNoCorpoDoArtigo"
+msgid "plugins.generic.CspSubmission.dataAvailabilityRadios.fontesIndicadasNoCorpoDoArtigo"
 msgstr "The sources of information used in the study are indicated in the body of the article."
 
-msgid "plugins.generic.CspSubmission.checkbox.dadosNaoDisponiveis"
+msgid "plugins.generic.CspSubmission.dataAvailabilityRadios.dadosNaoDisponiveis"
 msgstr "The research data are not available."
 
-msgid "plugins.generic.CspSubmission.checkbox.naoSeAplica"
+msgid "plugins.generic.CspSubmission.dataAvailabilityRadios.naoSeAplica"
 msgstr "Not applicable."
 
 msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado"
