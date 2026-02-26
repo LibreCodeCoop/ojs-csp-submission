@@ -1,0 +1,4 @@
+/* Esconde div lateral para melhorar navegação */
+.submissionWizard .panelSection__header{
+	display: none !important;
+}
