@@ -55,13 +55,10 @@ msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado"
 msgstr "Código"
 
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
-msgstr "A sessão "{$sectoin}" deve conter texto com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
+msgstr "A sessão "{$sectoin}" deve conter \"Corpo do texto\" com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
 
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .doc, .docx ou .odt"
-
-msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.Image"
-msgstr "Formato de arquivo inválido! Formatos permitidos para este tipo de arquivo: .png, .jpeg, .bmp, .tiff, .xls, .xlsx ou .ods"
+msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat"
+msgstr "Formato de arquivo inválido de \"{$genre}\"! Formatos permitidos para este tipo de arquivo: {$allowedFormats}"
 
 msgid "plugins.generic.CspSubmission.keywords.Notification"
 msgstr "São necessárias no mínimo 3 e no máximo 5 palavras-chave"
@@ -73,7 +70,7 @@ msgid "plugins.generic.CspSubmission.authorAddress.Notification"
 msgstr "É necessário preencher os campos de endereço para todos os autores"
 
 msgid "plugins.generic.CspSubmission.submission.bodyTextFile.limit"
-msgstr "Só é permitido inseir um arquivo Corpo do texto"
+msgstr "Só é permitido inseir um arquivo \"Corpo do texto\""
 
 msgid "plugins.generic.CspSubmission.submission.transcriptsFile.limit"
 msgstr "Só é permitido inseir um arquivo de legendas"
