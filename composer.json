@@ -1,7 +1,0 @@
-{
-    "require": {
-        "symfony/http-client": "^6.3",
-        "phpoffice/phpword": "^1.1",
-        "ncjoes/office-converter": "^1.0"
-    }
-}
