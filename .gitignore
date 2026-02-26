@@ -1,5 +1,0 @@
-/vendor/
-node_modules
-js/*
-styles/*
-yarn.lock
