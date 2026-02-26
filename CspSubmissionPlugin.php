@@ -43,7 +43,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$templateMgr->addStyleSheet('CspSubmission', $url, ['contexts' => 'backend']);
 
 			Hook::add('TemplateResource::getFilename', [$this, '_overridePluginTemplates']);
-			Hook::add('SubmissionFile::validate', [$this, 'submissionFileValidate']);
 			Hook::add('SubmissionFile::edit', [$this, 'submissionFileEdit']);
 			Hook::add('Schema::get::submission', [$this, 'schemaGetSubmission']);
 			Hook::add('Form::config::before', [$this, 'formConfigBefore']);
@@ -68,163 +67,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 	 */
 	function getDescription() {
 		return __('plugins.generic.CspSubmission.description');
-	}
-
-	public function submissionFileValidate($hookName, $args) {
-		if($args[1] instanceof \submissionFile){
-			$request = Application::get()->getRequest();
-			$submissionId = $request->getUserVar('submissionId');
-			$context = $request->getContext();
-			$genreId = $request->getUserVar('genreId');
-			$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
-			$genre = $genreDao->getById($genreId, $context->getId());
-			$genreKey = $genre->getKey();
-			$mimetype = $args[1]->getData('mimetype');
-			
-			if(in_array($genreKey, ['SUBMISSION', 'SUBMISSION_TABLE', 'TRANSCRIPTS', 'MATERIAL_SUPLEMENTAR'])){
-				if (!in_array($mimetype,
-				['application/msword', 'application/wps-office.doc', /*Doc*/
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/wps-office.docx', /*docx*/
-				'application/vnd.oasis.opendocument.text', /*odt*/
-				'application/rtf'] /*rtf*/
-				)) {
-					$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody')];
-					return;
-				}
-				if($genreKey == 'SUBMISSION'){
-					$submissionFiles = Repo::submissionFile()
-					->getCollector()
-					->filterBySubmissionIds([$submissionId])
-					->getMany();
-					foreach ($submissionFiles as $submissionFile) {
-						$submissionFileGenre = $genreDao->getById($submissionFile->getData('genreId'), $context->getId());
-						if ($submissionFileGenre && $submissionFileGenre->getKey() == 'SUBMISSION'){
-							$args[0]['genreId'] = [__('plugins.generic.CspSubmission.submission.bodyTextFile.limit')];
-							return;
-						}
-					}
-
-					$formato = explode('.', $args[1]->getData('path'));
-					$formato = trim(strtolower(end($formato)));
-
-					$converter = new OfficeConverter('files/'.$args[1]->getData('path'));
-					$htmlFile = $converter->convertTo(str_replace($formato, 'html', 'files/'.$args[1]->getData('path')));
-					$htmlContent = file_get_contents($htmlFile);
-					$htmlContent = preg_replace("/<img[^>]+\>/i", "(image) ", $htmlContent);
-					file_put_contents($htmlFile, $htmlContent);
-					$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
-					$html = new \PhpOffice\PhpWord\Writer\HTML($doc);
-					$contagemPalavras = str_word_count(strip_tags($html->getWriterPart('Body')->write()));
-					unlink($htmlFile);
-
-					$submission = Repo::submission()->get((int) $submissionId);
-					$publication = Repo::publication()->get((int) $submission->getData('currentPublicationId'));
-					$section = Repo::section()->get((int) $publication->getData('sectionId'));
-					$sectionAbbrev = $section->getAbbrev($args[4]);
-
-					switch($sectionAbbrev) {
-						case 'ARTIGO':
-						case 'DEBATE':
-						case 'QUEST_METOD':
-						case 'ENTREVISTA':
-						case 'ESP_TEMATICO':
-							if ($contagemPalavras > 6600) {
-								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => 6000,
-									'count'   => $contagemPalavras
-									])
-								];
-							}
-						break;
-						case 'EDITORIAL':
-						case 'COM_BREVE':
-						case 'PERSPECT':
-							if ($contagemPalavras > 2750) {
-								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => 2500,
-									'count'   => $contagemPalavras
-									])
-								];
-							}
-						break;
-						case 'REVISAO':
-						case 'ENSAIO':
-							if ($contagemPalavras > 8800) {
-								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => 8000,
-									'count'   => $contagemPalavras
-									])
-								];
-							}
-						break;
-						case 'CARTA':
-						case 'COMENTARIOS':
-						case 'RESENHA':
-							if ($contagemPalavras > 1540) {
-								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => 1400,
-									'count'   => $contagemPalavras
-									])
-								];
-							}
-						break;
-						case 'OBTUARIO':
-							if ($contagemPalavras > 1050) {
-								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => 1000,
-									'count'   => $contagemPalavras
-									])
-								];
-							}
-						break;
-						case 'ERRATA':
-							if ($contagemPalavras > 770) {
-								$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => 700,
-									'count'   => $contagemPalavras
-									])
-								];
-							}
-						break;
-					}
-				}
-				if($genreKey == 'TRANSCRIPTS'){
-					$submissionFiles = Repo::submissionFile()
-					->getCollector()
-					->filterBySubmissionIds([$submissionId])
-					->getMany();
-					foreach ($submissionFiles as $submissionFile) {
-						$submissionFileGenre = $genreDao->getById($submissionFile->getData('genreId'), $context->getId());
-						if ($submissionFileGenre && $submissionFileGenre->getKey() == 'TRANSCRIPTS'){
-							$args[0]['genreId'] = [__('plugins.generic.CspSubmission.submission.transcriptsFile.limit')];
-							return;
-						}
-					}
-				}
-
-			}
-
-			if(in_array($genreKey, ['IMAGE'])){
-				if (!in_array($mimetype,[
-											'image/bmp',
-											'image/tiff',
-											'image/png',
-											'image/jpeg',
-											'image/svg+xml',
-											'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-											'application/vnd.oasis.opendocument.spreadsheet',
-											"application/vnd.ms-excel"
-										])) {
-					$args[0]['genreId'] = [__('plugins.generic.CspSubmission.SectionFile.invalidFormat.Image')];
-				}
-			}
-		}
 	}
 
 	public function submissionFileEdit(string $hookName, array $args){
@@ -525,6 +367,152 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$context = Application::get()->getRequest()->getContext();
         $publication = $args[1]->getCurrentPublication();
 		$submission = Repo::submission()->get((int) $publication->_data["submissionId"]);
+
+		$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
+		$submissionFiles = Repo::submissionFile()
+			->getCollector()
+			->filterBySubmissionIds([$submission->getId()])
+			->getMany();
+		$submissionGenreCount = 0;
+		$transcriptsGenreCount = 0;
+		foreach ($submissionFiles as $file) {
+			$genre = $genreDao->getById($file->getData('genreId'), $context->getId());
+			if ($genre) {
+				// Verifica se há mais de um arquivo com o gênero 'Corpo do Texto'
+				if ($genre->getKey() === 'SUBMISSION') {
+					$submissionGenreCount++;
+					if ($submissionGenreCount > 1) {
+						$args[0]["files"][] = __('plugins.generic.CspSubmission.submission.bodyTextFile.limit');
+					}
+				}
+				// Verifica se há mais de um arquivo com o gênero 'Legendas'
+				if ($genre->getKey() === 'LEGENDA_FIGURAS') {
+					$transcriptsGenreCount++;
+					if ($transcriptsGenreCount > 1) {
+						$args[0]["files"][] = __('plugins.generic.CspSubmission.submission.transcriptsFile.limit');
+					}
+				}
+				if (in_array($genre->getKey(), ['SUBMISSION', 'SUBMISSION_TABLE', 'LEGENDA_FIGURAS', 'MATERIAL_SUPLEMENTAR'])) {
+					$allowedMimetypes = [
+						'application/msword',
+						'application/wps-office.doc',
+						'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+						'application/wps-office.docx',
+						'application/vnd.oasis.opendocument.text',
+						'application/rtf',
+					];
+					$mimetype = $file->getData('mimetype');
+					// Verifica se o tipo do arquivo é permitido para o gênero do arquivo
+					$allowedFormats = ['doc', 'docx', 'odt', 'rtf'];
+					if (!in_array($mimetype, $allowedMimetypes)) {
+						$args[0]["files"][] = __('plugins.generic.CspSubmission.SectionFile.invalidFormat', ['genre' => $genre->getLocalizedData('name'), 'allowedFormats' => implode(', ', $allowedFormats)]);
+					}else{
+						//Verifica se o número de palavras dos arquivos Corpo do Texto está dentro do limite permitido para a seção da submissão
+						if ($genre->getKey() === 'SUBMISSION') {
+							$path = $file->getData('path');
+							$formato = explode('.', $path);
+							$formato = trim(strtolower(end($formato)));
+							$converter = new OfficeConverter('files/' . $path);
+							$htmlFile = $converter->convertTo(str_replace($formato, 'html', 'files/' . $path));
+							$htmlContent = file_get_contents($htmlFile);
+							$htmlContent = preg_replace("/\\<img[^>]+\\>/i", "(image) ", $htmlContent);
+							file_put_contents($htmlFile, $htmlContent);
+							$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
+							$htmlWriter = new \PhpOffice\PhpWord\Writer\HTML($doc);
+							$wordCount = str_word_count(strip_tags($htmlWriter->getWriterPart('Body')->write()));
+							@unlink($htmlFile);
+							$section = Repo::section()->get((int) $publication->getData('sectionId'));
+							$sectionAbbrev = $section->getAbbrev($context->_data["primaryLocale"]);
+
+							switch($sectionAbbrev) {
+								case 'ARTIGO':
+								case 'DEBATE':
+								case 'QUEST_METOD':
+								case 'ENTREVISTA':
+								case 'ESP_TEMATICO':
+									if ($wordCount > 6600) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'sectoin' => $section->getTitle($publication->getData('locale')),
+											'max'     => 6000,
+											'count'   => $wordCount
+											]);
+									}
+								break;
+								case 'EDITORIAL':
+								case 'COM_BREVE':
+								case 'PERSPECT':
+									if ($wordCount > 2750) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'sectoin' => $section->getTitle($publication->getData('locale')),
+											'max'     => 2500,
+											'count'   => $wordCount
+											]);
+									}
+								break;
+								case 'REVISAO':
+								case 'ENSAIO':
+									if ($wordCount > 8800) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'sectoin' => $section->getTitle($publication->getData('locale')),
+											'max'     => 8000,
+											'count'   => $wordCount
+											]);
+									}
+								break;
+								case 'CARTA':
+								case 'COMENTARIOS':
+								case 'RESENHA':
+									if ($wordCount > 1540) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'sectoin' => $section->getTitle($publication->getData('locale')),
+											'max'     => 1400,
+											'count'   => $wordCount
+											]);
+									}
+								break;
+								case 'OBTUARIO':
+									if ($wordCount > 1050) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'sectoin' => $section->getTitle($publication->getData('locale')),
+											'max'     => 1000,
+											'count'   => $wordCount
+											]);
+									}
+								break;
+								case 'ERRATA':
+									if ($wordCount > 770) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'sectoin' => $section->getTitle($publication->getData('locale')),
+											'max'     => 700,
+											'count'   => $wordCount
+											]);
+									}
+								break;
+							}
+						}
+					}
+				}
+				if ($genre->getKey() === 'IMAGE') {
+					$allowedMimetypes = [
+						'image/bmp',
+						'image/tiff',
+						'image/png',
+						'image/jpeg',
+						'image/svg+xml',
+						'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+						'application/vnd.oasis.opendocument.spreadsheet',
+						"application/vnd.ms-excel",
+					];
+					$mimetype = $file->getData('mimetype');
+					$allowedFormats = ['bmp', 'tiff', 'png', 'jpeg', 'jpg', 'svg', 'xlsx', 'ods', 'xls'];
+					if (!in_array($mimetype, $allowedMimetypes)) {
+						$args[0]["files"][] = __('plugins.generic.CspSubmission.SectionFile.invalidFormat', ['genre' => $genre->getLocalizedData('name'), 'allowedFormats' => implode(', ', $allowedFormats)]);
+					}
+				}
+
+			}
+		}
+
 		$keywords = count($publication->getData('keywords'));
 		$section = Repo::section()->get((int) $publication->getData('sectionId'));
 		$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
