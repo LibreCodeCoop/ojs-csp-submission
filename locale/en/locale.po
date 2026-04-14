@@ -21,6 +21,9 @@ msgstr "Theme"
 msgid "plugins.generic.CspSubmission.conflitoInteresse"
 msgstr "Does your article have a potential conflict of interest?"
 
+msgid "plugins.generic.CspSubmission.conflitoInteresseTexto"
+msgstr "Describe the conflict of interest"
+
 msgid "plugins.generic.CspSubmission.codigoFasciculoTematico"
 msgstr "Thematic issue code"
 

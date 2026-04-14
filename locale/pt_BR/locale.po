@@ -21,6 +21,9 @@ msgstr "Tema"
 msgid "plugins.generic.CspSubmission.conflitoInteresse"
 msgstr "Seu artigo possui potencial conflito de interesse?"
 
+msgid "plugins.generic.CspSubmission.conflitoInteresseTexto"
+msgstr "Descreva o conflito de interesse"
+
 msgid "plugins.generic.CspSubmission.conflitoInteresse.Notification'"
 msgstr "É necessário inserir o enderećo em todos os co-autores"
 

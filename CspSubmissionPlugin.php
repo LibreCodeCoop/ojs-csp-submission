@@ -24,6 +24,7 @@ use APP\facades\Repo;
 use PKP\components\forms\FieldTextarea;
 use PKP\components\forms\FieldText;
 use PKP\components\forms\FieldRadioInput;
+use PKP\components\forms\FieldOptions;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
 use PKP\facades\Locale;
@@ -326,17 +327,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 					]));
 				}
 				if($args->id == "commentsForTheEditors"){
-					$args->addField(new FieldRadioInput('conflitoInteresse', [
+					$conflitoInteresse = $args->submission->getData('conflitoInteresse');
+					$conflitoInteresseOption = ($conflitoInteresse === null || $conflitoInteresse === '')
+						? '' : ($conflitoInteresse === 'N' ? 'N' : 'S');
+					$args->addField(new FieldOptions('conflitoInteresseOption', [
 						'label' => __('plugins.generic.CspSubmission.conflitoInteresse'),
 						'groupId' => 'default',
 						'isRequired' => true,
 						'type' => 'radio',
-						'size' => 'small',
 						'options' => [
 							['value' => 'S', 'label' => __('common.yes')],
 							['value' => 'N', 'label' => __('common.no')],
 						],
-						'value' => $args->submission->getData('conflitoInteresse'),
+						'value' => $conflitoInteresseOption,
+					]));
+					$args->addField(new FieldTextarea('conflitoInteresse', [
+						'label' => __('plugins.generic.CspSubmission.conflitoInteresseTexto'),
+						'groupId' => 'default',
+						'isRequired' => true,
+						'showWhen' => ['conflitoInteresseOption', 'S'],
+						'value' => ($conflitoInteresseOption === 'S' ? $conflitoInteresse : ''),
 					]));
 					$args->addField(new FieldRadioInput('consideracoesEticas', [
 						'label' => __('plugins.generic.CspSubmission.consideracoesEticas'),
@@ -547,6 +557,10 @@ class CspSubmissionPlugin extends GenericPlugin {
 	}
 
 	public function submissionEdit($hookName, $args) {
+		$request = Application::get()->getRequest();
+		if ($request->getUserVar('conflitoInteresseOption') === 'N') {
+			$args[0]->setData('conflitoInteresse', 'N');
+		}
 		if(isset($args[2]["submissionProgress"]) && $args[2]["submissionProgress"] == ""){
 			// Atribui código CSP à nova submissão
 			$contextDao = Application::getContextDao();
