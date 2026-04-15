@@ -196,11 +196,29 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$context = Application::get()->getRequest()->getContext();
 		$request = Application::get()->getRequest();
 		if($args->id == "forTheEditors"){
-			// Customiza campo "Fonte" para adicionar caixas de seleção
+			// Customiza campo "Fonte" para adicionar pergunta prévia: "Seu texto está depositado em servidor preprint?"
+			$sourceValue = $args->publication->getData('source');
+			$preprintOption = ($sourceValue !== null && $sourceValue !== '') ? 'S' : '';
+
+			$args->addField(new FieldOptions('preprintOption', [
+				'label' => __('plugins.generic.CspSubmission.preprint'),
+				'groupId' => 'default',
+				'isRequired' => true,
+				'type' => 'radio',
+				'options' => [
+					['value' => 'S', 'label' => __('common.yes')],
+					['value' => 'N', 'label' => __('common.no')],
+				],
+				'value' => $preprintOption,
+			]), [FIELD_POSITION_BEFORE, 'source']);
+
 			$source = $args->getField('source');
 			$source->isRequired = true;
-			$source->description = __('plugins.generic.CspSubmission.preprint');
+			$source->label = __('plugins.generic.CspSubmission.preprint.doi');
+			$source->description = '';
 			$source->size = 'large';
+			$source->showWhen = ['preprintOption', 'S'];
+			$source->value = ($preprintOption === 'S' ? $sourceValue : '');
 
 			$args->addField(new FieldText('monografDissertTese', [
 				'label' => __('plugins.generic.CspSubmission.monografDissertTese.label'),
@@ -555,7 +573,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			}
 		}
 	}
-
 	public function submissionEdit($hookName, $args) {
 		$request = Application::get()->getRequest();
 		if ($request->getUserVar('conflitoInteresseOption') === 'N') {

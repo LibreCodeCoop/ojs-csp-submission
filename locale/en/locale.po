@@ -94,10 +94,10 @@ msgid "plugins.generic.CspSubmission.submission.title.description"
 msgstr "Minimum limit 15, maximum limit 300 characters with spaces"
 
 msgid "plugins.generic.CspSubmission.preprint"
-msgstr "Is your text deposited on a preprint server?<br> "
-"<input class='form-check-input' type='radio' name='preprint' value='Sim' id='preprintSim'> Yes <br> "
-"<input class='form-check-input' type='radio' name='preprint' value='Não' id='preprintNao' checked> No <br> "
-"Please inform the DOI assigned to the manuscript if it has been deposited on a preprint server:"
+msgstr "Is your text deposited on a preprint server?"
+
+msgid "plugins.generic.CspSubmission.preprint.doi"
+msgstr "Please inform the DOI assigned to the manuscript if it has been deposited on a preprint server:"
 
 msgid "plugins.generic.CspSubmission.monografDissertTese.label"
 msgstr "Monograph/Dissertation/Thesis"
