@@ -220,14 +220,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$source->showWhen = ['preprintOption', 'S'];
 			$source->value = ($preprintOption === 'S' ? $sourceValue : '');
 
+			// Adiciona campo monografia, dissertação ou tese depositada
+			$monografDissertTeseValue = $args->publication->getData('monografDissertTese');
+			$monografDissertTeseOption = ($monografDissertTeseValue !== null && $monografDissertTeseValue !== '') ? 'S' : '';
+			$args->addField(new FieldOptions('monografDissertTeseOption', [
+				'label' => __('plugins.generic.CspSubmission.monografDissertTese.options'),
+				'groupId' => 'default',
+				'isRequired' => true,
+				'type' => 'radio',
+				'options' => [
+					['value' => 'S', 'label' => __('common.yes')],
+					['value' => 'N', 'label' => __('common.no')],
+				],
+				'value' => $monografDissertTeseOption,
+			]), [FIELD_POSITION_BEFORE, 'monografDissertTese']);
 			$args->addField(new FieldText('monografDissertTese', [
-				'label' => __('plugins.generic.CspSubmission.monografDissertTese.label'),
-				'description' => __('plugins.generic.CspSubmission.monografDissertTese.description'),
+				'label' => __('plugins.generic.CspSubmission.monografDissertTese.repo'),
 				'groupId' => 'default',
 				'isRequired' => true,
 				'size' => 'large',
-				'value' => $args->publication->getData('monografDissertTese')
-			]),[FIELD_POSITION_AFTER, 'source']);
+				'showWhen' => ['monografDissertTeseOption', 'S'],
+				'value' => ($monografDissertTeseOption === 'S' ? $monografDissertTeseValue : '')
+			]),[FIELD_POSITION_AFTER, 'monografDissertTeseOption']);
 
 			$args->addField(new FieldRadioInput('dataAvailabilityRadios', [
 				'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.label'),

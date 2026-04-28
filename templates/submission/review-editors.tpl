@@ -59,7 +59,7 @@
                 {include file="/submission/review-publication-field.tpl" prop="dataAvailabilityRadios" name="{translate key="plugins.generic.CspSubmission.dataAvailabilityRadios.label"}" type="html"}
                 {include file="/submission/review-publication-field.tpl" prop="dataAvailability" inLocale=$localeKey name="{translate key="submission.dataAvailability"}" type="html"}
             {/if}
-                {include file="/submission/review-publication-field.tpl" prop="monografDissertTese" name="{translate key="plugins.generic.CspSubmission.monografDissertTese.label"}" type="html"}
+                {include file="/submission/review-publication-field.tpl" prop="monografDissertTese" name="{translate key="plugins.generic.CspSubmission.monografDissertTese.options"}" type="html"}
             {if $localeKey === $submission->getData('locale')}
                 {if $isCategoriesEnabled}
                     <div class="submissionWizard__reviewPanel__item">
