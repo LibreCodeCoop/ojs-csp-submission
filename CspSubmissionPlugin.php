@@ -243,13 +243,14 @@ class CspSubmissionPlugin extends GenericPlugin {
 				'value' => ($monografDissertTeseOption === 'S' ? $monografDissertTeseValue : '')
 			]),[FIELD_POSITION_AFTER, 'monografDissertTeseOption']);
 
+			// Adiciona campos de opções sobre disponibilidade dos dados de pesquisa
 			$args->addField(new FieldRadioInput('dataAvailabilityRadios', [
 				'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.label'),
 				'groupId' => 'default',
 				'isRequired' => true,
 				'size' => 'large',
 				'type' => 'radio',
-				'value' => $args->publication->getData('dataAvailabilityRadios'),
+				'value' => $args->publication->getData('dataAvailabilityRadios') ?? '',
                 'options' => [
                     ['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisNoRepo'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisNoRepo'),],
 					['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisMedianteSolicitacao'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisMedianteSolicitacao'),],
@@ -258,6 +259,8 @@ class CspSubmissionPlugin extends GenericPlugin {
                     ['value' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.naoSeAplica'), 'label' => __('plugins.generic.CspSubmission.dataAvailabilityRadios.naoSeAplica'),],
                 ],
 			]),[FIELD_POSITION_BEFORE, 'dataAvailability']);
+			$dataAvailability = $args->getField('dataAvailability');
+			$dataAvailability->showWhen = ['dataAvailabilityRadios', __('plugins.generic.CspSubmission.dataAvailabilityRadios.dadosDisponiveisNoRepo')];
 
 		}
 		// Customiza formulário de autor/coautor
