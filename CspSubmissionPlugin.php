@@ -469,70 +469,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 							$section = Repo::section()->get((int) $publication->getData('sectionId'));
 							$sectionAbbrev = $section->getAbbrev($context->_data["primaryLocale"]);
 
-							switch($sectionAbbrev) {
-								case 'ARTIGO':
-								case 'DEBATE':
-								case 'QUEST_METOD':
-								case 'ENTREVISTA':
-								case 'ESP_TEMATICO':
-									if ($wordCount > 6600) {
-										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-											'sectoin' => $section->getTitle($publication->getData('locale')),
-											'max'     => 6000,
-											'count'   => $wordCount
-											]);
-									}
-								break;
-								case 'EDITORIAL':
-								case 'COM_BREVE':
-								case 'PERSPECT':
-									if ($wordCount > 2750) {
-										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-											'sectoin' => $section->getTitle($publication->getData('locale')),
-											'max'     => 2500,
-											'count'   => $wordCount
-											]);
-									}
-								break;
-								case 'REVISAO':
-								case 'ENSAIO':
-									if ($wordCount > 8800) {
-										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-											'sectoin' => $section->getTitle($publication->getData('locale')),
-											'max'     => 8000,
-											'count'   => $wordCount
-											]);
-									}
-								break;
-								case 'CARTA':
-								case 'COMENTARIOS':
-								case 'RESENHA':
-									if ($wordCount > 1540) {
-										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-											'sectoin' => $section->getTitle($publication->getData('locale')),
-											'max'     => 1400,
-											'count'   => $wordCount
-											]);
-									}
-								break;
-								case 'OBTUARIO':
-									if ($wordCount > 1050) {
-										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-											'sectoin' => $section->getTitle($publication->getData('locale')),
-											'max'     => 1000,
-											'count'   => $wordCount
-											]);
-									}
-								break;
-								case 'ERRATA':
-									if ($wordCount > 770) {
-										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-											'sectoin' => $section->getTitle($publication->getData('locale')),
-											'max'     => 700,
-											'count'   => $wordCount
-											]);
-									}
-								break;
+							$limit = self::getWordCountLimit($sectionAbbrev);
+							if ($limit !== null && $wordCount > $limit['threshold']) {
+								$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+									'sectoin' => $section->getTitle($publication->getData('locale')),
+									'max'     => $limit['max'],
+									'count'   => $wordCount
+								]);
 							}
 						}
 					}
@@ -629,6 +572,40 @@ class CspSubmissionPlugin extends GenericPlugin {
             }
 		}
 	}
+	/**
+	 * Returns word count limit for a section abbreviation.
+	 * Returns ['max' => int, 'threshold' => int] or null if no limit applies.
+	 */
+	public static function getWordCountLimit(string $sectionAbbrev): ?array
+	{
+		switch ($sectionAbbrev) {
+			case 'ARTIGO':
+			case 'DEBATE':
+			case 'QUEST_METOD':
+			case 'ENTREVISTA':
+			case 'ESP_TEMATICO':
+				return ['max' => 6000, 'threshold' => 6600];
+			case 'EDITORIAL':
+			case 'COM_BREVE':
+			case 'PERSPECT':
+				return ['max' => 2500, 'threshold' => 2750];
+			case 'REVISAO':
+			case 'ENSAIO':
+				return ['max' => 8000, 'threshold' => 8800];
+			case 'CARTA':
+			case 'COMENTARIOS':
+			case 'RESENHA':
+				return ['max' => 1400, 'threshold' => 1540];
+			case 'OBTUARIO':
+				return ['max' => 1000, 'threshold' => 1050];
+			case 'ERRATA':
+				return ['max' => 700, 'threshold' => 770];
+			default:
+				return null;
+		}
+	}
+
+
 	public function templateManagerDisplay($hookName, $args) {
 		if($args[1] == "submission/wizard.tpl"){
 			unset($args[0]->tpl_vars["locales"]->value["en"]);
