@@ -58,7 +58,7 @@ msgid "plugins.generic.CspSubmission.codigoArtigoRelacionado"
 msgstr "Código"
 
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
-msgstr "A sessão "{$sectoin}" deve conter \"Corpo do texto\" com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
+msgstr "A seção "{$section}" deve conter \"Corpo do texto\" com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
 
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat"
 msgstr "Formato de arquivo inválido de \"{$genre}\"! Formatos permitidos para este tipo de arquivo: {$allowedFormats}"

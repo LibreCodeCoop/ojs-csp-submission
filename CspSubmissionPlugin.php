@@ -28,6 +28,7 @@ use PKP\components\forms\FieldOptions;
 use PKP\security\Role;
 use NcJoes\OfficeConverter\OfficeConverter;
 use PKP\facades\Locale;
+use PKP\submissionFile\SubmissionFile;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
 
 class CspSubmissionPlugin extends GenericPlugin {
@@ -52,6 +53,8 @@ class CspSubmissionPlugin extends GenericPlugin {
 			Hook::add('Schema::get::publication', [$this, 'schemaGetPublication']);
 			Hook::add('TemplateManager::display', [$this, 'templateManagerDisplay']);
 			Hook::add('Schema::get::author', [$this, 'SchemaGetAuthor']);
+			Hook::add('submissionfilesuploadform::validate', [$this, 'submissionfilesuploadformValidate']);
+
 		}
 		return $success;
 	}
@@ -454,28 +457,18 @@ class CspSubmissionPlugin extends GenericPlugin {
 					}else{
 						//Verifica se o número de palavras dos arquivos Corpo do Texto está dentro do limite permitido para a seção da submissão
 						if ($genre->getKey() === 'SUBMISSION') {
-							$path = $file->getData('path');
-							$formato = explode('.', $path);
-							$formato = trim(strtolower(end($formato)));
-							$converter = new OfficeConverter('files/' . $path);
-							$htmlFile = $converter->convertTo(str_replace($formato, 'html', 'files/' . $path));
-							$htmlContent = file_get_contents($htmlFile);
-							$htmlContent = preg_replace("/\\<img[^>]+\\>/i", "(image) ", $htmlContent);
-							file_put_contents($htmlFile, $htmlContent);
-							$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
-							$htmlWriter = new \PhpOffice\PhpWord\Writer\HTML($doc);
-							$wordCount = str_word_count(strip_tags($htmlWriter->getWriterPart('Body')->write()));
-							@unlink($htmlFile);
 							$section = Repo::section()->get((int) $publication->getData('sectionId'));
 							$sectionAbbrev = $section->getAbbrev($context->_data["primaryLocale"]);
-
 							$limit = self::getWordCountLimit($sectionAbbrev);
-							if ($limit !== null && $wordCount > $limit['threshold']) {
-								$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-									'sectoin' => $section->getTitle($publication->getData('locale')),
-									'max'     => $limit['max'],
-									'count'   => $wordCount
-								]);
+							if ($limit !== null) {
+								$wordCount = self::countWordsInFile('files/' . $file->getData('path'));
+								if ($wordCount > $limit['threshold']) {
+									$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+										'section' => $section->getTitle($publication->getData('locale')),
+										'max'     => $limit['max'],
+										'count'   => $wordCount
+									]);
+								}
 							}
 						}
 					}
@@ -573,7 +566,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 	}
 	/**
-	 * Returns word count limit for a section abbreviation.
+	 * Returns word count limit for a section.
 	 * Returns ['max' => int, 'threshold' => int] or null if no limit applies.
 	 */
 	public static function getWordCountLimit(string $sectionAbbrev): ?array
@@ -611,5 +604,77 @@ class CspSubmissionPlugin extends GenericPlugin {
 			unset($args[0]->tpl_vars["locales"]->value["en"]);
 			unset($args[0]->tpl_vars["locales"]->value["es"]);
 		}
+	}
+
+	public function submissionfilesuploadformValidate($hookName, array $args)
+	{
+		//No upload de revisões, verifica se o número de palavras dos arquivos Corpo do Texto está dentro do limite permitido para a seção
+		$form = $args[0];
+		if ((int) $form->getData('fileStage') !== SubmissionFile::SUBMISSION_FILE_REVIEW_REVISION) {
+			return false;
+		}
+
+		$genreId = (int) $form->getData('genreId');
+		if (!$genreId || empty($_FILES['uploadedFile']['tmp_name'])) {
+			return false;
+		}
+
+		$context = Application::get()->getRequest()->getContext();
+		$genreDao = DAORegistry::getDAO('GenreDAO'); /** @var GenreDAO $genreDao */
+		$genre = $genreDao->getById($genreId, $context->getId());
+		if (!$genre || $genre->getKey() !== 'SUBMISSION') {
+			return false;
+		}
+
+		$extension = strtolower(pathinfo($_FILES['uploadedFile']['name'], PATHINFO_EXTENSION));
+		if (!in_array($extension, ['doc', 'docx', 'odt', 'rtf'])) {
+			return false;
+		}
+
+		$submission = Repo::submission()->get((int) $form->getData('submissionId'));
+		$publication = Repo::publication()->get((int) $submission->getData('currentPublicationId'));
+		$section = Repo::section()->get((int) $publication->getData('sectionId'));
+		$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
+
+		$limit = self::getWordCountLimit($sectionAbbrev);
+		if ($limit === null) {
+			return false;
+		}
+
+		$tempPath = $_FILES['uploadedFile']['tmp_name'] . '.' . $extension;
+		copy($_FILES['uploadedFile']['tmp_name'], $tempPath);
+		try {
+			$wordCount = self::countWordsInFile($tempPath);
+		} catch (\Exception) {
+			@unlink($tempPath);
+			return false;
+		}
+		@unlink($tempPath);
+
+		if ($wordCount > $limit['threshold']) {
+			$form->addError('uploadedFile', __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+				'section' => $section->getTitle($publication->getData('locale')),
+				'max'     => $limit['max'],
+				'count'   => $wordCount,
+			]));
+		}
+
+		return false;
+	}
+
+	private static function countWordsInFile(string $pathWithExtension): int
+	{
+		$extension = strtolower(pathinfo($pathWithExtension, PATHINFO_EXTENSION));
+		$htmlFile = substr($pathWithExtension, 0, -(strlen($extension) + 1)) . '.html';
+		$converter = new OfficeConverter($pathWithExtension);
+		$converter->convertTo($htmlFile);
+		$htmlContent = file_get_contents($htmlFile);
+		$htmlContent = preg_replace("/\\<img[^>]+\\>/i", "(image) ", $htmlContent);
+		file_put_contents($htmlFile, $htmlContent);
+		$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
+		$htmlWriter = new \PhpOffice\PhpWord\Writer\HTML($doc);
+		$wordCount = str_word_count(strip_tags($htmlWriter->getWriterPart('Body')->write()));
+		@unlink($htmlFile);
+		return $wordCount;
 	}
 }
