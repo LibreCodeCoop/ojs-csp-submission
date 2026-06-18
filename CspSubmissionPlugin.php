@@ -129,6 +129,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'multilingual' => false,
 			'validation' => ['nullable']
 		];
+		$schema->properties->usoIA = (object) [
+			'type' => 'string',
+			'apiSummary' => true,
+			'multilingual' => false,
+			'validation' => ['nullable']
+		];
 		return false;
     }
 
@@ -398,6 +404,26 @@ class CspSubmissionPlugin extends GenericPlugin {
 						],
 						'value' => $args->submission->getData('consideracoesEticas'),
 					]));
+					$usoIA = $args->submission->getData('usoIA');
+					$usoIAOption = ($usoIA === null || $usoIA === '') ? '' : ($usoIA === 'N' ? 'N' : 'S');
+					$args->addField(new FieldOptions('usoIAOption', [
+						'label' => __('plugins.generic.CspSubmission.usoIA.options'),
+						'groupId' => 'default',
+						'isRequired' => true,
+						'type' => 'radio',
+						'options' => [
+							['value' => 'S', 'label' => __('common.yes')],
+							['value' => 'N', 'label' => __('common.no')],
+						],
+						'value' => $usoIAOption,
+					]));
+					$args->addField(new FieldTextarea('usoIA', [
+						'label' => __('plugins.generic.CspSubmission.usoIA.description'),
+						'groupId' => 'default',
+						'isRequired' => true,
+						'showWhen' => ['usoIAOption', 'S'],
+						'value' => ($usoIAOption === 'S' ? $usoIA : ''),
+					]));
 					$args->addField(new FieldTextarea('agradecimentos', [
 						'label' => __('plugins.generic.CspSubmission.agradecimentos'),
 						'groupId' => 'default',
@@ -510,6 +536,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if(!$submission->getData('consideracoesEticas')){
 			$args[0]["consideracoesEticas"] = [$locale => [__('plugins.generic.CspSubmission.consideracoesEticas.Notification')]];
 		}
+		if(!$submission->getData('usoIA')){
+			$args[0]["usoIA"] = [$locale => [__('plugins.generic.CspSubmission.usoIA.Notification')]];
+		}
 		// Valida se campos Endereço postal e Contribuição do autor no trabalho foram preenchidos
 		foreach ($publication->getData('authors') as $author) {
 			if($author->getData('region') == null){
@@ -530,6 +559,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$request = Application::get()->getRequest();
 		if ($request->getUserVar('conflitoInteresseOption') === 'N') {
 			$args[0]->setData('conflitoInteresse', 'N');
+		}
+		if ($request->getUserVar('usoIAOption') === 'N') {
+			$args[0]->setData('usoIA', 'N');
 		}
 		if(isset($args[2]["submissionProgress"]) && $args[2]["submissionProgress"] == ""){
 			// Atribui código CSP à nova submissão

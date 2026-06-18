@@ -107,3 +107,12 @@ msgstr "Seu texto está disponibilizado em repositório de Monografia/Dissertaç
 
 msgid "plugins.generic.CspSubmission.monografDissertTese.repo"
 msgstr "Informe o link do repositório:"
+
+msgid "plugins.generic.CspSubmission.usoIA.options"
+msgstr "Uso de IA na elaboração do manuscrito?"
+
+msgid "plugins.generic.CspSubmission.usoIA.description"
+msgstr "Em caso afirmativo, especifique e detalhe a utilização:"
+
+msgid "plugins.generic.CspSubmission.usoIA.Notification"
+msgstr "É obrigatório informar se houve uso de Inteligência Artificial no trabalho."

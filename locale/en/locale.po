@@ -104,3 +104,12 @@ msgstr "Is your text available in the Monograph/Dissertation/Thesis repository?"
 
 msgid "plugins.generic.CspSubmission.monografDissertTese.repo"
 msgstr "Enter the repository link:"
+
+msgid "plugins.generic.CspSubmission.usoIA.options"
+msgstr "Use of AI in manuscript preparation?"
+
+msgid "plugins.generic.CspSubmission.usoIA.description"
+msgstr "If so, please specify and describe the use:"
+
+msgid "plugins.generic.CspSubmission.usoIA.Notification"
+msgstr "You must indicate whether Artificial Intelligence was used in this work."
