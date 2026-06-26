@@ -57,6 +57,9 @@ msgstr "Code"
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
 msgstr "The "{$section}" section must contain text with at most {$max} words. The uploaded file contains {$count} words."
 
+msgid "plugins.generic.CspSubmission.SectionFile.errorWordCountParse"
+msgstr "Could not count the words in the \"{$genre}\" file. Please clean the file by removing complex formatting (such as nested text boxes) and try again."
+
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat.AticleBody"
 msgstr "Invalid file format! Allowed formats for this file type: .doc, .docx or .odt"
 

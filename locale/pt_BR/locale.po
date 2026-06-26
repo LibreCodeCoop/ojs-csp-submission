@@ -60,6 +60,9 @@ msgstr "Código"
 msgid "plugins.generic.CspSubmission.SectionFile.errorWordCount"
 msgstr "A seção "{$section}" deve conter \"Corpo do texto\" com no máximo {$max} palavras. O arquivo enviado contém {$count} palavras."
 
+msgid "plugins.generic.CspSubmission.SectionFile.errorWordCountParse"
+msgstr "Não foi possível contar as palavras do arquivo \"{$genre}\". Por favor, limpe o arquivo removendo formatações complexas (como caixas de texto aninhadas) e envie novamente."
+
 msgid "plugins.generic.CspSubmission.SectionFile.invalidFormat"
 msgstr "Formato de arquivo inválido de \"{$genre}\"! Formatos permitidos para este tipo de arquivo: {$allowedFormats}"
 

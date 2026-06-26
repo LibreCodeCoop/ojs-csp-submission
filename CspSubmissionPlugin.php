@@ -487,13 +487,17 @@ class CspSubmissionPlugin extends GenericPlugin {
 							$sectionAbbrev = $section->getAbbrev($context->_data["primaryLocale"]);
 							$limit = self::getWordCountLimit($sectionAbbrev);
 							if ($limit !== null) {
-								$wordCount = self::countWordsInFile('files/' . $file->getData('path'));
-								if ($wordCount > $limit['threshold']) {
-									$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
-										'section' => $section->getTitle($publication->getData('locale')),
-										'max'     => $limit['max'],
-										'count'   => $wordCount
-									]);
+								try {
+									$wordCount = self::countWordsInFile('files/' . $file->getData('path'));
+									if ($wordCount > $limit['threshold']) {
+										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
+											'section' => $section->getTitle($publication->getData('locale')),
+											'max'     => $limit['max'],
+											'count'   => $wordCount
+										]);
+									}
+								} catch (\BadMethodCallException) {
+									$args[0]["files"][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCountParse', ['genre' => $genre->getLocalizedData('name')]);
 								}
 							}
 						}
