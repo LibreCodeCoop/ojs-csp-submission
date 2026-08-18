@@ -1,7 +1,14 @@
 {
     "require": {
-        "symfony/http-client": "^6.3",
         "phpoffice/phpword": "^1.1",
-        "ncjoes/office-converter": "^1.0"
+        "phpoffice/math": "^0.3.0"
+    },
+    "config": {
+        "platform": {
+            "php": "8.3.31"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10"
     }
 }

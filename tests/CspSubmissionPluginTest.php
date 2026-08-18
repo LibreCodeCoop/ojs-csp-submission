@@ -78,4 +78,48 @@ class CspSubmissionPluginTest extends TestCase
         $this->assertFalse(6600 > $limit['threshold']);
     }
 
+    // -------------------------------------------------------------------------
+    // countWordsInFile (rewritten to use PhpWord's native readers, no LibreOffice)
+    // -------------------------------------------------------------------------
+
+    public function testCountWordsInFileReadsDocxNatively(): void
+    {
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+        $section->addText('one two three four five six seven eight nine ten');
+        $tmpDocx = tempnam(sys_get_temp_dir(), 'cspword_test_') . '.docx';
+        \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007')->save($tmpDocx);
+
+        $method = new \ReflectionMethod(CspSubmissionPlugin::class, 'countWordsInFile');
+        $method->setAccessible(true);
+        $wordCount = $method->invoke(null, $tmpDocx);
+
+        @unlink($tmpDocx);
+        $this->assertSame(10, $wordCount);
+    }
+
+    public function testCountWordsInFileReadsRtfNatively(): void
+    {
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+        $section->addText('alpha beta gamma delta epsilon');
+        $tmpRtf = tempnam(sys_get_temp_dir(), 'cspword_test_') . '.rtf';
+        \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'RTF')->save($tmpRtf);
+
+        $method = new \ReflectionMethod(CspSubmissionPlugin::class, 'countWordsInFile');
+        $method->setAccessible(true);
+        $wordCount = $method->invoke(null, $tmpRtf);
+
+        @unlink($tmpRtf);
+        $this->assertSame(5, $wordCount);
+    }
+
+    public function testCountWordsInFileThrowsOnUnsupportedExtension(): void
+    {
+        $this->expectException(\BadMethodCallException::class);
+        $method = new \ReflectionMethod(CspSubmissionPlugin::class, 'countWordsInFile');
+        $method->setAccessible(true);
+        $method->invoke(null, '/tmp/whatever.pdf');
+    }
+
 }

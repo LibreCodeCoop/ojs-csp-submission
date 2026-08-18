@@ -26,7 +26,6 @@ use PKP\components\forms\FieldText;
 use PKP\components\forms\FieldRadioInput;
 use PKP\components\forms\FieldOptions;
 use PKP\security\Role;
-use NcJoes\OfficeConverter\OfficeConverter;
 use PKP\facades\Locale;
 use PKP\submissionFile\SubmissionFile;
 require_once(dirname(__FILE__) . '/vendor/autoload.php');
@@ -701,16 +700,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 	private static function countWordsInFile(string $pathWithExtension): int
 	{
 		$extension = strtolower(pathinfo($pathWithExtension, PATHINFO_EXTENSION));
-		$htmlFile = substr($pathWithExtension, 0, -(strlen($extension) + 1)) . '.html';
-		$converter = new OfficeConverter($pathWithExtension);
-		$converter->convertTo($htmlFile);
-		$htmlContent = file_get_contents($htmlFile);
-		$htmlContent = preg_replace("/\\<img[^>]+\\>/i", "(image) ", $htmlContent);
-		file_put_contents($htmlFile, $htmlContent);
-		$doc = \PhpOffice\PhpWord\IOFactory::load($htmlFile, 'HTML');
-		$htmlWriter = new \PhpOffice\PhpWord\Writer\HTML($doc);
-		$wordCount = str_word_count(strip_tags($htmlWriter->getWriterPart('Body')->write()));
-		@unlink($htmlFile);
+		$readerType = match ($extension) {
+			'docx' => 'Word2007',
+			'doc' => 'MsDoc',
+			'odt' => 'ODText',
+			'rtf' => 'RTF',
+			default => throw new \BadMethodCallException("Unsupported extension for word count: {$extension}"),
+		};
+		try {
+			$phpWord = \PhpOffice\PhpWord\IOFactory::load($pathWithExtension, $readerType);
+		} catch (\Throwable $e) {
+			throw new \BadMethodCallException("Failed to parse {$extension} file for word count: {$e->getMessage()}", 0, $e);
+		}
+		$htmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'HTML');
+		$tmpHtml = tempnam(sys_get_temp_dir(), 'cspwordcount_') . '.html';
+		$htmlWriter->save($tmpHtml);
+		$htmlContent = file_get_contents($tmpHtml);
+		// PhpWord's HTML writer always emits a <style> block; strip_tags() would
+		// otherwise leave its CSS text behind to be miscounted as words.
+		$htmlContent = preg_replace('#<head\b[^>]*>.*?</head>#is', '', $htmlContent);
+		$htmlContent = preg_replace('/<img[^>]+>/i', '(image) ', $htmlContent);
+		$wordCount = str_word_count(strip_tags($htmlContent));
+		@unlink($tmpHtml);
 		return $wordCount;
 	}
 }
