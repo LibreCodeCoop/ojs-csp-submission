@@ -275,7 +275,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 		// Customiza formulário de autor/coautor
 		if($args->id == "contributor"){
 			$orcid = $args->getField('orcid');
-			$orcid->isRequired = true;
+			if ($orcid) {
+				$orcid->isRequired = true;
+			}
 
 			$familyName = $args->getField('familyName');
 			$familyName->isRequired = true;
@@ -660,7 +662,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			'cspPublication' => $publication,
 			'cspSubmission' => $submission,
 		]);
-		$args[2] = $smarty->fetch($this->getTemplateResource('reviewEditorsSection.tpl'));
+		$args[2] = $smarty->fetch($this->getTemplateResource('submission/reviewEditorsSection.tpl'));
 		return false;
 	}
 
