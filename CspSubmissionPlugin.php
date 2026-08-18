@@ -53,6 +53,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			Hook::add('TemplateManager::display', [$this, 'templateManagerDisplay']);
 			Hook::add('Schema::get::author', [$this, 'SchemaGetAuthor']);
 			Hook::add('submissionfilesuploadform::validate', [$this, 'submissionfilesuploadformValidate']);
+			Hook::add('Template::SubmissionWizard::Section::Review::Editors', [$this, 'reviewEditorsSection']);
 
 		}
 		return $success;
@@ -639,6 +640,28 @@ class CspSubmissionPlugin extends GenericPlugin {
 			unset($args[0]->tpl_vars["locales"]->value["en"]);
 			unset($args[0]->tpl_vars["locales"]->value["es"]);
 		}
+	}
+
+	/**
+	 * Injects CSP's custom review-panel fields (dataAvailabilityRadios,
+	 * monografDissertTese, agradecimentos) via the 3.5 hook added at the
+	 * exact point the 3.4 plugin needed a full review-editors.tpl override
+	 * for. See docs/2026-07-plugin-audit.md and the cspSubmission 3.5 port
+	 * plan for why this replaces the old file override.
+	 */
+	public function reviewEditorsSection(string $hookName, array $args): bool
+	{
+		$params = $args[0];
+		$smarty = $args[1];
+		$submission = $params['submission'];
+		$publication = $submission->getCurrentPublication();
+
+		$smarty->assign([
+			'cspPublication' => $publication,
+			'cspSubmission' => $submission,
+		]);
+		$args[2] = $smarty->fetch($this->getTemplateResource('reviewEditorsSection.tpl'));
+		return false;
 	}
 
 	public function submissionfilesuploadformValidate($hookName, array $args)
