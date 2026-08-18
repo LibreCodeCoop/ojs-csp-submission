@@ -644,13 +644,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		}
 	}
 
-	/**
-	 * Injects CSP's custom review-panel fields (dataAvailabilityRadios,
-	 * monografDissertTese, agradecimentos) via the 3.5 hook added at the
-	 * exact point the 3.4 plugin needed a full review-editors.tpl override
-	 * for. See docs/2026-07-plugin-audit.md and the cspSubmission 3.5 port
-	 * plan for why this replaces the old file override.
-	 */
+	//Exibe campos Disponibilidade de dados, Monografia/Dissertação/Tese e Agradecimentos em etapa "Revisar" da submissão
 	public function reviewEditorsSection(string $hookName, array $args): bool
 	{
 		$params = $args[0];

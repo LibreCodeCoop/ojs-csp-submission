@@ -1,10 +1,3 @@
-{**
- * plugins/generic/cspSubmission/templates/submission/reviewEditorsSection.tpl
- *
- * Injected via the Template::SubmissionWizard::Section::Review::Editors hook
- * (added in OJS 3.5) instead of overriding the whole review-editors.tpl —
- * see docs/2026-07-plugin-audit.md and the cspSubmission 3.5 port plan for why.
- *}
 {if $cspPublication->getData('dataAvailabilityRadios')}
     {include file="/submission/review-publication-field.tpl" prop="dataAvailabilityRadios" name="{translate key="plugins.generic.CspSubmission.dataAvailabilityRadios.label"}" type="html"}
 {/if}
