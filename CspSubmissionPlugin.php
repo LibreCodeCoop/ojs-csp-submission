@@ -285,11 +285,6 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$familyName = $args->getField('biography');
 			$familyName->isRequired = true;
 
-			$affiliation = $args->getField('affiliation');
-			$affiliation->description = __('user.affiliation.description');
-			$affiliation->size = "large";
-			$affiliation->isRequired = true;
-
 			// Adiciona campo Endereço em formulário de inclusão de autor/coautor na submissão
 			$args->addField(new FieldText('region', [
 				'label' => __('plugins.themes.csp.user.region'),
@@ -315,7 +310,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			// Atribui colaborador com papel de autor pois o campo de escolha do papel foi ocultado
 			$authorgroup = Repo::userGroup()->getByRoleIds([Role::ROLE_ID_AUTHOR], $context->getId(), true)->first();
-			$args->addHiddenField('userGroupId', $authorgroup->getData('id'));
+			$args->addHiddenField('userGroupId', $authorgroup->id);
 		}
 		if($request->_router->_page == 'submission'){
 			if($args->id == "startSubmission"){
