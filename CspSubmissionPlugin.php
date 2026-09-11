@@ -599,9 +599,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 			foreach ($submissionFiles as $file) {
 				$file->setData('notRename', true);
 				$fileArray = explode('.', $file->getData('path'));
-				$file->setData('name', str_replace(' ', '_', $file->getData('name',$file->getData('locale'))) . '_csp_' . str_replace('/', '_', $row->code) .'_V1.' . $fileArray[1], $file->getData('locale'));
-				if($file->getData('locale') <> $primaryLocale){
-					$file->setData('name', str_replace(' ', '_', $file->getData('name',$primaryLocale)) . '_csp_' . str_replace('/', '_', $row->code) .'_V1.' . $fileArray[1], $primaryLocale);
+				$names = (array) $file->getData('name');
+				foreach ($names as $locale => $originalName) {
+					$file->setData('name', str_replace(' ', '_', $originalName) . '_csp_' . str_replace('/', '_', $row->code) . '_V1.' . $fileArray[1], $locale);
+				}
+				if (!array_key_exists($primaryLocale, $names)) {
+					$fallbackName = reset($names) ?: '';
+					$file->setData('name', str_replace(' ', '_', $fallbackName) . '_csp_' . str_replace('/', '_', $row->code) . '_V1.' . $fileArray[1], $primaryLocale);
 				}
                 Repo::submissionFile()->edit($file, $file->_data);
             }
