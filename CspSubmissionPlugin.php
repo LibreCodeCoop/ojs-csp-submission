@@ -18,6 +18,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use APP\core\Application;
 use APP\template\TemplateManager;
+use PKP\config\Config;
 use PKP\db\DAORegistry;
 use PKP\submission\GenreDAO;
 use APP\facades\Repo;
@@ -276,7 +277,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		if($args->id == "contributor"){
 			$orcid = $args->getField('orcid');
 			if ($orcid) {
-				$orcid->isRequired = true;
+				// $orcid->isRequired = true;
 			}
 
 			$familyName = $args->getField('familyName');
@@ -285,7 +286,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 			$familyName = $args->getField('biography');
 			$familyName->isRequired = true;
 
-			// Adiciona campo Endereço em formulário de inclusão de autor/coautor na submissão
+			// Adiciona campo endereço, cidade e estado em formulário de inclusão de autor/coautor na submissão
 			$args->addField(new FieldText('region', [
 				'label' => __('plugins.themes.csp.user.region'),
 				'isRequired' => true,
@@ -306,9 +307,9 @@ class CspSubmissionPlugin extends GenericPlugin {
 
 			$args->removeField('preferredPublicName');
 			$args->removeField('url');
+			// Remove campo de escolha do "Papel do Colaborador" em formulário de autor/coautor
 			$args->removeField('userGroupId');
-
-			// Atribui colaborador com papel de autor pois o campo de escolha do papel foi ocultado
+			// Adiciona campo oculto para atribuir papel de "Autor" a todos os autores/coautores adicionados
 			$authorgroup = Repo::userGroup()->getByRoleIds([Role::ROLE_ID_AUTHOR], $context->getId(), true)->first();
 			$args->addHiddenField('userGroupId', $authorgroup->id);
 		}
@@ -327,12 +328,13 @@ class CspSubmissionPlugin extends GenericPlugin {
 				if($args->id == "titleAbstract"){
 					$title = $args->getField('title');
 					$title->description = __('plugins.generic.CspSubmission.submission.title.description');
-
+					// Atribui obrigatoriedade de palavras chave para seções Artigo, Comunicação breve, Debate,
+					// Ensaio, Questões Metodológicas e Revisão
 					if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
 						$keywords = $args->getField('keywords');
 						$keywords->isRequired = true;
 					}
-
+					// Insere campo "Tema" obrigatório para seção Espaço Temático
 					if($sectionAbbrev == "ESP_TEMATICO") {
 						$args->addField(new FieldText('espacoTematico', [
 							'label' => __('plugins.generic.CspSubmission.espacoTematico'),
@@ -342,7 +344,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							'value' => $context->getData('espacoTematico'),
 						]));
 					}
-
+					// Insere campo "Código" obrigatório para seção Comentários
 					if($sectionAbbrev == "COMENTARIOS") {
 						$args->addField(new FieldText('codigoArtigoRelacionado', [
 							'label' => __('plugins.generic.CspSubmission.codigoArtigoRelacionado'),
@@ -352,12 +354,12 @@ class CspSubmissionPlugin extends GenericPlugin {
 							'value' => $context->getData('codigoArtigoRelacionado'),
 						]));
 					}
-
+					// Remove campos resumo e palavras-chave quando seção for "Carta"
 					if($sectionAbbrev == "CARTA") {
 						$args->removeField('abstract');
 						$args->removeField('keywords');
 					}
-
+					// Adiciona campo Código do fascículo temático
 					$args->addField(new FieldText('codigoFasciculoTematico', [
 						'label' => __('plugins.generic.CspSubmission.codigoFasciculoTematico'),
 						'description' => __('plugins.generic.CspSubmission.codigoFasciculoTematico.description'),
@@ -368,6 +370,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 					]));
 				}
 				if($args->id == "commentsForTheEditors"){
+					// Adiciona campo Seu artigo possui potencial conflito de interesse?
 					$conflitoInteresse = $args->submission->getData('conflitoInteresse');
 					$conflitoInteresseOption = ($conflitoInteresse === null || $conflitoInteresse === '')
 						? '' : ($conflitoInteresse === 'N' ? 'N' : 'S');
@@ -389,6 +392,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						'showWhen' => ['conflitoInteresseOption', 'S'],
 						'value' => ($conflitoInteresseOption === 'S' ? $conflitoInteresse : ''),
 					]));
+					// Adiciona campo Considerações éticas e legais
 					$args->addField(new FieldRadioInput('consideracoesEticas', [
 						'label' => __('plugins.generic.CspSubmission.consideracoesEticas'),
 						'groupId' => 'default',
@@ -401,6 +405,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 						],
 						'value' => $args->submission->getData('consideracoesEticas'),
 					]));
+					// Adiciona campo Uso de IA na elaboração do manuscrito
 					$usoIA = $args->submission->getData('usoIA');
 					$usoIAOption = ($usoIA === null || $usoIA === '') ? '' : ($usoIA === 'N' ? 'N' : 'S');
 					$args->addField(new FieldOptions('usoIAOption', [
@@ -485,7 +490,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 							$limit = self::getWordCountLimit($sectionAbbrev);
 							if ($limit !== null) {
 								try {
-									$wordCount = self::countWordsInFile('files/' . $file->getData('path'));
+									$wordCount = self::countWordsInFile(Config::getVar('files', 'files_dir') . '/' . $file->getData('path'));
 									if ($wordCount > $limit['threshold']) {
 										$args[0]['files'][] = __('plugins.generic.CspSubmission.SectionFile.errorWordCount', [
 											'section' => $section->getTitle($publication->getData('locale')),
@@ -524,6 +529,7 @@ class CspSubmissionPlugin extends GenericPlugin {
 		$keywords = count($publication->getData('keywords'));
 		$section = Repo::section()->get((int) $publication->getData('sectionId'));
 		$sectionAbbrev = $section->getAbbrev($context->getData('primaryLocale'));
+		// Limita o mínimo de 3 e máximo de 5 palavras chave para as seções Artigo, Comunicação breve, Debate, Ensaio, Questões Metodológicas e Revisão
 		if(in_array($sectionAbbrev, ['ARTIGO', 'COM_BREVE', 'DEBATE', 'ENSAIO', 'QUEST_METOD', 'REVISAO'])) {
 			if (!$keywords) {
 				$args[0]["keywords"] = [$locale => [__('validator.required')]];
@@ -531,12 +537,15 @@ class CspSubmissionPlugin extends GenericPlugin {
 				$args[0]["keywords"] = [$locale => [__('plugins.generic.CspSubmission.keywords.Notification')]];
 			}
 		}
+		// Verifica preenchimento de campo Conflito de interesse
 		if(!$submission->getData('conflitoInteresse')){
 			$args[0]["conflitoInteresse"] = [$locale => [__('plugins.generic.CspSubmission.conflitoInteresse.Notification')]];
 		}
+		// Verifica preenchimento de campo Considerações éticas
 		if(!$submission->getData('consideracoesEticas')){
 			$args[0]["consideracoesEticas"] = [$locale => [__('plugins.generic.CspSubmission.consideracoesEticas.Notification')]];
 		}
+		// Verifica preenchimento de campo Uso de IA
 		if(!$submission->getData('usoIA')){
 			$args[0]["usoIA"] = [$locale => [__('plugins.generic.CspSubmission.usoIA.Notification')]];
 		}
